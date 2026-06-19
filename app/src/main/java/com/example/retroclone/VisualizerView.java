@@ -12,23 +12,26 @@ import java.util.Arrays;
 public class VisualizerView extends View {
     private byte[] fftBytes;
     private float[] smoothedMagnitudes;
-    private Paint paint = new Paint();
-    private Path path = new Path();
+    private final Paint wavePaint = new Paint();
+    private final Path wavePath = new Path();
+    private static final int WAVE_ALPHA = 70;
+    private static final float DAMPING_FACTOR = 0.25f;
 
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        paint.setAntiAlias(true);
-        paint.setColor(Color.WHITE);
-        paint.setStyle(Paint.Style.FILL);
+        wavePaint.setAntiAlias(true);
+        wavePaint.setColor(Color.WHITE);
+        wavePaint.setStyle(Paint.Style.FILL);
     }
 
     public void updateVisualizer(byte[] bytes) {
         this.fftBytes = bytes;
+        postInvalidate(); // Draw only when visualizer updates to conserve CPU and battery
     }
 
     public void setColor(int color) {
-        paint.setColor(color);
-        paint.setAlpha(70);
+        wavePaint.setColor(color);
+        wavePaint.setAlpha(WAVE_ALPHA);
     }
 
     @Override
@@ -47,8 +50,8 @@ public class VisualizerView extends View {
             Arrays.fill(smoothedMagnitudes, 0f);
         }
 
-        path.reset();
-        path.moveTo(0, height); // Start at bottom-left corner now
+        wavePath.reset();
+        wavePath.moveTo(0, height); // Start at bottom-left corner
 
         float barHeight = height / (numBins - 1);
 
@@ -61,33 +64,34 @@ public class VisualizerView extends View {
             }
 
             float amplitude = (magnitude / 128f) * (width * 0.5f);
-            if (amplitude > width * 0.6f) amplitude = width * 0.6f;
+            if (amplitude > width * 0.6f) {
+                amplitude = width * 0.6f;
+            }
 
-            smoothedMagnitudes[i] += (amplitude - smoothedMagnitudes[i]) * 0.25f;
+            smoothedMagnitudes[i] += (amplitude - smoothedMagnitudes[i]) * DAMPING_FACTOR;
 
-            // INVERTED Y AXIS: Bass (i=0) is at the bottom (height), Treble pushes UP to 0
-            float y = height - (i * barHeight);
-            float x = smoothedMagnitudes[i];
+            // Inverted Y-axis: bass at bottom, treble pushes up
+            float currentY = height - (i * barHeight);
+            float currentX = smoothedMagnitudes[i];
 
             if (i == 0) {
-                path.lineTo(x, y);
+                wavePath.lineTo(currentX, currentY);
             } else {
-                float prevY = height - ((i - 1) * barHeight);
-                float prevX = smoothedMagnitudes[i - 1];
+                float previousY = height - ((i - 1) * barHeight);
+                float previousX = smoothedMagnitudes[i - 1];
                 // Smooth bezier curve going UP the Y axis
-                path.cubicTo(
-                        prevX, prevY - barHeight / 2,
-                        x, y + barHeight / 2,
-                        x, y
+                wavePath.cubicTo(
+                        previousX, previousY - barHeight / 2,
+                        currentX, currentY + barHeight / 2,
+                        currentX, currentY
                 );
             }
         }
 
         // Draw to top-left, then close the shape back to the bottom-left
-        path.lineTo(0, 0);
-        path.close();
+        wavePath.lineTo(0, 0);
+        wavePath.close();
 
-        canvas.drawPath(path, paint);
-        invalidate();
+        canvas.drawPath(wavePath, wavePaint);
     }
 }
