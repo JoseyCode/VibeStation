@@ -11,6 +11,8 @@ const playerArtist = document.getElementById('player-artist');
 const currentArt = document.getElementById('current-art');
 const tracksContainer = document.getElementById('tracks-container');
 const searchBar = document.getElementById('search-bar');
+const fileInput = document.getElementById('file-input');
+const btnUpload = document.getElementById('btn-upload');
 
 let songs = [];
 let currentSongIndex = -1;
@@ -151,6 +153,57 @@ function setupAudioListeners() {
         );
         renderTracks(filtered);
     });
+
+    // Manual file selector trigger
+    btnUpload.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async () => {
+        const files = fileInput.files;
+        if (files.length === 0) return;
+        await handleFileUpload(files);
+    });
+
+    // Drag and drop events
+    const mainContent = document.querySelector('.main-content');
+    mainContent.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        mainContent.classList.add('drag-over');
+    });
+    mainContent.addEventListener('dragleave', () => {
+        mainContent.classList.remove('drag-over');
+    });
+    mainContent.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        mainContent.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            await handleFileUpload(files);
+        }
+    });
+}
+
+async function handleFileUpload(files) {
+    const mp3Files = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.mp3'));
+    if (mp3Files.length === 0) return;
+
+    const formData = new FormData();
+    mp3Files.forEach(file => formData.append('files', file));
+
+    btnUpload.textContent = 'Uploading...';
+    try {
+        const response = await fetch('/api/upload', { method: 'POST', body: formData });
+        const result = await response.json();
+        if (result.success) {
+            btnUpload.textContent = `Uploaded ${result.count} Tracks!`;
+            setTimeout(() => btnUpload.textContent = 'Upload Tracks', 3000);
+            await loadLibrary();
+        }
+    } catch (err) {
+        btnUpload.textContent = 'Upload Failed';
+        setTimeout(() => btnUpload.textContent = 'Upload Tracks', 3000);
+    }
 }
 
 function formatTime(secs) {

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "music-metadata": "^7.14.0"
+    "music-metadata": "^7.14.0",
+    "multer": "^1.4.5-lts.1"
   }
 }
