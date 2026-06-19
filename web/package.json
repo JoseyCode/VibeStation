@@ -1,0 +1,13 @@
+{
+  "name": "vibestation-web",
+  "version": "1.0.0",
+  "description": "VibeStation Pi Sync & Streaming Hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "music-metadata": "^7.14.0"
+  }
+}

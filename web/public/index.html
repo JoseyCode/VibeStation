@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeStation Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="vibe-bg-glow"></div>
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h1 class="brand-title">VibeStation</h1>
+            <nav class="nav-menu">
+                <button class="nav-item active" id="btn-show-library">Library</button>
+            </nav>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2>Your Collection</h2>
+                <input type="text" id="search-bar" placeholder="Search tracks, artists...">
+            </header>
+
+            <div class="library-view">
+                <div class="tracks-list" id="tracks-container">
+                    <p class="status-msg">Scanning library folders...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Player Overlay -->
+        <div class="player-bar">
+            <canvas id="visualizer-canvas"></canvas>
+            
+            <div class="player-left">
+                <div class="artwork-container">
+                    <img id="current-art" src="placeholder.png" alt="Cover Art">
+                </div>
+                <div class="track-meta">
+                    <div class="track-title" id="player-title">Not Playing</div>
+                    <div class="track-artist" id="player-artist">Select a song from library</div>
+                </div>
+            </div>
+
+            <div class="player-center">
+                <div class="controls">
+                    <button class="control-btn" id="btn-prev">⏮</button>
+                    <button class="control-btn play-btn" id="btn-play-pause">▶</button>
+                    <button class="control-btn" id="btn-next">⏭</button>
+                </div>
+                <div class="timeline-container">
+                    <span id="time-current">0:00</span>
+                    <input type="range" id="seek-bar" min="0" max="100" value="0">
+                    <span id="time-total">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-right">
+                <div class="volume-container">
+                    <span class="vol-icon">🔊</span>
+                    <input type="range" id="volume-bar" min="0" max="100" value="80">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="audio-element" crossorigin="anonymous"></audio>
+    <script src="app.js"></script>
+</body>
+</html>
