@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const mm = require('music-metadata');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 1337;
@@ -14,6 +15,19 @@ if (!fs.existsSync(musicDir)) {
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Configure Multer for track uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, musicDir);
+    },
+    filename: (req, file, cb) => {
+        // Retain original file name safely
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage });
 
 // Recursive helper to find all MP3 files
 function getMp3Files(dir, fileList = []) {
@@ -121,6 +135,15 @@ app.get('/api/artwork/:id', async (req, res) => {
     } catch (e) {}
     // Fallback to placeholder image
     res.sendFile(path.join(__dirname, 'public', 'placeholder.png'));
+});
+
+// Upload files endpoint
+app.post('/api/upload', upload.array('files'), (req, res) => {
+    try {
+        res.json({ success: true, count: req.files.length });
+    } catch (err) {
+        res.status(500).json({ error: 'Upload failed' });
+    }
 });
 
 app.listen(PORT, () => {
