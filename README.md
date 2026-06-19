@@ -17,9 +17,34 @@ VibeStation is a vibe-coded, premium, offline MP3 player for Android. Built with
 
 ---
 
-## Architecture & Core Components
+## Architecture and Core Components
 
-VibeStation follows a standard Android framework structure:
+VibeStation follows a standard Android framework structure. Below is a directory tree of the key project files and layouts:
+
+```text
+VibeStation/
+├── app/
+│   ├── src/
+│   │   └── main/
+│   │       ├── java/com/example/retroclone/
+│   │       │   ├── Models.java         (Song, Album, and Playlist data structures)
+│   │       │   ├── SplashActivity.java (Intro screen with randomized slogan)
+│   │       │   ├── MainActivity.java   (Core UI controller, adapters, & content queries)
+│   │       │   ├── AudioService.java   (Playback service, MediaSession, & lockscreen controls)
+│   │       │   └── VisualizerView.java (Custom view rendering dynamic FFT curves)
+│   │       ├── res/
+│   │       │   ├── layout/             (XML UI layout files)
+│   │       │   │   ├── activity_splash.xml
+│   │       │   │   ├── activity_main.xml
+│   │       │   │   ├── item_song.xml
+│   │       │   │   └── item_grid.xml
+│   │       │   └── values/             (Theme styles and color definitions)
+│   │       │       ├── colors.xml
+│   │       │       └── themes.xml
+│   │       └── AndroidManifest.xml     (System declarations, permissions, foreground setup)
+│   └── build.gradle.kts                (Module configurations and dependencies)
+└── settings.gradle.kts                 (Project-wide builds configuration)
+```
 
 *   **[`SplashActivity`](app/src/main/java/com/example/retroclone/SplashActivity.java)**: Greets you with a random vibe-coded slogan on start.
 *   **[`MainActivity`](app/src/main/java/com/example/retroclone/MainActivity.java)**: Coordinates the interface, handles standard storage query routines, and manages user interaction.
@@ -45,14 +70,3 @@ VibeStation follows a standard Android framework structure:
 3. Sync the project with Gradle files.
 4. Put some MP3 files into your device's `/Music/` directory.
 5. Run the app on your physical device or emulator.
-
----
-
-## Roadmap & Planned Upgrades
-
-We are planning to modernize the entire codebase in stages:
-*   [ ] **Stage 1**: Package renaming from `com.example.retroclone` to `com.vibestation.app`.
-*   [ ] **Stage 2**: Database upgrade from SharedPreferences JSON storage to **Room Database**.
-*   [ ] **Stage 3**: Code modernization migrating the legacy Java codebase to **Kotlin** with Coroutines and Flows.
-*   [ ] **Stage 4**: UI/UX overhaul replacing XML/Imperative layouts with **Jetpack Compose**.
-*   [ ] **Stage 5**: Launching the home screen play widget (`vibe_widget.xml`).
