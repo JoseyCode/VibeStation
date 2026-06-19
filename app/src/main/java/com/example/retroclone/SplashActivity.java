@@ -21,20 +21,22 @@ public class SplashActivity extends AppCompatActivity {
             "Setting the mood..."
     };
 
+    private static final int SPLASH_DELAY_MS = 1500;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        TextView txtSplashVibe = findViewById(R.id.txtSplashVibe);
+        TextView splashVibeTextView = findViewById(R.id.txtSplashVibe);
 
         int randomIndex = new Random().nextInt(vibePhrases.length);
-        txtSplashVibe.setText(vibePhrases[randomIndex]);
+        splashVibeTextView.setText(vibePhrases[randomIndex]);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(SplashActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
-        }, 1500);
+        }, SPLASH_DELAY_MS);
     }
 }
