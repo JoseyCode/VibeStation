@@ -128,7 +128,7 @@ body {
 
 .track-row {
     display: grid;
-    grid-template-columns: 48px 2fr 1fr 1fr;
+    grid-template-columns: 48px 2fr 1fr 1fr auto;
     align-items: center;
     padding: 12px 16px;
     border-radius: 10px;
@@ -489,4 +489,348 @@ body {
     .player-right {
         display: none;
     }
+
+    .track-row {
+        grid-template-columns: 40px 1fr auto;
+        grid-template-areas: 
+            "art title action"
+            "art artist action";
+        gap: 2px 12px;
+        padding: 8px 12px;
+    }
+    .btn-add-to-playlist {
+        grid-area: action;
+        align-self: center;
+    }
+
+    .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+    .card-art-container {
+        width: 100px;
+        height: 100px;
+    }
+    .detail-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .detail-art {
+        width: 140px;
+        height: 140px;
+    }
+}
+
+/* Grid layout for Albums, Artists, Playlists */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px;
+    padding-top: 10px;
+}
+
+.grid-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.grid-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--vibe-color);
+    box-shadow: 0 10px 20px var(--vibe-color-glow);
+}
+
+.card-art-container {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 16px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.card-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.grid-card:hover .card-art {
+    transform: scale(1.05);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.card-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* Detail view header */
+.detail-header {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 30px;
+    align-items: flex-end;
+}
+
+.detail-art {
+    width: 180px;
+    height: 180px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+}
+
+.detail-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-type {
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--vibe-color);
+    font-weight: 800;
+}
+
+.detail-title {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.detail-meta {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.detail-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-primary {
+    background: var(--vibe-color);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #fff;
+    color: var(--bg-dark);
+    box-shadow: 0 0 15px var(--vibe-color-glow);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--border-color);
+    color: var(--text-muted);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.back-btn {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: var(--vibe-color);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    transition: opacity 0.2s;
+}
+
+.back-btn:hover {
+    opacity: 0.8;
+}
+
+/* Playlist creation section */
+.playlist-create-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.playlist-input {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 20px;
+    color: var(--text-main);
+    font-family: var(--font-stack);
+    outline: none;
+    flex-grow: 1;
+    max-width: 300px;
+}
+
+.playlist-input:focus {
+    border-color: var(--vibe-color);
+}
+
+.btn-add-to-playlist {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-to-playlist:hover {
+    color: var(--vibe-color);
+    transform: scale(1.15);
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: rgba(15, 15, 20, 0.95);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    color: var(--text-main);
+}
+
+.close-modal {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: var(--text-muted);
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: var(--text-main);
+}
+
+.modal h3 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 4px;
+}
+
+.modal-list-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.modal-list-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--vibe-color);
+}
+
+.modal-create-section {
+    display: flex;
+    gap: 8px;
+}
+
+.modal-create-section input {
+    flex-grow: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 20px;
+    color: var(--text-main);
+    font-family: var(--font-stack);
+    outline: none;
+}
+
+.modal-create-section input:focus {
+    border-color: var(--vibe-color);
+}
 }

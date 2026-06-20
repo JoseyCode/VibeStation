@@ -16,6 +16,9 @@
             <h1 class="brand-title">VibeStation</h1>
             <nav class="nav-menu">
                 <button class="nav-item active" id="btn-show-library">Library</button>
+                <button class="nav-item" id="btn-show-albums">Albums</button>
+                <button class="nav-item" id="btn-show-artists">Artists</button>
+                <button class="nav-item" id="btn-show-playlists">Playlists</button>
                 <input type="file" id="file-input" multiple accept="audio/mpeg" style="display: none;">
                 <button class="nav-item" id="btn-upload">Upload Tracks</button>
             </nav>
@@ -78,6 +81,21 @@
     </div>
     
     <audio id="audio-element" crossorigin="anonymous"></audio>
+    
+    <!-- Add to Playlist Modal -->
+    <div id="playlist-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-playlist-modal">&times;</span>
+            <h3>Add to Playlist</h3>
+            <div id="modal-playlists-list" class="modal-list">
+                <!-- Dynamically loaded playlists -->
+            </div>
+            <div class="modal-create-section">
+                <input type="text" id="modal-playlist-name" placeholder="Create new playlist...">
+                <button class="btn-primary" id="btn-modal-create-playlist">Create</button>
+            </div>
+        </div>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
