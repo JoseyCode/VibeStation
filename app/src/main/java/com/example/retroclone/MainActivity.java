@@ -274,8 +274,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         totalTimeTextView = findViewById(R.id.txtTotalTime);
         searchEditText = findViewById(R.id.editSearch);
         audioVisualizerView = findViewById(R.id.visualizerView);
-        int initialStyle = sharedPreferences.getInt("visualizer_style", 0);
-        audioVisualizerView.setVisualizerStyle(initialStyle);
 
         topBarContainer = findViewById(R.id.topBar);
         selectionBarContainer = findViewById(R.id.selectionBar);
@@ -1437,11 +1435,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         boolean is120 = sharedPreferences.getBoolean("120hz", true);
         boolean adaptiveBg = sharedPreferences.getBoolean("adaptive_bg", true);
         boolean showVis = sharedPreferences.getBoolean("show_visualizer", true);
-        int currentStyle = sharedPreferences.getInt("visualizer_style", 0);
 
         String[] visualOptions = {
                 showVis ? "Disable Visualizer Wave" : "Enable Visualizer Wave",
-                "Visualizer Style: " + (currentStyle == 0 ? "Liquid Wavy" : "Retro Spiky"),
                 adaptiveBg ? "Disable Adaptive Background" : "Enable Adaptive Background",
                 is120 ? "Disable 120Hz Refresh Rate" : "Enable 120Hz Refresh Rate"
         };
@@ -1455,18 +1451,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         audioVisualizerView.setVisibility(newValue ? View.VISIBLE : View.GONE);
                         Toast.makeText(this, "Visualizer " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
                     } else if (which == 1) {
-                        int nextStyle = (currentStyle + 1) % 2;
-                        sharedPreferences.edit().putInt("visualizer_style", nextStyle).apply();
-                        audioVisualizerView.setVisualizerStyle(nextStyle);
-                        Toast.makeText(this, "Visualizer Style: " + (nextStyle == 0 ? "Liquid Wavy" : "Retro Spiky"), Toast.LENGTH_SHORT).show();
-                    } else if (which == 2) {
                         boolean newValue = !adaptiveBg;
                         sharedPreferences.edit().putBoolean("adaptive_bg", newValue).apply();
                         Toast.makeText(this, "Adaptive Background " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
                         if (audioService != null && audioService.getCurrentArt() != null) {
                             onTrackChanged(audioService.getCurrentSong(), audioService.getCurrentArt());
                         }
-                    } else if (which == 3) {
+                    } else if (which == 2) {
                         boolean newValue = !is120;
                         sharedPreferences.edit().putBoolean("120hz", newValue).apply();
                         applyRefreshRate(newValue);
