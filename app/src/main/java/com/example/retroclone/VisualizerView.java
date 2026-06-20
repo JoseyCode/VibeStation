@@ -18,11 +18,20 @@ public class VisualizerView extends View {
     private static final int WAVE_ALPHA = 70;
     private static final float DAMPING_FACTOR = 0.25f;
 
+    public static final int STYLE_WAVY = 0;
+    public static final int STYLE_SPIKY = 1;
+    private int visualizerStyle = STYLE_WAVY;
+
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         wavePaint.setAntiAlias(true);
         wavePaint.setColor(Color.WHITE);
         wavePaint.setStyle(Paint.Style.FILL);
+    }
+
+    public void setVisualizerStyle(int style) {
+        this.visualizerStyle = style;
+        postInvalidateOnAnimation();
     }
 
     public void updateVisualizer(byte[] bytes) {
@@ -113,13 +122,23 @@ public class VisualizerView extends View {
             if (i == 0) {
                 wavePath.lineTo(currentX, currentY);
             } else {
-                float previousY = height - ((i - 1) * barHeight);
-                float previousX = smoothedMagnitudes[i - 1];
-                wavePath.cubicTo(
-                        previousX, previousY - barHeight / 2,
-                        currentX, currentY + barHeight / 2,
-                        currentX, currentY
-                );
+                if (visualizerStyle == STYLE_WAVY) {
+                    float x1 = smoothedMagnitudes[i - 1];
+                    float y1 = height - (i - 1) * barHeight;
+                    float x2 = smoothedMagnitudes[i];
+                    float y2 = height - i * barHeight;
+
+                    float x0 = (i < 2) ? x1 : smoothedMagnitudes[i - 2];
+                    float x3 = (i >= RENDER_BINS - 1) ? x2 : smoothedMagnitudes[i + 1];
+
+                    wavePath.cubicTo(
+                            x1 + (x2 - x0) / 6f, y1 - barHeight / 3f,
+                            x2 - (x3 - x1) / 6f, y2 + barHeight / 3f,
+                            x2, y2
+                    );
+                } else {
+                    wavePath.lineTo(currentX, currentY);
+                }
             }
         }
 

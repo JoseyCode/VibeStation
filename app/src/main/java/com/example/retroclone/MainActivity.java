@@ -274,6 +274,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         totalTimeTextView = findViewById(R.id.txtTotalTime);
         searchEditText = findViewById(R.id.editSearch);
         audioVisualizerView = findViewById(R.id.visualizerView);
+        int initialStyle = sharedPreferences.getInt("visualizer_style", 0);
+        audioVisualizerView.setVisualizerStyle(initialStyle);
 
         topBarContainer = findViewById(R.id.topBar);
         selectionBarContainer = findViewById(R.id.selectionBar);
@@ -329,50 +331,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         findViewById(R.id.btnSettings).setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            boolean is120 = sharedPreferences.getBoolean("120hz", true);
-            boolean adaptiveBg = sharedPreferences.getBoolean("adaptive_bg", true);
-            boolean showVis = sharedPreferences.getBoolean("show_visualizer", true);
-
-            String[] options = {
-                    "Sync Now (Raspberry Pi)",
-                    "Set Sync Server IP",
-                    "Backup Playlists (Export)",
-                    "Restore Playlists (Import)",
-                    is120 ? "Disable 120Hz Mode" : "Enable 120Hz Mode",
-                    adaptiveBg ? "Disable Adaptive Background" : "Enable Adaptive Background",
-                    showVis ? "Disable Visualizer Wave" : "Enable Visualizer Wave"
-            };
-
-            new AlertDialog.Builder(this)
-                    .setTitle("VibeStation Settings")
-                    .setItems(options, (dialog, which) -> {
-                        if (which == 0) {
-                            runSync();
-                        } else if (which == 1) {
-                            showSetIpDialog();
-                        } else if (which == 2) {
-                            backupFileLauncher.launch("VibeStation_Backup.txt");
-                        } else if (which == 3) {
-                            restoreFileLauncher.launch(new String[]{"text/plain"});
-                        } else if (which == 4) {
-                            boolean newValue = !is120;
-                            sharedPreferences.edit().putBoolean("120hz", newValue).apply();
-                            applyRefreshRate(newValue);
-                            Toast.makeText(this, "120Hz " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
-                        } else if (which == 5) {
-                            boolean newValue = !adaptiveBg;
-                            sharedPreferences.edit().putBoolean("adaptive_bg", newValue).apply();
-                            Toast.makeText(this, "Adaptive Background " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
-                            if (audioService != null && audioService.getCurrentArt() != null) {
-                                onTrackChanged(audioService.getCurrentSong(), audioService.getCurrentArt());
-                            }
-                        } else if (which == 6) {
-                            boolean newValue = !showVis;
-                            sharedPreferences.edit().putBoolean("show_visualizer", newValue).apply();
-                            audioVisualizerView.setVisibility(newValue ? View.VISIBLE : View.GONE);
-                            Toast.makeText(this, "Visualizer " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
-                        }
-                    }).show();
+            showMainSettingsDialog();
         });
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNav);
@@ -1431,5 +1390,109 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
         imageExecutor.shutdown();
         seekHandler.removeCallbacks(updateSeekBarTask);
+    }
+
+    private void showMainSettingsDialog() {
+        String[] mainOptions = {
+                "📡 Sync & Server Settings",
+                "🎨 Visualizer & Display Options",
+                "💾 Backup & Portability Profiles"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("VibeStation Settings")
+                .setItems(mainOptions, (dialog, which) -> {
+                    if (which == 0) {
+                        showSyncSettingsDialog();
+                    } else if (which == 1) {
+                        showVisualSettingsDialog();
+                    } else if (which == 2) {
+                        showBackupSettingsDialog();
+                    }
+                })
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
+    private void showSyncSettingsDialog() {
+        String[] syncOptions = {
+                "Sync Now (Raspberry Pi)",
+                "Set Sync Server IP Address"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("📡 Sync & Server")
+                .setItems(syncOptions, (dialog, which) -> {
+                    if (which == 0) {
+                        runSync();
+                    } else if (which == 1) {
+                        showSetIpDialog();
+                    }
+                })
+                .setNegativeButton("Back", (dialog, which) -> showMainSettingsDialog())
+                .show();
+    }
+
+    private void showVisualSettingsDialog() {
+        boolean is120 = sharedPreferences.getBoolean("120hz", true);
+        boolean adaptiveBg = sharedPreferences.getBoolean("adaptive_bg", true);
+        boolean showVis = sharedPreferences.getBoolean("show_visualizer", true);
+        int currentStyle = sharedPreferences.getInt("visualizer_style", 0);
+
+        String[] visualOptions = {
+                showVis ? "Disable Visualizer Wave" : "Enable Visualizer Wave",
+                "Visualizer Style: " + (currentStyle == 0 ? "Liquid Wavy" : "Retro Spiky"),
+                adaptiveBg ? "Disable Adaptive Background" : "Enable Adaptive Background",
+                is120 ? "Disable 120Hz Refresh Rate" : "Enable 120Hz Refresh Rate"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("🎨 Visualizer & Display")
+                .setItems(visualOptions, (dialog, which) -> {
+                    if (which == 0) {
+                        boolean newValue = !showVis;
+                        sharedPreferences.edit().putBoolean("show_visualizer", newValue).apply();
+                        audioVisualizerView.setVisibility(newValue ? View.VISIBLE : View.GONE);
+                        Toast.makeText(this, "Visualizer " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
+                    } else if (which == 1) {
+                        int nextStyle = (currentStyle + 1) % 2;
+                        sharedPreferences.edit().putInt("visualizer_style", nextStyle).apply();
+                        audioVisualizerView.setVisualizerStyle(nextStyle);
+                        Toast.makeText(this, "Visualizer Style: " + (nextStyle == 0 ? "Liquid Wavy" : "Retro Spiky"), Toast.LENGTH_SHORT).show();
+                    } else if (which == 2) {
+                        boolean newValue = !adaptiveBg;
+                        sharedPreferences.edit().putBoolean("adaptive_bg", newValue).apply();
+                        Toast.makeText(this, "Adaptive Background " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
+                        if (audioService != null && audioService.getCurrentArt() != null) {
+                            onTrackChanged(audioService.getCurrentSong(), audioService.getCurrentArt());
+                        }
+                    } else if (which == 3) {
+                        boolean newValue = !is120;
+                        sharedPreferences.edit().putBoolean("120hz", newValue).apply();
+                        applyRefreshRate(newValue);
+                        Toast.makeText(this, "120Hz " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Back", (dialog, which) -> showMainSettingsDialog())
+                .show();
+    }
+
+    private void showBackupSettingsDialog() {
+        String[] backupOptions = {
+                "Export Playlists Backup",
+                "Import Playlists Backup"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("💾 Backup Profiles")
+                .setItems(backupOptions, (dialog, which) -> {
+                    if (which == 0) {
+                        backupFileLauncher.launch("VibeStation_Backup.txt");
+                    } else if (which == 1) {
+                        restoreFileLauncher.launch(new String[]{"text/plain"});
+                    }
+                })
+                .setNegativeButton("Back", (dialog, which) -> showMainSettingsDialog())
+                .show();
     }
 }
