@@ -46,6 +46,7 @@ function getMp3Files(dir, fileList = []) {
 
 // Fetch all songs on the Pi server
 app.get('/api/songs', async (req, res) => {
+    console.log('GET /api/songs - Library scan requested');
     try {
         const mp3Paths = getMp3Files(musicDir);
         const songs = [];
@@ -74,6 +75,7 @@ app.get('/api/songs', async (req, res) => {
         }
         res.json(songs);
     } catch (err) {
+        console.error('Error scanning music library:', err);
         res.status(500).json({ error: 'Failed to scan music library' });
     }
 });
@@ -83,6 +85,7 @@ app.get('/api/stream/:id', (req, res) => {
     try {
         const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
+        console.log(`GET /api/stream - Streaming requested for: ${relativePath}`);
 
         if (!fs.existsSync(filePath)) {
             return res.status(404).send('File not found');
@@ -115,6 +118,7 @@ app.get('/api/stream/:id', (req, res) => {
             fs.createReadStream(filePath).pipe(res);
         }
     } catch (err) {
+        console.error('Error streaming file:', err);
         res.status(500).send('Streaming error');
     }
 });
@@ -124,6 +128,7 @@ app.get('/api/artwork/:id', async (req, res) => {
     try {
         const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
+        console.log(`GET /api/artwork - Art extraction requested for: ${relativePath}`);
 
         if (fs.existsSync(filePath)) {
             const metadata = await mm.parseFile(filePath);
@@ -133,7 +138,9 @@ app.get('/api/artwork/:id', async (req, res) => {
                 return res.send(picture.data);
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error('Error extracting artwork:', e);
+    }
     // Fallback to placeholder image
     res.sendFile(path.join(__dirname, 'public', 'placeholder.png'));
 });
@@ -141,14 +148,18 @@ app.get('/api/artwork/:id', async (req, res) => {
 // Upload files endpoint
 app.post('/api/upload', upload.array('files'), (req, res) => {
     try {
+        const filesCount = req.files ? req.files.length : 0;
+        console.log(`POST /api/upload - Received upload request for ${filesCount} files`);
         res.json({ success: true, count: req.files.length });
     } catch (err) {
+        console.error('Error handling upload:', err);
         res.status(500).json({ error: 'Upload failed' });
     }
 });
 
 // Fetch synced playlists configuration
 app.get('/api/playlists', (req, res) => {
+    console.log('GET /api/playlists - Playlists fetch requested');
     try {
         if (fs.existsSync(playlistsFile)) {
             const data = fs.readFileSync(playlistsFile, 'utf8');
@@ -156,14 +167,18 @@ app.get('/api/playlists', (req, res) => {
         }
         res.json([]);
     } catch (e) {
+        console.error('Error fetching playlists:', e);
         res.status(500).json({ error: 'Failed to read playlists' });
     }
 });
 
 // Merge and backup local playlists on the server
-app.post('/api/playlists', express.json(), (req, res) => {
+app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
     try {
         const clientPlaylists = req.body;
+        const playlistsCount = clientPlaylists ? clientPlaylists.length : 0;
+        console.log(`POST /api/playlists - Sync request for ${playlistsCount} playlists`);
+
         let serverPlaylists = [];
         if (fs.existsSync(playlistsFile)) {
             serverPlaylists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
@@ -191,6 +206,7 @@ app.post('/api/playlists', express.json(), (req, res) => {
         fs.writeFileSync(playlistsFile, JSON.stringify(mergedPlaylists, null, 2), 'utf8');
         res.json(mergedPlaylists);
     } catch (e) {
+        console.error('Error syncing playlists:', e);
         res.status(500).json({ error: 'Failed to sync playlists' });
     }
 });

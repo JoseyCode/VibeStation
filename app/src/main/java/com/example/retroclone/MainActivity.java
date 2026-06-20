@@ -39,6 +39,8 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.graphics.PorterDuff;
+import android.widget.ProgressBar;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -1279,6 +1281,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }).show();
     }
 
+    private AlertDialog syncProgressDialog;
+    private TextView syncStatusTextView;
+    private ProgressBar syncProgressBar;
+
     private void runSync() {
         String serverUrl = sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337");
         if (serverUrl.isEmpty()) {
@@ -1286,24 +1292,78 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             return;
         }
 
-        Toast.makeText(this, "Syncing started...", Toast.LENGTH_SHORT).show();
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
+
+        syncStatusTextView = new TextView(this);
+        syncStatusTextView.setText("Preparing synchronization...");
+        syncStatusTextView.setTextColor(0xFFFFFFFF);
+        syncStatusTextView.setTextSize(16);
+        layout.addView(syncStatusTextView);
+
+        syncProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        syncProgressBar.setIndeterminate(true);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        progressParams.topMargin = (int) (15 * getResources().getDisplayMetrics().density);
+        syncProgressBar.setLayoutParams(progressParams);
+
+        if (syncProgressBar.getIndeterminateDrawable() != null) {
+            syncProgressBar.getIndeterminateDrawable().setColorFilter(0xFFa084dc, PorterDuff.Mode.SRC_IN);
+        }
+        if (syncProgressBar.getProgressDrawable() != null) {
+            syncProgressBar.getProgressDrawable().setColorFilter(0xFFa084dc, PorterDuff.Mode.SRC_IN);
+        }
+        layout.addView(syncProgressBar);
+
+        syncProgressDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Library Sync")
+                .setView(layout)
+                .setCancelable(false)
+                .create();
+
+        syncProgressDialog.show();
+
         SyncManager.startSync(this, serverUrl, allSongs, new SyncManager.SyncCallback() {
             @Override
-            public void onProgress(String message) {
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
+            public void onProgress(int progress, int max, String message) {
+                runOnUiThread(() -> {
+                    if (syncProgressDialog != null && syncProgressDialog.isShowing()) {
+                        syncStatusTextView.setText(message);
+                        if (max > 0) {
+                            syncProgressBar.setIndeterminate(false);
+                            syncProgressBar.setMax(max);
+                            syncProgressBar.setProgress(progress);
+                        } else {
+                            syncProgressBar.setIndeterminate(true);
+                        }
+                    }
+                });
             }
 
             @Override
             public void onComplete(String result) {
                 runOnUiThread(() -> {
+                    if (syncProgressDialog != null && syncProgressDialog.isShowing()) {
+                        syncProgressDialog.dismiss();
+                    }
                     Toast.makeText(MainActivity.this, "Sync Complete: " + result, Toast.LENGTH_LONG).show();
-                    loadMusic(); // Refresh library
+                    loadMusic();
                 });
             }
 
             @Override
             public void onError(String error) {
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Sync Error: " + error, Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    if (syncProgressDialog != null && syncProgressDialog.isShowing()) {
+                        syncProgressDialog.dismiss();
+                    }
+                    Toast.makeText(MainActivity.this, "Sync Error: " + error, Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
