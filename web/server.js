@@ -53,6 +53,19 @@ app.get('/api/songs', async (req, res) => {
 
         for (let i = 0; i < mp3Paths.length; i++) {
             const filePath = mp3Paths[i];
+            
+            // Delete and skip zero-byte or corrupt files from failed transfers
+            try {
+                const stats = fs.statSync(filePath);
+                if (stats.size === 0) {
+                    console.log(`Removing empty/corrupt file from failed transfer: ${filePath}`);
+                    fs.unlinkSync(filePath);
+                    continue;
+                }
+            } catch (err) {
+                continue;
+            }
+
             const relativePath = path.relative(musicDir, filePath);
             const id = Buffer.from(relativePath).toString('base64url'); // Safe ID base64
             

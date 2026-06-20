@@ -1009,59 +1009,108 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     private void loadMusic() {
-        allSongs.clear();
-        HashMap<String, Models.Album> albumMap = new HashMap<>();
-        Cursor musicCursor = getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                null,
-                MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
-                new String[]{"%Music/%"},
-                null
-        );
+        new Thread(() -> {
+            ArrayList<Models.Song> tempSongs = new ArrayList<>();
+            HashMap<String, Models.Album> albumMap = new HashMap<>();
+            try {
+                Cursor musicCursor = getContentResolver().query(
+                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        null,
+                        MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
+                        new String[]{"%Music/%"},
+                        null
+                );
 
-        if (musicCursor != null && musicCursor.moveToFirst()) {
-            do {
-                String id = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
-                String title = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE));
-                String artist = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
-                String path = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
-                String albumId = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
-                String albumName = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM));
-                long dateAdded = musicCursor.getLong(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED));
-                int trackNumber = musicCursor.getInt(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK));
+                if (musicCursor != null && musicCursor.moveToFirst()) {
+                    do {
+                        String id = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
+                        String title = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE));
+                        String artist = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
+                        String path = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
+                        String albumId = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
+                        String albumName = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM));
+                        long dateAdded = musicCursor.getLong(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED));
+                        int trackNumber = musicCursor.getInt(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK));
 
-                if (artist.toLowerCase().contains("unknown")) {
-                    try {
-                        String[] pathSegments = path.split("/");
-                        if (pathSegments.length >= 3) {
-                            albumName = pathSegments[pathSegments.length - 2];
-                            artist = pathSegments[pathSegments.length - 3];
+                        if (artist.toLowerCase().contains("unknown")) {
+                            try {
+                                String[] pathSegments = path.split("/");
+                                if (pathSegments.length >= 3) {
+                                    albumName = pathSegments[pathSegments.length - 2];
+                                    artist = pathSegments[pathSegments.length - 3];
+                                }
+                            } catch (Exception ignored) {}
                         }
-                    } catch (Exception ignored) {}
+
+                        Models.Song song = new Models.Song(id, title, artist, path, albumId, albumName, trackNumber, dateAdded);
+                        tempSongs.add(song);
+
+                        if (!albumMap.containsKey(albumId)) {
+                            albumMap.put(albumId, new Models.Album(albumId, albumName, artist, dateAdded));
+                        }
+                        albumMap.get(albumId).songs.add(song);
+
+                    } while (musicCursor.moveToNext());
+                    musicCursor.close();
                 }
+            } catch (Exception ignored) {}
 
-                Models.Song song = new Models.Song(id, title, artist, path, albumId, albumName, trackNumber, dateAdded);
-                allSongs.add(song);
+            ArrayList<Models.Album> tempAlbums = new ArrayList<>(albumMap.values());
+            for (Models.Album album : tempAlbums) {
+                Collections.sort(album.songs, Comparator.comparingInt(song -> song.trackNumber));
+            }
 
-                if (!albumMap.containsKey(albumId)) {
-                    albumMap.put(albumId, new Models.Album(albumId, albumName, artist, dateAdded));
+            HashMap<String, Models.Song> songIdMap = new HashMap<>();
+            HashMap<String, Models.Song> songNameMap = new HashMap<>();
+            for (Models.Song s : tempSongs) {
+                songIdMap.put(s.id, s);
+                songNameMap.put((s.title + "_" + s.artist).toLowerCase(Locale.getDefault()), s);
+            }
+
+            ArrayList<Models.Playlist> tempPlaylists = new ArrayList<>();
+            try {
+                JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
+                for (int i = 0; i < playlistsJsonArray.length(); i++) {
+                    JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
+                    Models.Playlist playlist = new Models.Playlist(
+                            playlistJsonObject.getString("name"),
+                            playlistJsonObject.optString("imageUri", null)
+                    );
+                    JSONArray songsJsonArray = playlistJsonObject.getJSONArray("songData");
+                    for (int j = 0; j < songsJsonArray.length(); j++) {
+                        JSONObject songJsonObject = songsJsonArray.getJSONObject(j);
+                        String songId = songJsonObject.getString("id");
+                        String songTitle = songJsonObject.getString("t");
+                        String songArtist = songJsonObject.getString("a");
+
+                        Models.Song matchedSong = songIdMap.get(songId);
+                        if (matchedSong == null) {
+                            matchedSong = songNameMap.get((songTitle + "_" + songArtist).toLowerCase(Locale.getDefault()));
+                        }
+                        if (matchedSong != null) {
+                            playlist.songs.add(matchedSong);
+                        }
+                    }
+                    tempPlaylists.add(playlist);
                 }
-                albumMap.get(albumId).songs.add(song);
+            } catch (Exception ignored) {}
 
-            } while (musicCursor.moveToNext());
-            musicCursor.close();
-        }
+            Comparator<Models.Song> songComparator = (a, b) -> a.title.compareToIgnoreCase(b.title);
+            Comparator<Models.Album> albumComparator = (a, b) -> a.name.compareToIgnoreCase(b.name);
+            Collections.sort(tempSongs, songComparator);
+            Collections.sort(tempAlbums, albumComparator);
 
-        allAlbums.clear();
-        allAlbums.addAll(albumMap.values());
+            runOnUiThread(() -> {
+                allSongs.clear();
+                allSongs.addAll(tempSongs);
+                allAlbums.clear();
+                allAlbums.addAll(tempAlbums);
+                allPlaylists.clear();
+                allPlaylists.addAll(tempPlaylists);
 
-        for (Models.Album album : allAlbums) {
-            Collections.sort(album.songs, Comparator.comparingInt(song -> song.trackNumber));
-        }
-
-        loadPlaylists();
-        sortData(0);
-        filterData("");
+                filterData(searchEditText.getText().toString());
+            });
+        }).start();
     }
 
     private void savePlaylists() {
@@ -1084,35 +1133,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playlistsJsonArray.put(playlistJsonObject);
             }
             sharedPreferences.edit().putString("playlists", playlistsJsonArray.toString()).apply();
-        } catch (Exception ignored) {}
-    }
-
-    private void loadPlaylists() {
-        allPlaylists.clear();
-        try {
-            JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
-            for (int i = 0; i < playlistsJsonArray.length(); i++) {
-                JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                Models.Playlist playlist = new Models.Playlist(
-                        playlistJsonObject.getString("name"),
-                        playlistJsonObject.optString("imageUri", null)
-                );
-                JSONArray songsJsonArray = playlistJsonObject.getJSONArray("songData");
-                for (int j = 0; j < songsJsonArray.length(); j++) {
-                    JSONObject songJsonObject = songsJsonArray.getJSONObject(j);
-                    String songId = songJsonObject.getString("id");
-                    String songTitle = songJsonObject.getString("t");
-                    String songArtist = songJsonObject.getString("a");
-
-                    for (Models.Song song : allSongs) {
-                        if (song.id.equals(songId) || (song.title.equalsIgnoreCase(songTitle) && song.artist.equalsIgnoreCase(songArtist))) {
-                            playlist.songs.add(song);
-                            break;
-                        }
-                    }
-                }
-                allPlaylists.add(playlist);
-            }
         } catch (Exception ignored) {}
     }
 
@@ -1246,8 +1266,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         stringBuilder.append(line);
                     }
                     sharedPreferences.edit().putString("playlists", stringBuilder.toString()).apply();
-                    loadPlaylists();
-                    filterData("");
+                    loadMusic();
                     Toast.makeText(this, "Restore Successful!", Toast.LENGTH_SHORT).show();
                 } catch (Exception ignored) {}
             }
