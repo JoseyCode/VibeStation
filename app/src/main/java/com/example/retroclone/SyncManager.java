@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.util.Log;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -30,7 +31,7 @@ public class SyncManager {
     private static final ExecutorService syncExecutor = Executors.newSingleThreadExecutor();
 
     public interface SyncCallback {
-        void onProgress(String message);
+        void onProgress(int progress, int max, String message);
         void onComplete(String result);
         void onError(String error);
     }
@@ -44,8 +45,9 @@ public class SyncManager {
                     .build();
 
             try {
-                // 1. Fetch server songs list
-                callback.onProgress("Querying server library...");
+                callback.onProgress(0, 0, "Querying server library...");
+                Log.d("VibeSync", "Connecting to server: " + serverUrl);
+
                 Request listRequest = new Request.Builder().url(serverUrl + "/api/songs").build();
 
                 String remoteSongsJson;
@@ -70,41 +72,54 @@ public class SyncManager {
                     remoteSongsList.add(new RemoteSong(id, title, artist, album));
                 }
 
-                // 2. Identify and upload missing songs from Phone to Pi
-                int uploadedCount = 0;
+                ArrayList<Models.Song> uploadList = new ArrayList<>();
                 for (Models.Song localSong : localSongs) {
                     String localKey = makeMatchKey(localSong.title, localSong.artist);
                     if (!remoteKeys.contains(localKey)) {
-                        callback.onProgress("Uploading " + localSong.title + "...");
-                        uploadSong(client, serverUrl, localSong);
-                        uploadedCount++;
+                        uploadList.add(localSong);
                     }
                 }
 
-                // 3. Identify and download missing songs from Pi to Phone
                 HashSet<String> localKeys = new HashSet<>();
                 for (Models.Song localSong : localSongs) {
                     localKeys.add(makeMatchKey(localSong.title, localSong.artist));
                 }
 
-                int downloadedCount = 0;
+                ArrayList<RemoteSong> downloadList = new ArrayList<>();
                 for (RemoteSong remoteSong : remoteSongsList) {
                     String remoteKey = makeMatchKey(remoteSong.title, remoteSong.artist);
                     if (!localKeys.contains(remoteKey)) {
-                        callback.onProgress("Downloading " + remoteSong.title + "...");
-                        downloadSong(context, client, serverUrl, remoteSong);
-                        downloadedCount++;
+                        downloadList.add(remoteSong);
                     }
                 }
 
-                // 4. Sync Playlists Metadata
-                callback.onProgress("Syncing playlists database...");
+                int totalSongsToSync = uploadList.size() + downloadList.size();
+                int currentProgress = 0;
+
+                int uploadedCount = 0;
+                for (Models.Song localSong : uploadList) {
+                    callback.onProgress(currentProgress, totalSongsToSync, "Uploading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + localSong.title);
+                    uploadSong(client, serverUrl, localSong);
+                    uploadedCount++;
+                    currentProgress++;
+                }
+
+                int downloadedCount = 0;
+                for (RemoteSong remoteSong : downloadList) {
+                    callback.onProgress(currentProgress, totalSongsToSync, "Downloading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + remoteSong.title);
+                    downloadSong(context, client, serverUrl, remoteSong);
+                    downloadedCount++;
+                    currentProgress++;
+                }
+
+                callback.onProgress(totalSongsToSync, totalSongsToSync, "Syncing playlists database...");
                 syncPlaylists(context, client, serverUrl);
 
                 callback.onComplete("Uploaded " + uploadedCount + " tracks, Downloaded " + downloadedCount + " tracks.");
 
             } catch (Exception e) {
-                callback.onError(e.getMessage());
+                Log.e("VibeSync", "Sync process crashed with exception", e);
+                callback.onError(e.toString());
             }
         });
     }
