@@ -1239,36 +1239,42 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         backupFileLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("text/plain"), documentUri -> {
             if (documentUri != null) {
-                try (OutputStream outputStream = getContentResolver().openOutputStream(documentUri)) {
-                    JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
-                    for (int i = 0; i < playlistsJsonArray.length(); i++) {
-                        JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                        String imageUri = playlistJsonObject.optString("imageUri", "");
-                        if (!imageUri.isEmpty()) {
-                            playlistJsonObject.put("b64", getBase64Image(Uri.parse(imageUri)));
+                new Thread(() -> {
+                    try (OutputStream outputStream = getContentResolver().openOutputStream(documentUri)) {
+                        JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
+                        for (int i = 0; i < playlistsJsonArray.length(); i++) {
+                            JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
+                            String imageUri = playlistJsonObject.optString("imageUri", "");
+                            if (!imageUri.isEmpty()) {
+                                playlistJsonObject.put("b64", getBase64Image(Uri.parse(imageUri)));
+                            }
                         }
-                    }
-                    if (outputStream != null) {
-                        outputStream.write(playlistsJsonArray.toString().getBytes());
-                    }
-                    Toast.makeText(this, "Export Ready!", Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {}
+                        if (outputStream != null) {
+                            outputStream.write(playlistsJsonArray.toString().getBytes());
+                        }
+                        runOnUiThread(() -> Toast.makeText(this, "Export Ready!", Toast.LENGTH_SHORT).show());
+                    } catch (Exception ignored) {}
+                }).start();
             }
         });
 
         restoreFileLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), documentUri -> {
             if (documentUri != null) {
-                try (InputStream inputStream = getContentResolver().openInputStream(documentUri);
-                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        stringBuilder.append(line);
-                    }
-                    sharedPreferences.edit().putString("playlists", stringBuilder.toString()).apply();
-                    loadMusic();
-                    Toast.makeText(this, "Restore Successful!", Toast.LENGTH_SHORT).show();
-                } catch (Exception ignored) {}
+                new Thread(() -> {
+                    try (InputStream inputStream = getContentResolver().openInputStream(documentUri);
+                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
+                        StringBuilder stringBuilder = new StringBuilder();
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            stringBuilder.append(line);
+                        }
+                        sharedPreferences.edit().putString("playlists", stringBuilder.toString()).apply();
+                        runOnUiThread(() -> {
+                            loadMusic();
+                            Toast.makeText(this, "Restore Successful!", Toast.LENGTH_SHORT).show();
+                        });
+                    } catch (Exception ignored) {}
+                }).start();
             }
         });
     }

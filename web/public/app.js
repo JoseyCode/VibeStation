@@ -15,6 +15,7 @@ const fileInput = document.getElementById('file-input');
 const btnUpload = document.getElementById('btn-upload');
 
 let songs = [];
+let currentQueue = [];
 let currentSongIndex = -1;
 let audioCtx = null;
 let analyser = null;
@@ -30,7 +31,8 @@ async function loadLibrary() {
     try {
         const response = await fetch('/api/songs');
         songs = await response.json();
-        renderTracks(songs);
+        currentQueue = [...songs];
+        renderTracks(currentQueue);
     } catch (err) {
         tracksContainer.innerHTML = `<p class="status-msg">Failed to connect to VibeStation library server.</p>`;
     }
@@ -75,9 +77,9 @@ function updateDynamicVibes(artworkUrl) {
 }
 
 function playTrack(index) {
-    if (index < 0 || index >= songs.length) return;
+    if (index < 0 || index >= currentQueue.length) return;
     currentSongIndex = index;
-    const song = songs[currentSongIndex];
+    const song = currentQueue[currentSongIndex];
 
     playerTitle.textContent = song.title;
     playerArtist.textContent = song.artist;
@@ -95,7 +97,7 @@ function playTrack(index) {
 
 function setupAudioListeners() {
     btnPlayPause.addEventListener('click', () => {
-        if (currentSongIndex === -1 && songs.length > 0) {
+        if (currentSongIndex === -1 && currentQueue.length > 0) {
             playTrack(0);
             return;
         }
@@ -109,14 +111,14 @@ function setupAudioListeners() {
     });
 
     btnNext.addEventListener('click', () => {
-        if (songs.length > 0) {
-            playTrack((currentSongIndex + 1) % songs.length);
+        if (currentQueue.length > 0) {
+            playTrack((currentSongIndex + 1) % currentQueue.length);
         }
     });
 
     btnPrev.addEventListener('click', () => {
-        if (songs.length > 0) {
-            playTrack((currentSongIndex - 1 + songs.length) % songs.length);
+        if (currentQueue.length > 0) {
+            playTrack((currentSongIndex - 1 + currentQueue.length) % currentQueue.length);
         }
     });
 
@@ -146,12 +148,12 @@ function setupAudioListeners() {
 
     searchBar.addEventListener('input', () => {
         const query = searchBar.value.toLowerCase().trim();
-        const filtered = songs.filter(s => 
+        currentQueue = songs.filter(s => 
             s.title.toLowerCase().includes(query) || 
             s.artist.toLowerCase().includes(query) || 
             s.album.toLowerCase().includes(query)
         );
-        renderTracks(filtered);
+        renderTracks(currentQueue);
     });
 
     // Manual file selector trigger

@@ -63,10 +63,10 @@ public class SyncManager {
 
                 for (int i = 0; i < remoteSongsArray.length(); i++) {
                     JSONObject sObj = remoteSongsArray.getJSONObject(i);
-                    String id = sObj.getString("id");
-                    String title = sObj.getString("title");
-                    String artist = sObj.getString("artist");
-                    String album = sObj.getString("album");
+                    String id = sObj.optString("id", "");
+                    String title = sObj.optString("title", "Unknown Title");
+                    String artist = sObj.optString("artist", "Unknown Artist");
+                    String album = sObj.optString("album", "Unknown Album");
                     String key = makeMatchKey(title, artist);
                     remoteKeys.add(key);
                     remoteSongsList.add(new RemoteSong(id, title, artist, album));
@@ -125,7 +125,19 @@ public class SyncManager {
     }
 
     private static String makeMatchKey(String title, String artist) {
-        return (title + "_" + artist).toLowerCase(Locale.getDefault()).replaceAll("[^a-z0-9_]", "");
+        String safeTitle = title != null ? title.trim() : "";
+        String safeArtist = artist != null ? artist.trim() : "";
+        if (safeTitle.isEmpty() && safeArtist.isEmpty()) {
+            return "unknown_track";
+        }
+        return (safeTitle + "_" + safeArtist).toLowerCase(Locale.getDefault()).replaceAll("[^\\p{L}\\p{N}_]", "");
+    }
+
+    private static String safeFileName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "track_" + System.currentTimeMillis();
+        }
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
     private static void uploadSong(OkHttpClient client, String serverUrl, Models.Song song) throws IOException {
@@ -158,7 +170,7 @@ public class SyncManager {
             if (response.body() == null) throw new IOException("Empty response body from stream");
 
             ContentValues values = new ContentValues();
-            values.put(MediaStore.Audio.Media.DISPLAY_NAME, remoteSong.title + ".mp3");
+            values.put(MediaStore.Audio.Media.DISPLAY_NAME, safeFileName(remoteSong.title) + ".mp3");
             values.put(MediaStore.Audio.Media.TITLE, remoteSong.title);
             values.put(MediaStore.Audio.Media.ARTIST, remoteSong.artist);
             values.put(MediaStore.Audio.Media.ALBUM, remoteSong.album);

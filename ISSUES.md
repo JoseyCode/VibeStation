@@ -16,3 +16,30 @@
     1. Client-side: Wrapped download stream writing in a try-catch and deleted the partial MediaStore database record on exception.
     2. Server-side: Modified the library scanner on the server to detect 0-byte files, delete them on the fly, and skip listing them.
 *   **Status**: Resolved
+
+## Issue 3: Web player plays incorrect song when choosing from filtered search results
+*   **Description**: Searching inside the search bar filters the UI, but selecting any item plays the song at that index from the original unfiltered library list instead of the search results. In addition, previous/next buttons iterate through the unsorted library.
+*   **Root Cause**: The client-side click handler and navigation controls query the static global `songs` array by index instead of using the currently active search-filtered queue.
+*   **Resolution**:
+    1. Introduced a `currentQueue` array representing the active list of playable tracks (which updates as searches are typed).
+    2. Updated `playTrack()`, navigation buttons, and play/pause controls to reference `currentQueue` instead of `songs` for bounds and track retrieval.
+*   **Status**: Resolved
+
+## Issue 4: App freezes (ANRs) during playlist backup export and restore operations
+*   **Description**: When triggering playlist backups, the app can freeze or trigger ANR warnings if there are custom playlist images.
+*   **Root Cause**: Base64 encoding, scaling, and compression of images, along with backup reading, were executed synchronously inside the activity result callbacks on the main UI thread.
+*   **Resolution**: Offloaded the backup writing and restore parsing blocks to background threads, updating the UI safely via `runOnUiThread`.
+*   **Status**: Resolved
+
+## Issue 5: Sync crashes on track names containing Unicode (e.g., Japanese, Cyrillic) or slashes
+*   **Description**: Syncing consistently crashed or misidentified tracks with weird characters, slashes, or non-ASCII characters (e.g. SoundCloud tracks).
+*   **Root Cause**:
+    1. Keys for international character tracks collided because ASCII-only regex stripped them completely.
+    2. Slashes in track titles caused filesystem path insertion crashes.
+    3. Missing metadata fields in server JSON threw JSONExceptions.
+*   **Resolution**:
+    1. Used Unicode regex groups `\\p{L}` (letters) and `\\p{N}` (digits) to preserve international characters.
+    2. Stripped illegal path characters from filenames during download.
+    3. Switched to JSON `optString` to tolerate missing metadata fields.
+*   **Status**: Resolved
+
