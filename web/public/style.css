@@ -1,4 +1,5 @@
 :root {
+    --text-color: var(--text-main);
     --bg-dark: #060608;
     --card-bg: rgba(255, 255, 255, 0.02);
     --border-color: rgba(255, 255, 255, 0.05);
@@ -208,6 +209,7 @@ body {
     align-items: center;
     gap: 16px;
     width: 300px;
+    min-width: 0;
 }
 
 .artwork-container {
@@ -224,6 +226,8 @@ body {
 
 .track-meta {
     overflow: hidden;
+    min-width: 0;
+    flex: 1;
 }
 
 .track-title {
@@ -237,6 +241,9 @@ body {
 .track-artist {
     font-size: 13px;
     color: var(--text-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .player-center {
@@ -519,6 +526,7 @@ body {
         width: auto;
         max-width: calc(100vw - 160px);
         gap: 12px;
+        min-width: 0;
     }
 
     .artwork-container img {
@@ -1120,8 +1128,8 @@ body {
 .fp-play-btn {
     width: 64px;
     height: 64px;
-    background: var(--text-color);
-    color: #000;
+    background: none;
+    color: var(--text-main);
     border-radius: 50%;
 }
 
