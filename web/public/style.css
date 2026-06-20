@@ -309,3 +309,138 @@ body {
     font-size: 14px;
     color: var(--text-muted);
 }
+
+/* Responsive Mobile Styles */
+@media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+    }
+
+    .sidebar {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-title {
+        font-size: 20px;
+        margin-bottom: 0;
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .nav-item {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .main-content {
+        padding: 16px;
+    }
+
+    .content-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    #search-bar {
+        width: 100%;
+    }
+
+    .track-row {
+        grid-template-columns: 40px 1fr;
+        grid-template-areas: 
+            "art title"
+            "art artist";
+        gap: 2px 12px;
+        padding: 8px 12px;
+    }
+
+    .row-art {
+        grid-area: art;
+        width: 40px;
+        height: 40px;
+    }
+
+    .row-title {
+        grid-area: title;
+        font-size: 15px;
+        align-self: end;
+    }
+
+    .row-artist {
+        grid-area: artist;
+        font-size: 12px;
+        align-self: start;
+    }
+
+    .row-album {
+        display: none;
+    }
+
+    .player-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "info controls"
+            "timeline timeline";
+        gap: 8px 12px;
+        padding: 12px 16px;
+        height: auto;
+    }
+
+    .player-left {
+        grid-area: info;
+        width: auto;
+        max-width: calc(100vw - 160px);
+        gap: 12px;
+    }
+
+    .artwork-container img {
+        width: 48px;
+        height: 48px;
+    }
+
+    .player-center {
+        display: contents;
+    }
+
+    .controls {
+        grid-area: controls;
+        gap: 12px;
+    }
+
+    .control-btn {
+        font-size: 18px;
+    }
+
+    .play-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .timeline-container {
+        grid-area: timeline;
+        width: 100%;
+    }
+
+    #seek-bar::-webkit-slider-thumb {
+        width: 14px;
+        height: 14px;
+    }
+
+    .player-right {
+        display: none;
+    }
+}
