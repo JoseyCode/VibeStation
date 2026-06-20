@@ -83,7 +83,7 @@ app.get('/api/songs', async (req, res) => {
             }
 
             const relativePath = path.relative(musicDir, filePath);
-            const id = Buffer.from(relativePath).toString('base64url'); // Safe ID base64
+            const id = Buffer.from(relativePath).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // Safe ID base64
             
             let title = path.basename(filePath, '.mp3');
             let artist = 'Unknown Artist';
@@ -112,7 +112,8 @@ app.get('/api/songs', async (req, res) => {
 // Stream audio file with HTTP Range support for seek operations
 app.get('/api/stream/:id', (req, res) => {
     try {
-        const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
+        const idStr = req.params.id.replace(/-/g, '+').replace(/_/g, '/');
+        const relativePath = Buffer.from(idStr, 'base64').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
         console.log(`GET /api/stream - Streaming requested for: ${relativePath}`);
 
@@ -155,7 +156,8 @@ app.get('/api/stream/:id', (req, res) => {
 // Extract album artwork buffer from ID3 tags
 app.get('/api/artwork/:id', async (req, res) => {
     try {
-        const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
+        const idStr = req.params.id.replace(/-/g, '+').replace(/_/g, '/');
+        const relativePath = Buffer.from(idStr, 'base64').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
         console.log(`GET /api/artwork - Art extraction requested for: ${relativePath}`);
 

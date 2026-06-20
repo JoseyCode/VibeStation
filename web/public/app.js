@@ -50,16 +50,23 @@ window.addEventListener('load', async () => {
 async function loadLibrary() {
     try {
         const response = await fetch('/api/songs');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server returned ${response.status}: ${errorText}`);
+        }
         songs = await response.json();
         try {
             const plResponse = await fetch('/api/playlists');
-            playlists = await plResponse.json();
+            if (plResponse.ok) {
+                playlists = await plResponse.json();
+            }
         } catch (e) {
             console.error('Failed to load playlists', e);
         }
         currentQueue = [...songs];
         showLibrary();
     } catch (err) {
+        console.error('Library connection error:', err);
         tracksContainer.innerHTML = `<p class="status-msg">Failed to connect to VibeStation library server.</p>`;
     }
 }
