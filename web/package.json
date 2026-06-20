@@ -4,7 +4,8 @@
   "description": "VibeStation Pi Sync & Streaming Hub",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "deduplicate": "node deduplicate.js"
   },
   "dependencies": {
     "express": "^4.19.2",

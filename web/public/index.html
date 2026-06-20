@@ -15,16 +15,38 @@
         <aside class="sidebar">
             <h1 class="brand-title">VibeStation</h1>
             <nav class="nav-menu">
-                <button class="nav-item active" id="btn-show-library">Library</button>
+                <button class="nav-item active" id="btn-show-library">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                    <span class="nav-label">Library</span>
+                </button>
+                <button class="nav-item" id="btn-show-albums">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
+                    <span class="nav-label">Albums</span>
+                </button>
+                <button class="nav-item" id="btn-show-artists">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <span class="nav-label">Artists</span>
+                </button>
+                <button class="nav-item" id="btn-show-playlists">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-2-7h-8v2h8V9zm0 4h-8v2h8v-2zm0-8h-8v2h8V5z"/></svg>
+                    <span class="nav-label">Playlists</span>
+                </button>
+                <button class="nav-item" id="btn-show-settings">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    <span class="nav-label">Settings</span>
+                </button>
                 <input type="file" id="file-input" multiple accept="audio/mpeg" style="display: none;">
-                <button class="nav-item" id="btn-upload">Upload Tracks</button>
+                <button class="nav-item" id="btn-upload">
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                    <span class="nav-label">Upload Tracks</span>
+                </button>
             </nav>
         </aside>
 
         <!-- Main Workspace -->
         <main class="main-content">
             <header class="content-header">
-                <h2>Your Collection</h2>
+                <h2 id="view-title">Your Collection</h2>
                 <input type="text" id="search-bar" placeholder="Search tracks, artists...">
             </header>
 
@@ -41,7 +63,7 @@
             
             <div class="player-left">
                 <div class="artwork-container">
-                    <img id="current-art" src="placeholder.png" alt="Cover Art">
+                    <img id="current-art" src="placeholder.webp" alt="Cover Art">
                 </div>
                 <div class="track-meta">
                     <div class="track-title" id="player-title">Not Playing</div>
@@ -51,9 +73,15 @@
 
             <div class="player-center">
                 <div class="controls">
-                    <button class="control-btn" id="btn-prev">⏮</button>
-                    <button class="control-btn play-btn" id="btn-play-pause">▶</button>
-                    <button class="control-btn" id="btn-next">⏭</button>
+                    <button class="control-btn" id="btn-prev">
+                        <svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle;"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button class="control-btn play-btn" id="btn-play-pause">
+                        <svg id="play-pause-svg" viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle;"><path fill="currentColor" id="play-pause-path" d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button class="control-btn" id="btn-next">
+                        <svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle;"><path fill="currentColor" d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
                 </div>
                 <div class="timeline-container">
                     <span id="time-current">0:00</span>
@@ -69,15 +97,89 @@
             </button>
 
             <div class="player-right">
+                <button class="control-btn" id="btn-lyrics" title="Show Lyrics" style="margin-right: 16px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align: middle; color: var(--text-muted);"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </button>
                 <div class="volume-container">
-                    <span class="vol-icon">🔊</span>
-                    <input type="range" id="volume-bar" min="0" max="100" value="80">
+                    <svg class="vol-icon" viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; color: var(--text-muted);"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    <input type="range" id="volume-bar" min="0" max="100" value="100">
                 </div>
             </div>
         </div>
     </div>
     
     <audio id="audio-element" crossorigin="anonymous"></audio>
+    
+    <!-- Add to Playlist Modal -->
+    <div id="playlist-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-playlist-modal">&times;</span>
+            <h3>Add to Playlist</h3>
+            <div id="modal-playlists-list" class="modal-list">
+                <!-- Dynamically loaded playlists -->
+            </div>
+            <div class="modal-create-section">
+                <input type="text" id="modal-playlist-name" placeholder="Create new playlist...">
+                <button class="btn-primary" id="btn-modal-create-playlist">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Player Overlay (Mobile only) -->
+    <div id="fullscreen-player" class="fullscreen-player">
+        <div class="fp-background" id="fp-bg"></div>
+        <button class="fp-close-btn" id="fp-close-btn">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+        <div class="fp-content">
+            <div class="fp-header">
+                <span>Now Playing</span>
+            </div>
+            <div class="fp-artwork-container">
+                <img id="fp-art" class="fp-art" src="placeholder.webp" alt="Cover Art">
+            </div>
+            <div class="fp-meta">
+                <div class="fp-title" id="fp-title">Not Playing</div>
+                <div class="fp-artist" id="fp-artist">Select a song</div>
+            </div>
+            
+            <div class="fp-timeline-container">
+                <div class="fp-timeline-slider">
+                    <input type="range" id="fp-seek-bar" min="0" max="100" value="0">
+                </div>
+                <div class="fp-time-labels">
+                    <span id="fp-time-current">0:00</span>
+                    <span id="fp-time-total">0:00</span>
+                </div>
+            </div>
+
+            <div class="fp-controls">
+                <button class="fp-control-btn" id="fp-btn-prev">
+                    <svg viewBox="0 0 24 24" width="36" height="36"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button class="fp-control-btn fp-play-btn" id="fp-btn-play-pause">
+                    <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" id="fp-play-pause-path" d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="fp-control-btn" id="fp-btn-next">
+                    <svg viewBox="0 0 24 24" width="36" height="36"><path fill="currentColor" d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+                <button class="fp-control-btn" id="fp-btn-lyrics" title="Show Lyrics">
+                    <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lyrics Panel Overlay -->
+    <div id="lyrics-panel" class="lyrics-panel">
+        <div class="lyrics-header">
+            <h3>Lyrics</h3>
+            <button class="lyrics-close-btn" id="lyrics-close-btn">&times;</button>
+        </div>
+        <div class="lyrics-content" id="lyrics-content">
+            <p class="status-msg">Loading lyrics...</p>
+        </div>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>

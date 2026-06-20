@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 1337;
 // Scan directory: falls back to a subfolder inside this project
 const musicDir = process.env.MUSIC_DIR || path.join(__dirname, 'music');
 const playlistsFile = path.join(musicDir, 'playlists.json');
+const deletedPlaylistsFile = path.join(musicDir, 'deleted_playlists.json');
 
 if (!fs.existsSync(musicDir)) {
     fs.mkdirSync(musicDir, { recursive: true });
@@ -32,15 +33,31 @@ const upload = multer({ storage });
 
 // Recursive helper to find all MP3 files
 function getMp3Files(dir, fileList = []) {
-    const files = fs.readdirSync(dir);
-    files.forEach(file => {
-        const filePath = path.join(dir, file);
-        if (fs.statSync(filePath).isDirectory()) {
-            getMp3Files(filePath, fileList);
-        } else if (file.toLowerCase().endsWith('.mp3')) {
-            fileList.push(filePath);
-        }
-    });
+    try {
+        const files = fs.readdirSync(dir);
+        files.forEach(file => {
+            const filePath = path.join(dir, file);
+            
+            const filenameByteLength = Buffer.byteLength(file, 'utf8');
+            if (filenameByteLength >= 250) {
+                console.warn(`Skipping scan of extremely long filename (${filenameByteLength} bytes): ${file}`);
+                return;
+            }
+
+            try {
+                const stat = fs.statSync(filePath);
+                if (stat.isDirectory()) {
+                    getMp3Files(filePath, fileList);
+                } else if (file.toLowerCase().endsWith('.mp3')) {
+                    fileList.push(filePath);
+                }
+            } catch (err) {
+                console.error(`Skipping file due to scan error: ${filePath}`, err);
+            }
+        });
+    } catch (err) {
+        console.error(`Skipping directory due to scan error: ${dir}`, err);
+    }
     return fileList;
 }
 
@@ -67,7 +84,7 @@ app.get('/api/songs', async (req, res) => {
             }
 
             const relativePath = path.relative(musicDir, filePath);
-            const id = Buffer.from(relativePath).toString('base64url'); // Safe ID base64
+            const id = Buffer.from(relativePath).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // Safe ID base64
             
             let title = path.basename(filePath, '.mp3');
             let artist = 'Unknown Artist';
@@ -96,7 +113,8 @@ app.get('/api/songs', async (req, res) => {
 // Stream audio file with HTTP Range support for seek operations
 app.get('/api/stream/:id', (req, res) => {
     try {
-        const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
+        const idStr = req.params.id.replace(/-/g, '+').replace(/_/g, '/');
+        const relativePath = Buffer.from(idStr, 'base64').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
         console.log(`GET /api/stream - Streaming requested for: ${relativePath}`);
 
@@ -139,7 +157,8 @@ app.get('/api/stream/:id', (req, res) => {
 // Extract album artwork buffer from ID3 tags
 app.get('/api/artwork/:id', async (req, res) => {
     try {
-        const relativePath = Buffer.from(req.params.id, 'base64url').toString('utf8');
+        const idStr = req.params.id.replace(/-/g, '+').replace(/_/g, '/');
+        const relativePath = Buffer.from(idStr, 'base64').toString('utf8');
         const filePath = path.join(musicDir, relativePath);
         console.log(`GET /api/artwork - Art extraction requested for: ${relativePath}`);
 
@@ -155,7 +174,7 @@ app.get('/api/artwork/:id', async (req, res) => {
         console.error('Error extracting artwork:', e);
     }
     // Fallback to placeholder image
-    res.sendFile(path.join(__dirname, 'public', 'placeholder.png'));
+    res.sendFile(path.join(__dirname, 'public', 'placeholder.webp'));
 });
 
 // Upload files endpoint
@@ -185,30 +204,132 @@ app.get('/api/playlists', (req, res) => {
     }
 });
 
-// Merge and backup local playlists on the server
+function getDeletedState() {
+    try {
+        if (fs.existsSync(deletedPlaylistsFile)) {
+            const state = JSON.parse(fs.readFileSync(deletedPlaylistsFile, 'utf8'));
+            const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+            let updated = false;
+            
+            if (state.playlists) {
+                for (const name in state.playlists) {
+                    if (state.playlists[name] < cutoff) {
+                        delete state.playlists[name];
+                        updated = true;
+                    }
+                }
+            } else {
+                state.playlists = {};
+                updated = true;
+            }
+            
+            if (state.tracks) {
+                for (const plName in state.tracks) {
+                    let plUpdated = false;
+                    for (const songId in state.tracks[plName]) {
+                        if (state.tracks[plName][songId] < cutoff) {
+                            delete state.tracks[plName][songId];
+                            plUpdated = true;
+                            updated = true;
+                        }
+                    }
+                    if (plUpdated && Object.keys(state.tracks[plName]).length === 0) {
+                        delete state.tracks[plName];
+                    }
+                }
+            } else {
+                state.tracks = {};
+                updated = true;
+            }
+            
+            if (updated) {
+                fs.writeFileSync(deletedPlaylistsFile, JSON.stringify(state, null, 2), 'utf8');
+            }
+            return state;
+        }
+    } catch (e) {
+        console.error('Error reading deleted state:', e);
+    }
+    return { playlists: {}, tracks: {} };
+}
+
+function saveDeletedState(state) {
+    try {
+        fs.writeFileSync(deletedPlaylistsFile, JSON.stringify(state, null, 2), 'utf8');
+    } catch (e) {
+        console.error('Error saving deleted state:', e);
+    }
+}
+
+// Sync and merge playlists
 app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
     try {
-        const clientPlaylists = req.body;
-        const playlistsCount = clientPlaylists ? clientPlaylists.length : 0;
-        console.log(`POST /api/playlists - Sync request for ${playlistsCount} playlists`);
+        const clientPlaylists = req.body || [];
+        const isWebClient = req.query.client === 'web';
+        console.log(`POST /api/playlists - Sync request (isWebClient: ${isWebClient})`);
 
         let serverPlaylists = [];
         if (fs.existsSync(playlistsFile)) {
             serverPlaylists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
         }
 
+        const deletedState = getDeletedState();
+
+        if (isWebClient) {
+            // Web Client Update - Autoritative Overwrite
+            const clientMap = new Map(clientPlaylists.map(p => [p.name, p]));
+            const serverMap = new Map(serverPlaylists.map(p => [p.name, p]));
+
+            // Detect deleted playlists
+            serverPlaylists.forEach(serverP => {
+                if (!clientMap.has(serverP.name)) {
+                    deletedState.playlists[serverP.name] = Date.now();
+                    console.log(`Web client deleted playlist: "${serverP.name}"`);
+                }
+            });
+
+            // Detect track removals in existing playlists
+            clientPlaylists.forEach(clientP => {
+                const serverP = serverMap.get(clientP.name);
+                if (serverP) {
+                    const clientSongIds = new Set(clientP.songData.map(s => s.id));
+                    serverP.songData.forEach(song => {
+                        if (!clientSongIds.has(song.id)) {
+                            if (!deletedState.tracks[clientP.name]) {
+                                deletedState.tracks[clientP.name] = {};
+                            }
+                            deletedState.tracks[clientP.name][song.id] = Date.now();
+                            console.log(`Web client removed song "${song.id}" from playlist "${clientP.name}"`);
+                        }
+                    });
+                }
+            });
+
+            saveDeletedState(deletedState);
+            fs.writeFileSync(playlistsFile, JSON.stringify(clientPlaylists, null, 2), 'utf8');
+            return res.json(clientPlaylists);
+        }
+
+        // Android Sync - Merge filtering out tombstones
         const playlistMap = new Map();
         serverPlaylists.forEach(p => playlistMap.set(p.name, p));
 
         clientPlaylists.forEach(clientP => {
+            if (deletedState.playlists[clientP.name]) {
+                console.log(`Ignoring deleted playlist from Android sync: "${clientP.name}"`);
+                return;
+            }
+
             const serverP = playlistMap.get(clientP.name);
             if (!serverP) {
+                const deletedSongs = deletedState.tracks[clientP.name] || {};
+                clientP.songData = clientP.songData.filter(s => !deletedSongs[s.id]);
                 playlistMap.set(clientP.name, clientP);
             } else {
-                // Merge songs list unions
+                const deletedSongs = deletedState.tracks[clientP.name] || {};
                 const songIds = new Set(serverP.songData.map(s => s.id));
                 clientP.songData.forEach(s => {
-                    if (!songIds.has(s.id)) {
+                    if (!songIds.has(s.id) && !deletedSongs[s.id]) {
                         serverP.songData.push(s);
                     }
                 });
@@ -216,11 +337,144 @@ app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
         });
 
         const mergedPlaylists = Array.from(playlistMap.values());
+        mergedPlaylists.forEach(p => {
+            const deletedSongs = deletedState.tracks[p.name] || {};
+            p.songData = p.songData.filter(s => !deletedSongs[s.id]);
+        });
+
         fs.writeFileSync(playlistsFile, JSON.stringify(mergedPlaylists, null, 2), 'utf8');
         res.json(mergedPlaylists);
     } catch (e) {
         console.error('Error syncing playlists:', e);
         res.status(500).json({ error: 'Failed to sync playlists' });
+    }
+});
+
+// Helper to extract primary artist for searches
+function cleanArtist(artist) {
+    if (!artist) return '';
+    return artist.split(/\s+(?:ft\.?|feat\.?|featuring|with|vs\.?|and|&)\s+/i)[0].trim();
+}
+
+// Load metadata overrides
+const overridesFile = path.join(__dirname, 'metadata_overrides.json');
+let overrides = { artists: {}, albums: {} };
+if (fs.existsSync(overridesFile)) {
+    try {
+        overrides = JSON.parse(fs.readFileSync(overridesFile, 'utf8'));
+    } catch (e) {
+        console.error('Error loading overrides:', e);
+    }
+}
+
+// Metadata Artist endpoint
+app.get('/api/metadata/artist', async (req, res) => {
+    try {
+        const { name } = req.query;
+        if (!name) return res.status(400).json({ error: 'Name is required' });
+        console.log(`GET /api/metadata/artist - Fetching metadata for: ${name}`);
+        
+        const cleaned = cleanArtist(name);
+        const response = await fetch(`https://www.theaudiodb.com/api/v1/json/2/search.php?s=${encodeURIComponent(cleaned)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        if (data && data.artists && data.artists.length > 0) {
+            const artist = data.artists[0];
+            return res.json({
+                biography: artist.strBiography || artist.strBiographyEN,
+                image: artist.strArtistThumb,
+                logo: artist.strArtistLogo,
+                banner: artist.strArtistBanner,
+                genre: artist.strGenre,
+                style: artist.strStyle
+            });
+        }
+        res.status(404).json({ error: 'Artist not found' });
+    } catch (e) {
+        console.error('Error fetching artist metadata:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Metadata Album endpoint
+app.get('/api/metadata/album', async (req, res) => {
+    try {
+        const { artist, album } = req.query;
+        if (!artist || !album) return res.status(400).json({ error: 'Artist and album are required' });
+        console.log(`GET /api/metadata/album - Fetching metadata for: ${artist} - ${album}`);
+        
+        const cleanedArtist = cleanArtist(artist);
+        const overrideKey = `${cleanedArtist.toLowerCase().replace(/[^a-z0-9]/g, '')}_${album.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const localOverride = overrides.albums && overrides.albums[overrideKey];
+
+        let description = null;
+        let year = null;
+        let genre = null;
+        let artwork = null;
+
+        const response = await fetch(`https://www.theaudiodb.com/api/v1/json/2/searchalbum.php?s=${encodeURIComponent(cleanedArtist)}&a=${encodeURIComponent(album)}`);
+        if (response.ok) {
+            const data = await response.json().catch(() => null);
+            if (data && data.album && data.album.length > 0) {
+                const albumData = data.album[0];
+                description = albumData.strDescription || albumData.strDescriptionEN;
+                year = albumData.intYearReleased;
+                genre = albumData.strGenre;
+                artwork = albumData.strAlbumThumb;
+            }
+        }
+
+        if (!description && localOverride) {
+            description = localOverride.description;
+            if (localOverride.year) year = localOverride.year;
+            if (localOverride.genre) genre = localOverride.genre;
+            if (localOverride.artwork) artwork = localOverride.artwork;
+        }
+
+        if (description) {
+            return res.json({ description, year, genre, artwork });
+        }
+        res.status(404).json({ error: 'Album not found' });
+    } catch (e) {
+        console.error('Error fetching album metadata:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Lyrics endpoint
+app.get('/api/metadata/lyrics', async (req, res) => {
+    try {
+        const { artist, title } = req.query;
+        if (!artist || !title) return res.status(400).json({ error: 'Artist and title are required' });
+        console.log(`GET /api/metadata/lyrics - Fetching lyrics for: ${artist} - ${title}`);
+        
+        const cleanedArtist = cleanArtist(artist);
+        const response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanedArtist)}/${encodeURIComponent(title)}`);
+        if (!response.ok) {
+            if (response.status === 404) return res.status(404).json({ error: 'Lyrics not found' });
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data && data.lyrics) {
+            return res.json({ lyrics: data.lyrics });
+        }
+        res.status(404).json({ error: 'Lyrics not found' });
+    } catch (e) {
+        console.error('Error fetching lyrics:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/deduplicate', async (req, res) => {
+    console.log('POST /api/deduplicate - Running library deduplication');
+    try {
+        const { deduplicate } = require('./deduplicate');
+        const result = await deduplicate();
+        res.json(result);
+    } catch (err) {
+        console.error('Error running deduplication:', err);
+        res.status(500).json({ error: 'Deduplication failed', details: err.message });
     }
 });
 
