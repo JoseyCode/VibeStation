@@ -18,7 +18,16 @@ public class SplashActivity extends AppCompatActivity {
             "Boarding the Vibe Train...",
             "Now departing for Vibe City.",
             "Checking the schedule...",
-            "Setting the mood..."
+            "Setting the mood...",
+            "Go hit those Prs.",
+            "Powered by Insomnia.",
+            "It's boogie time >:)",
+            "Sesame has zoomies...",
+            "Someone get the preworkout...",
+            "Is it chest day yet?",
+            "Hopefully not a leg day...",
+            "Miku is watching you...",
+            "Nico Robin, my beloved..."
     };
 
     private static final int SPLASH_DELAY_MS = 1500;
