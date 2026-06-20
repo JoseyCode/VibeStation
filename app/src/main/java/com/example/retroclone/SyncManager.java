@@ -26,16 +26,38 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Manages the background synchronization process between the Android app's local MediaStore
+ * audio database and a remote VibeStation server. Handles song uploads, downloads,
+ * and JSON-based playlist syncing.
+ */
 public class SyncManager {
 
+    // Executor that serializes sync execution runs to prevent race conditions on write operations
     private static final ExecutorService syncExecutor = Executors.newSingleThreadExecutor();
 
+    /**
+     * Callback interface providing progress, completion, and failure feedback
+     * notifications during a synchronization run.
+     */
     public interface SyncCallback {
+        /** Called when a synchronization step completes. */
         void onProgress(int progress, int max, String message);
+        /** Called when the synchronization run completes successfully. */
         void onComplete(String result);
+        /** Called when a critical exception terminates the synchronization run. */
         void onError(String error);
     }
 
+    /**
+     * Starts the synchronization operation on a background executor. Querying remote songs,
+     * comparing match keys to compute uploads and downloads, and merging playlists.
+     *
+     * @param context    Application context for content resolvers and preferences.
+     * @param serverUrl  Base URL of the remote synchronization server.
+     * @param localSongs List of all local songs found in the MediaStore database.
+     * @param callback   Callback for reporting sync status updates to the UI.
+     */
     public static void startSync(Context context, String serverUrl, ArrayList<Models.Song> localSongs, SyncCallback callback) {
         syncExecutor.execute(() -> {
             OkHttpClient client = new OkHttpClient.Builder()
@@ -48,6 +70,7 @@ public class SyncManager {
                 callback.onProgress(0, 0, "Querying server library...");
                 Log.d("VibeSync", "Connecting to server: " + serverUrl);
 
+                // Fetch remote song library JSON array representation
                 Request listRequest = new Request.Builder().url(serverUrl + "/api/songs").build();
 
                 String remoteSongsJson;
@@ -61,6 +84,7 @@ public class SyncManager {
                 HashSet<String> remoteKeys = new HashSet<>();
                 ArrayList<RemoteSong> remoteSongsList = new ArrayList<>();
 
+                // Parse and map remote tracks to lookup hash keys
                 for (int i = 0; i < remoteSongsArray.length(); i++) {
                     JSONObject sObj = remoteSongsArray.getJSONObject(i);
                     String id = sObj.optString("id", "");
@@ -72,6 +96,7 @@ public class SyncManager {
                     remoteSongsList.add(new RemoteSong(id, title, artist, album));
                 }
 
+                // Compute upload list: Local songs that do not exist on the remote server
                 ArrayList<Models.Song> uploadList = new ArrayList<>();
                 for (Models.Song localSong : localSongs) {
                     String localKey = makeMatchKey(localSong.title, localSong.artist);
@@ -85,6 +110,7 @@ public class SyncManager {
                     localKeys.add(makeMatchKey(localSong.title, localSong.artist));
                 }
 
+                // Compute download list: Remote songs that do not exist in local MediaStore
                 ArrayList<RemoteSong> downloadList = new ArrayList<>();
                 for (RemoteSong remoteSong : remoteSongsList) {
                     String remoteKey = makeMatchKey(remoteSong.title, remoteSong.artist);
@@ -96,6 +122,7 @@ public class SyncManager {
                 int totalSongsToSync = uploadList.size() + downloadList.size();
                 int currentProgress = 0;
 
+                // Process uploads sequentially
                 int uploadedCount = 0;
                 for (Models.Song localSong : uploadList) {
                     callback.onProgress(currentProgress, totalSongsToSync, "Uploading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + localSong.title);
@@ -108,6 +135,7 @@ public class SyncManager {
                     currentProgress++;
                 }
 
+                // Process downloads sequentially
                 int downloadedCount = 0;
                 for (RemoteSong remoteSong : downloadList) {
                     callback.onProgress(currentProgress, totalSongsToSync, "Downloading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + remoteSong.title);
@@ -132,6 +160,14 @@ public class SyncManager {
         });
     }
 
+    /**
+     * Generates a normalized match key based on alphanumeric characters in song metadata.
+     * Prevents metadata differences (whitespace, casing, punctuation) from causing duplicates.
+     *
+     * @param title  The song title.
+     * @param artist The song artist.
+     * @return       A clean lowercase identification key.
+     */
     private static String makeMatchKey(String title, String artist) {
         String safeTitle = title != null ? title.trim() : "";
         String safeArtist = artist != null ? artist.trim() : "";
@@ -141,6 +177,12 @@ public class SyncManager {
         return (safeTitle + "_" + safeArtist).toLowerCase(Locale.getDefault()).replaceAll("[^\\p{L}\\p{N}_]", "");
     }
 
+    /**
+     * Sanitizes file system input strings to prevent invalid characters from causing crash loops during downloads.
+     *
+     * @param name Name string to sanitize.
+     * @return     A filesystem-safe name string.
+     */
     private static String safeFileName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return "track_" + System.currentTimeMillis();
@@ -148,6 +190,13 @@ public class SyncManager {
         return name.replaceAll("[\\\\/:*?\"<>|\\x00-\\x1F]", "_");
     }
 
+    /**
+     * Performs a multipart POST request containing the raw audio file to upload it to the server.
+     *
+     * @param client    Initialized OkHttpClient.
+     * @param serverUrl Server destination base URL.
+     * @param song      The local Song object to upload.
+     */
     private static void uploadSong(OkHttpClient client, String serverUrl, Models.Song song) throws IOException {
         File file = new File(song.path);
         if (!file.exists()) return;
@@ -168,6 +217,15 @@ public class SyncManager {
         }
     }
 
+    /**
+     * Streams the audio file content from the server and inserts it into the Android MediaStore content provider.
+     * Compatible with Android 10+ scoped storage policies using MediaStore IS_PENDING flags.
+     *
+     * @param context    Application context for content resolution.
+     * @param client     OkHttpClient.
+     * @param serverUrl  Server source base URL.
+     * @param remoteSong The RemoteSong description of the track to download.
+     */
     private static void downloadSong(Context context, OkHttpClient client, String serverUrl, RemoteSong remoteSong) throws IOException {
         Request request = new Request.Builder()
                 .url(serverUrl + "/api/stream/" + Uri.encode(remoteSong.id))
@@ -177,6 +235,7 @@ public class SyncManager {
             if (!response.isSuccessful()) throw new IOException("Failed to download stream");
             if (response.body() == null) throw new IOException("Empty response body from stream");
 
+            // Build metadata records for insertion into MediaStore content provider
             ContentValues values = new ContentValues();
             values.put(MediaStore.Audio.Media.DISPLAY_NAME, safeFileName(remoteSong.title) + ".mp3");
             values.put(MediaStore.Audio.Media.TITLE, remoteSong.title);
@@ -184,6 +243,7 @@ public class SyncManager {
             values.put(MediaStore.Audio.Media.ALBUM, remoteSong.album);
             values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/mpeg");
 
+            // Scoped storage requirements for Android 10 (Q) and higher
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 values.put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/");
                 values.put(MediaStore.Audio.Media.IS_PENDING, 1);
@@ -194,6 +254,7 @@ public class SyncManager {
                 uri = context.getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) throw new IOException("Failed to insert MediaStore record");
 
+                // Read download streams and write bytes into the shared system output storage path
                 try (InputStream is = response.body().byteStream();
                      OutputStream os = context.getContentResolver().openOutputStream(uri)) {
                     byte[] buffer = new byte[8192];
@@ -203,12 +264,14 @@ public class SyncManager {
                     }
                 }
 
+                // Turn off pending status flag once writing successfully completes on Q+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     values.clear();
                     values.put(MediaStore.Audio.Media.IS_PENDING, 0);
                     context.getContentResolver().update(uri, values, null, null);
                 }
             } catch (Exception e) {
+                // Delete orphaned provider entries in the event of an IO failure during writing
                 if (uri != null) {
                     try {
                         context.getContentResolver().delete(uri, null, null);
@@ -219,6 +282,14 @@ public class SyncManager {
         }
     }
 
+    /**
+     * Posts local JSON-formatted playlists to the server, fetches the merged response database,
+     * and saves it locally inside the app's Shared Preferences database.
+     *
+     * @param context   Application context.
+     * @param client    OkHttpClient.
+     * @param serverUrl Destination server base URL.
+     */
     private static void syncPlaylists(Context context, OkHttpClient client, String serverUrl) {
         try {
             SharedPreferences prefs = context.getSharedPreferences("RetroPrefs", Context.MODE_PRIVATE);
@@ -239,6 +310,9 @@ public class SyncManager {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Local model representing a remote server track definition metadata block.
+     */
     private static class RemoteSong {
         final String id, title, artist, album;
         RemoteSong(String id, String title, String artist, String album) {
