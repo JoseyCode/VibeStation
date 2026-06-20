@@ -63,7 +63,7 @@
             
             <div class="player-left">
                 <div class="artwork-container">
-                    <img id="current-art" src="placeholder.png" alt="Cover Art">
+                    <img id="current-art" src="placeholder.webp" alt="Cover Art">
                 </div>
                 <div class="track-meta">
                     <div class="track-title" id="player-title">Not Playing</div>
@@ -118,6 +118,48 @@
             <div class="modal-create-section">
                 <input type="text" id="modal-playlist-name" placeholder="Create new playlist...">
                 <button class="btn-primary" id="btn-modal-create-playlist">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Player Overlay (Mobile only) -->
+    <div id="fullscreen-player" class="fullscreen-player">
+        <div class="fp-background" id="fp-bg"></div>
+        <button class="fp-close-btn" id="fp-close-btn">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+        <div class="fp-content">
+            <div class="fp-header">
+                <span>Now Playing</span>
+            </div>
+            <div class="fp-artwork-container">
+                <img id="fp-art" src="placeholder.webp" alt="Cover Art">
+            </div>
+            <div class="fp-meta">
+                <div class="fp-title" id="fp-title">Not Playing</div>
+                <div class="fp-artist" id="fp-artist">Select a song</div>
+            </div>
+            
+            <div class="fp-timeline-container">
+                <div class="fp-timeline-slider">
+                    <input type="range" id="fp-seek-bar" min="0" max="100" value="0">
+                </div>
+                <div class="fp-time-labels">
+                    <span id="fp-time-current">0:00</span>
+                    <span id="fp-time-total">0:00</span>
+                </div>
+            </div>
+
+            <div class="fp-controls">
+                <button class="fp-control-btn" id="fp-btn-prev">
+                    <svg viewBox="0 0 24 24" width="36" height="36"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button class="fp-control-btn fp-play-btn" id="fp-btn-play-pause">
+                    <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" id="fp-play-pause-path" d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="fp-control-btn" id="fp-btn-next">
+                    <svg viewBox="0 0 24 24" width="36" height="36"><path fill="currentColor" d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
             </div>
         </div>
     </div>
