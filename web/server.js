@@ -356,6 +356,17 @@ function cleanArtist(artist) {
     return artist.split(/\s+(?:ft\.?|feat\.?|featuring|with|vs\.?|and|&)\s+/i)[0].trim();
 }
 
+// Load metadata overrides
+const overridesFile = path.join(__dirname, 'metadata_overrides.json');
+let overrides = { artists: {}, albums: {} };
+if (fs.existsSync(overridesFile)) {
+    try {
+        overrides = JSON.parse(fs.readFileSync(overridesFile, 'utf8'));
+    } catch (e) {
+        console.error('Error loading overrides:', e);
+    }
+}
+
 // Metadata Artist endpoint
 app.get('/api/metadata/artist', async (req, res) => {
     try {
@@ -394,18 +405,35 @@ app.get('/api/metadata/album', async (req, res) => {
         console.log(`GET /api/metadata/album - Fetching metadata for: ${artist} - ${album}`);
         
         const cleanedArtist = cleanArtist(artist);
+        const overrideKey = `${cleanedArtist.toLowerCase().replace(/[^a-z0-9]/g, '')}_${album.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const localOverride = overrides.albums && overrides.albums[overrideKey];
+
+        let description = null;
+        let year = null;
+        let genre = null;
+        let artwork = null;
+
         const response = await fetch(`https://www.theaudiodb.com/api/v1/json/2/searchalbum.php?s=${encodeURIComponent(cleanedArtist)}&a=${encodeURIComponent(album)}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        
-        if (data && data.album && data.album.length > 0) {
-            const albumData = data.album[0];
-            return res.json({
-                description: albumData.strDescription || albumData.strDescriptionEN,
-                year: albumData.intYearReleased,
-                genre: albumData.strGenre,
-                artwork: albumData.strAlbumThumb
-            });
+        if (response.ok) {
+            const data = await response.json().catch(() => null);
+            if (data && data.album && data.album.length > 0) {
+                const albumData = data.album[0];
+                description = albumData.strDescription || albumData.strDescriptionEN;
+                year = albumData.intYearReleased;
+                genre = albumData.strGenre;
+                artwork = albumData.strAlbumThumb;
+            }
+        }
+
+        if (!description && localOverride) {
+            description = localOverride.description;
+            if (localOverride.year) year = localOverride.year;
+            if (localOverride.genre) genre = localOverride.genre;
+            if (localOverride.artwork) artwork = localOverride.artwork;
+        }
+
+        if (description) {
+            return res.json({ description, year, genre, artwork });
         }
         res.status(404).json({ error: 'Album not found' });
     } catch (e) {
