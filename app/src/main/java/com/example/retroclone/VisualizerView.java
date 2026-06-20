@@ -10,13 +10,13 @@ import android.view.View;
 import java.util.Arrays;
 
 public class VisualizerView extends View {
-    private static final int RENDER_BINS = 40;
+    private static final int RENDER_BINS = 120;
     private final float[] targetAmplitudes = new float[RENDER_BINS];
     private final float[] smoothedMagnitudes = new float[RENDER_BINS];
     private final Paint wavePaint = new Paint();
     private final Path wavePath = new Path();
     private static final int WAVE_ALPHA = 70;
-    private static final float DAMPING_FACTOR = 0.24f;
+    private static final float DAMPING_FACTOR = 0.25f;
 
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -50,22 +50,23 @@ public class VisualizerView extends View {
                     endBin = fftSize;
                 }
 
-                float sum = 0;
-                int count = 0;
+                float maxMagnitude = 0;
                 for (int k = startBin; k < endBin; k++) {
                     int rIdx = k * 2;
                     int iIdx = k * 2 + 1;
                     if (iIdx < bytes.length) {
                         float r = bytes[rIdx];
                         float im = bytes[iIdx];
-                        sum += (float) Math.sqrt(r * r + im * im);
-                        count++;
+                        float mag = (float) Math.sqrt(r * r + im * im);
+                        if (mag > maxMagnitude) {
+                            maxMagnitude = mag;
+                        }
                     }
                 }
-                float magnitude = count > 0 ? (sum / count) : 0;
-                float amplitude = (magnitude / 128f) * (width * 0.35f);
-                if (amplitude > width * 0.45f) {
-                    amplitude = width * 0.45f;
+                float magnitude = maxMagnitude;
+                float amplitude = (magnitude / 128f) * (width * 0.15f);
+                if (amplitude > width * 0.18f) {
+                    amplitude = width * 0.18f;
                 }
                 targetAmplitudes[i] = amplitude;
             }
