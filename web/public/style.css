@@ -87,8 +87,18 @@ body {
 }
 
 .nav-icon {
+    width: 20px;
+    height: 20px;
     margin-right: 12px;
-    font-size: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.vol-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    display: inline-block;
 }
 
 .main-content {
@@ -418,7 +428,9 @@ body {
 
     .nav-icon {
         margin-right: 0;
-        font-size: 18px;
+        width: 22px;
+        height: 22px;
+        margin-bottom: 2px;
     }
 
     #btn-upload {

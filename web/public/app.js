@@ -126,23 +126,27 @@ function playTrack(index) {
 
     audioElement.src = `/api/stream/${song.id}`;
     audioElement.play();
-    btnPlayPause.textContent = '⏸';
+    const playPausePath = document.getElementById('play-pause-path');
+    if (playPausePath) {
+        playPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
+    }
 
     initVisualizer();
 }
 
 function setupAudioListeners() {
     btnPlayPause.addEventListener('click', () => {
+        const playPausePath = document.getElementById('play-pause-path');
         if (currentSongIndex === -1 && currentQueue.length > 0) {
             playTrack(0);
             return;
         }
         if (audioElement.paused) {
             audioElement.play();
-            btnPlayPause.textContent = '⏸';
+            if (playPausePath) playPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
         } else {
             audioElement.pause();
-            btnPlayPause.textContent = '▶';
+            if (playPausePath) playPausePath.setAttribute('d', 'M8 5v14l11-7z'); // Play triangle
         }
     });
 
@@ -654,8 +658,9 @@ function showPlaylists() {
         html += `
             <div class="grid-container">
                 ${filteredPlaylists.map(playlist => {
-                    const hasTracks = playlist.songData && playlist.songData.length > 0;
-                    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${playlist.songData[0].id}` : 'placeholder.png');
+                    const resolvedTracks = resolvePlaylistSongs(playlist);
+                    const hasTracks = resolvedTracks.length > 0;
+                    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${resolvedTracks[0].id}` : 'placeholder.png');
                     return `
                         <div class="grid-card" onclick="viewPlaylistDetail('${encodeURIComponent(playlist.name)}')">
                             <div class="card-art-container">
@@ -710,6 +715,37 @@ async function syncPlaylists() {
     }
 }
 
+function resolvePlaylistSongs(playlist) {
+    if (!playlist || !playlist.songData) return [];
+    return playlist.songData.map(ps => {
+        let matched = songs.find(s => s.id === ps.id);
+        if (!matched) {
+            const playlistSongKey = (ps.title || ps.t || '').trim().toLowerCase() + "_" + (ps.artist || ps.a || '').trim().toLowerCase();
+            matched = songs.find(s => {
+                const librarySongKey = s.title.trim().toLowerCase() + "_" + s.artist.trim().toLowerCase();
+                return librarySongKey === playlistSongKey;
+            });
+        }
+        if (matched) {
+            return {
+                id: matched.id,
+                title: matched.title,
+                artist: matched.artist,
+                album: matched.album,
+                duration: matched.duration
+            };
+        } else {
+            return {
+                id: ps.id,
+                title: ps.title || ps.t || 'Unknown Title',
+                artist: ps.artist || ps.a || 'Unknown Artist',
+                album: ps.album || 'Unknown Album',
+                duration: ps.duration || 0
+            };
+        }
+    });
+}
+
 function viewPlaylistDetail(encodedName) {
     const playlistName = decodeURIComponent(encodedName);
     currentDetailItem = playlistName;
@@ -721,7 +757,7 @@ function viewPlaylistDetail(encodedName) {
     document.getElementById('view-title').textContent = playlistName;
     
     const query = searchBar.value.toLowerCase().trim();
-    const playlistSongs = playlist.songData || [];
+    const playlistSongs = resolvePlaylistSongs(playlist);
     const filteredTracks = playlistSongs.filter(song => 
         song.title.toLowerCase().includes(query) || 
         song.artist.toLowerCase().includes(query) || 
@@ -823,7 +859,18 @@ async function removeTrackFromPlaylist(encodedPlaylistName, songId) {
     const playlist = playlists.find(p => p.name === playlistName);
     if (!playlist) return;
 
-    playlist.songData = playlist.songData.filter(s => s.id !== songId);
+    const songToRemove = songs.find(s => s.id === songId);
+    playlist.songData = playlist.songData.filter(s => {
+        if (s.id === songId) return false;
+        if (songToRemove) {
+            const sTitle = (s.title || s.t || '').trim().toLowerCase();
+            const sArtist = (s.artist || s.a || '').trim().toLowerCase();
+            const rTitle = songToRemove.title.trim().toLowerCase();
+            const rArtist = songToRemove.artist.trim().toLowerCase();
+            if (sTitle === rTitle && sArtist === rArtist) return false;
+        }
+        return true;
+    });
     playlist.lastModified = Date.now();
     await syncPlaylists();
     viewPlaylistDetail(encodedPlaylistName);
@@ -864,7 +911,15 @@ async function addTrackToPlaylist(encodedPlaylistName) {
     const song = songs.find(s => s.id === songIdToAdd);
     
     if (playlist && song) {
-        if (playlist.songData.some(s => s.id === song.id)) {
+        const resolvedTracks = resolvePlaylistSongs(playlist);
+        const songKey = song.title.trim().toLowerCase() + "_" + song.artist.trim().toLowerCase();
+        
+        const exists = resolvedTracks.some(rt => {
+            const rtKey = rt.title.trim().toLowerCase() + "_" + rt.artist.trim().toLowerCase();
+            return rtKey === songKey;
+        });
+
+        if (exists) {
             alert('This track is already in the playlist!');
             closePlaylistModal();
             return;
