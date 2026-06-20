@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 1337;
 
 // Scan directory: falls back to a subfolder inside this project
 const musicDir = process.env.MUSIC_DIR || path.join(__dirname, 'music');
+const playlistsFile = path.join(musicDir, 'playlists.json');
 
 if (!fs.existsSync(musicDir)) {
     fs.mkdirSync(musicDir, { recursive: true });
@@ -143,6 +144,54 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
         res.json({ success: true, count: req.files.length });
     } catch (err) {
         res.status(500).json({ error: 'Upload failed' });
+    }
+});
+
+// Fetch synced playlists configuration
+app.get('/api/playlists', (req, res) => {
+    try {
+        if (fs.existsSync(playlistsFile)) {
+            const data = fs.readFileSync(playlistsFile, 'utf8');
+            return res.json(JSON.parse(data));
+        }
+        res.json([]);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to read playlists' });
+    }
+});
+
+// Merge and backup local playlists on the server
+app.post('/api/playlists', express.json(), (req, res) => {
+    try {
+        const clientPlaylists = req.body;
+        let serverPlaylists = [];
+        if (fs.existsSync(playlistsFile)) {
+            serverPlaylists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
+        }
+
+        const playlistMap = new Map();
+        serverPlaylists.forEach(p => playlistMap.set(p.name, p));
+
+        clientPlaylists.forEach(clientP => {
+            const serverP = playlistMap.get(clientP.name);
+            if (!serverP) {
+                playlistMap.set(clientP.name, clientP);
+            } else {
+                // Merge songs list unions
+                const songIds = new Set(serverP.songData.map(s => s.id));
+                clientP.songData.forEach(s => {
+                    if (!songIds.has(s.id)) {
+                        serverP.songData.push(s);
+                    }
+                });
+            }
+        });
+
+        const mergedPlaylists = Array.from(playlistMap.values());
+        fs.writeFileSync(playlistsFile, JSON.stringify(mergedPlaylists, null, 2), 'utf8');
+        res.json(mergedPlaylists);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to sync playlists' });
     }
 });
 
