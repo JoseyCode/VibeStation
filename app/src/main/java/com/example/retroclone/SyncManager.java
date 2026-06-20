@@ -99,16 +99,24 @@ public class SyncManager {
                 int uploadedCount = 0;
                 for (Models.Song localSong : uploadList) {
                     callback.onProgress(currentProgress, totalSongsToSync, "Uploading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + localSong.title);
-                    uploadSong(client, serverUrl, localSong);
-                    uploadedCount++;
+                    try {
+                        uploadSong(client, serverUrl, localSong);
+                        uploadedCount++;
+                    } catch (Exception e) {
+                        Log.e("VibeSync", "Failed to upload: " + localSong.title, e);
+                    }
                     currentProgress++;
                 }
 
                 int downloadedCount = 0;
                 for (RemoteSong remoteSong : downloadList) {
                     callback.onProgress(currentProgress, totalSongsToSync, "Downloading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + remoteSong.title);
-                    downloadSong(context, client, serverUrl, remoteSong);
-                    downloadedCount++;
+                    try {
+                        downloadSong(context, client, serverUrl, remoteSong);
+                        downloadedCount++;
+                    } catch (Exception e) {
+                        Log.e("VibeSync", "Failed to download: " + remoteSong.title, e);
+                    }
                     currentProgress++;
                 }
 
@@ -137,7 +145,7 @@ public class SyncManager {
         if (name == null || name.trim().isEmpty()) {
             return "track_" + System.currentTimeMillis();
         }
-        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
+        return name.replaceAll("[\\\\/:*?\"<>|\\x00-\\x1F]", "_");
     }
 
     private static void uploadSong(OkHttpClient client, String serverUrl, Models.Song song) throws IOException {
@@ -162,7 +170,7 @@ public class SyncManager {
 
     private static void downloadSong(Context context, OkHttpClient client, String serverUrl, RemoteSong remoteSong) throws IOException {
         Request request = new Request.Builder()
-                .url(serverUrl + "/api/stream/" + remoteSong.id)
+                .url(serverUrl + "/api/stream/" + Uri.encode(remoteSong.id))
                 .build();
 
         try (Response response = client.newCall(request).execute()) {

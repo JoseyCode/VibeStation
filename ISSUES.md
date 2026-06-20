@@ -43,3 +43,18 @@
     3. Switched to JSON `optString` to tolerate missing metadata fields.
 *   **Status**: Resolved
 
+## Issue 6: App visualizer is extremely laggy and slow during playback
+*   **Labels**: `bug`, `performance`, `app`
+*   **Description**: The real-time FFT bezier visualizer causes noticeable UI lag, stuttering, and drops in frame rate during audio playback.
+*   **Root Cause**: 
+    1. The visualizer processes and renders all 341 bins (`fftBytes.length / 3`) directly on the main UI thread.
+    2. Generating and rasterizing a complex `Path` with 341 `cubicTo` bezier curves on every frame is highly CPU-intensive.
+    3. Math calculations (like `Math.sqrt`) are performed on the main thread for all bins.
+    4. Choppy rendering (10–20fps) occurs because invalidation only occurs when new data is captured, rather than animating smoothly at the device's display refresh rate (60Hz/120Hz).
+*   **Proposed Resolution**:
+    1. **Logarithmic Downsampling**: Group the FFT spectrum into 40 visually distinct bands using a logarithmic scale to match human hearing and drastically reduce rendering complexity.
+    2. **Background Math Offloading**: Offload all heavy FFT calculations, magnitudes, and logarithmic binning to the background `Visualizer` thread inside `updateVisualizer()`.
+    3. **Interpolated Reactive Rendering**: Perform smooth linear interpolation (LERP) on the UI thread and use `postInvalidateOnAnimation()` to render the animation smoothly at the screen's native refresh rate (up to 120Hz), pausing when settled to conserve battery.
+*   **Status**: Open (Drafting Fix)
+
+

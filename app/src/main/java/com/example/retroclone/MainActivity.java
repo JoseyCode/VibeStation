@@ -460,16 +460,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
  
         if (audioVisualizer != null) {
             try {
-                if (audioVisualizer.getEnabled()) {
-                    return; // Already initialized and running
-                }
-            } catch (Exception e) {
-                try {
-                    audioVisualizer.setEnabled(false);
-                } catch (Exception ignored) {}
+                audioVisualizer.setEnabled(false);
+            } catch (Exception ignored) {}
+            try {
                 audioVisualizer.release();
-                audioVisualizer = null;
-            }
+            } catch (Exception ignored) {}
+            audioVisualizer = null;
         }
  
         try {
@@ -484,7 +480,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 public void onFftDataCapture(Visualizer visualizer, byte[] fftData, int samplingRate) {
                     audioVisualizerView.updateVisualizer(fftData);
                 }
-            }, Visualizer.getMaxCaptureRate() / 2, false, true);
+            }, Visualizer.getMaxCaptureRate(), false, true);
  
             audioVisualizer.setEnabled(true);
         } catch (Exception ignored) {}
@@ -765,15 +761,21 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         inputStream.close();
                     }
                 } else {
-                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                    retriever.setDataSource(artworkPath);
-                    byte[] rawPictureData = retriever.getEmbeddedPicture();
-                    if (rawPictureData != null) {
-                        BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-                        decodeOptions.inSampleSize = qualityMode;
-                        decodedBitmap = BitmapFactory.decodeByteArray(rawPictureData, 0, rawPictureData.length, decodeOptions);
+                    MediaMetadataRetriever retriever = null;
+                    try {
+                        retriever = new MediaMetadataRetriever();
+                        retriever.setDataSource(artworkPath);
+                        byte[] rawPictureData = retriever.getEmbeddedPicture();
+                        if (rawPictureData != null) {
+                            BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+                            decodeOptions.inSampleSize = qualityMode;
+                            decodedBitmap = BitmapFactory.decodeByteArray(rawPictureData, 0, rawPictureData.length, decodeOptions);
+                        }
+                    } finally {
+                        if (retriever != null) {
+                            try { retriever.release(); } catch (Exception ignored) {}
+                        }
                     }
-                    retriever.release();
                 }
             } catch (Exception ignored) {}
 

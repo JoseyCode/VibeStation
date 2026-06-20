@@ -202,8 +202,9 @@ public class AudioService extends Service {
     private void loadAlbumArtAndNotify(Uri trackUri) {
         artworkExecutor.execute(() -> {
             currentAlbumArt = null;
+            MediaMetadataRetriever metadataRetriever = null;
             try {
-                MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
+                metadataRetriever = new MediaMetadataRetriever();
                 metadataRetriever.setDataSource(this, trackUri);
                 byte[] embeddedPictureData = metadataRetriever.getEmbeddedPicture();
                 if (embeddedPictureData != null) {
@@ -216,8 +217,12 @@ public class AudioService extends Service {
                             decodeOptions
                     );
                 }
-                metadataRetriever.release();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            } finally {
+                if (metadataRetriever != null) {
+                    try { metadataRetriever.release(); } catch (Exception ignored) {}
+                }
+            }
 
             new Handler(Looper.getMainLooper()).post(this::updateSystemPlayerAndUI);
         });
