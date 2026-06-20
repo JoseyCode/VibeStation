@@ -32,6 +32,20 @@ const btnShowArtists = document.getElementById('btn-show-artists');
 const btnShowPlaylists = document.getElementById('btn-show-playlists');
 const btnShowSettings = document.getElementById('btn-show-settings');
 
+// Fullscreen player elements
+const fullscreenPlayer = document.getElementById('fullscreen-player');
+const fpCloseBtn = document.getElementById('fp-close-btn');
+const fpArt = document.getElementById('fp-art');
+const fpBg = document.getElementById('fp-bg');
+const fpTitle = document.getElementById('fp-title');
+const fpArtist = document.getElementById('fp-artist');
+const fpSeekBar = document.getElementById('fp-seek-bar');
+const fpTimeCurrent = document.getElementById('fp-time-current');
+const fpTimeTotal = document.getElementById('fp-time-total');
+const fpBtnPrev = document.getElementById('fp-btn-prev');
+const fpBtnPlayPause = document.getElementById('fp-btn-play-pause');
+const fpBtnNext = document.getElementById('fp-btn-next');
+
 let songs = [];
 let currentQueue = [];
 let currentSongIndex = -1;
@@ -47,7 +61,30 @@ let currentDetailItem = null;
 window.addEventListener('load', async () => {
     await loadLibrary();
     setupAudioListeners();
+    setupFullscreenPlayer();
 });
+
+function setupFullscreenPlayer() {
+    document.querySelector('.artwork-container').addEventListener('click', () => {
+        fullscreenPlayer.classList.add('active');
+    });
+    fpCloseBtn.addEventListener('click', () => {
+        fullscreenPlayer.classList.remove('active');
+    });
+    fpBtnPlayPause.addEventListener('click', () => {
+        btnPlayPause.click();
+    });
+    fpBtnPrev.addEventListener('click', () => {
+        btnPrev.click();
+    });
+    fpBtnNext.addEventListener('click', () => {
+        btnNext.click();
+    });
+    fpSeekBar.addEventListener('input', () => {
+        if (!audioElement.duration) return;
+        audioElement.currentTime = (fpSeekBar.value / 100) * audioElement.duration;
+    });
+}
 
 async function loadLibrary() {
     try {
@@ -130,6 +167,34 @@ function playTrack(index) {
     if (playPausePath) {
         playPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
     }
+    const fpPlayPausePath = document.getElementById('fp-play-pause-path');
+    if (fpPlayPausePath) {
+        fpPlayPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
+    }
+
+    // Update fullscreen player
+    fpTitle.textContent = song.title;
+    fpArtist.textContent = song.artist;
+    fpArt.src = artworkUrl;
+    fpBg.style.backgroundImage = `url('${artworkUrl}')`;
+
+    // Media Session Metadata & Browser Title Masking
+    if ('mediaSession' in navigator) {
+        document.title = `VibeStation - ${song.title}`;
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: song.title,
+            artist: song.artist,
+            album: song.album || 'VibeStation',
+            artwork: [
+                { src: artworkUrl, sizes: '96x96', type: 'image/jpeg' },
+                { src: artworkUrl, sizes: '128x128', type: 'image/jpeg' },
+                { src: artworkUrl, sizes: '192x192', type: 'image/jpeg' },
+                { src: artworkUrl, sizes: '256x256', type: 'image/jpeg' },
+                { src: artworkUrl, sizes: '384x384', type: 'image/jpeg' },
+                { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
+            ]
+        });
+    }
 
     initVisualizer();
 }
@@ -137,6 +202,7 @@ function playTrack(index) {
 function setupAudioListeners() {
     btnPlayPause.addEventListener('click', () => {
         const playPausePath = document.getElementById('play-pause-path');
+        const fpPlayPausePath = document.getElementById('fp-play-pause-path');
         if (currentSongIndex === -1 && currentQueue.length > 0) {
             playTrack(0);
             return;
@@ -144,11 +210,28 @@ function setupAudioListeners() {
         if (audioElement.paused) {
             audioElement.play();
             if (playPausePath) playPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
+            if (fpPlayPausePath) fpPlayPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
         } else {
             audioElement.pause();
             if (playPausePath) playPausePath.setAttribute('d', 'M8 5v14l11-7z'); // Play triangle
+            if (fpPlayPausePath) fpPlayPausePath.setAttribute('d', 'M8 5v14l11-7z');
         }
     });
+
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => {
+            btnPlayPause.click();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            btnPlayPause.click();
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            btnPrev.click();
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            btnNext.click();
+        });
+    }
 
     btnNext.addEventListener('click', () => {
         if (currentQueue.length > 0) {
@@ -167,10 +250,14 @@ function setupAudioListeners() {
         const pct = (audioElement.currentTime / audioElement.duration) * 100;
         seekBar.value = pct;
         timeCurrent.textContent = formatTime(audioElement.currentTime);
+        fpSeekBar.value = pct;
+        fpTimeCurrent.textContent = formatTime(audioElement.currentTime);
     });
 
     audioElement.addEventListener('loadedmetadata', () => {
-        timeTotal.textContent = formatTime(audioElement.duration);
+        const durationStr = formatTime(audioElement.duration);
+        timeTotal.textContent = durationStr;
+        fpTimeTotal.textContent = durationStr;
     });
 
     audioElement.addEventListener('ended', () => {
@@ -660,7 +747,7 @@ function showPlaylists() {
                 ${filteredPlaylists.map(playlist => {
                     const resolvedTracks = resolvePlaylistSongs(playlist);
                     const hasTracks = resolvedTracks.length > 0;
-                    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${resolvedTracks[0].id}` : 'placeholder.png');
+                    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${resolvedTracks[0].id}` : 'placeholder.webp');
                     return `
                         <div class="grid-card" onclick="viewPlaylistDetail('${encodeURIComponent(playlist.name)}')">
                             <div class="card-art-container">
@@ -767,7 +854,7 @@ function viewPlaylistDetail(encodedName) {
     currentQueue = [...filteredTracks];
 
     const hasTracks = playlistSongs.length > 0;
-    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${playlistSongs[0].id}` : 'placeholder.png');
+    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${playlistSongs[0].id}` : 'placeholder.webp');
 
     tracksContainer.innerHTML = `
         <button class="back-btn" onclick="searchBar.value=''; showPlaylists()">← Back to Playlists</button>

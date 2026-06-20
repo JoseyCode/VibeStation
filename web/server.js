@@ -174,7 +174,7 @@ app.get('/api/artwork/:id', async (req, res) => {
         console.error('Error extracting artwork:', e);
     }
     // Fallback to placeholder image
-    res.sendFile(path.join(__dirname, 'public', 'placeholder.png'));
+    res.sendFile(path.join(__dirname, 'public', 'placeholder.webp'));
 });
 
 // Upload files endpoint

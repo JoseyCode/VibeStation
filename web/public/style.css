@@ -210,6 +210,10 @@ body {
     width: 300px;
 }
 
+.artwork-container {
+    cursor: pointer;
+}
+
 .artwork-container img {
     width: 56px;
     height: 56px;
@@ -491,13 +495,14 @@ body {
 
     .player-bar {
         position: fixed;
-        bottom: calc(60px + 8px + env(safe-area-inset-bottom));
-        left: 8px;
-        right: 8px;
-        width: calc(100% - 16px);
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        bottom: 60px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
         display: grid;
         grid-template-columns: 1fr auto auto;
         grid-template-areas:
@@ -940,4 +945,178 @@ body {
     height: 18px;
     accent-color: var(--vibe-color);
     cursor: pointer;
+}
+
+/* Fullscreen Player Overlay */
+.fullscreen-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #08080c;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(100%);
+    overflow: hidden;
+}
+
+.fullscreen-player.active {
+    transform: translateY(0);
+}
+
+.fp-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) brightness(0.3);
+    opacity: 0.6;
+    z-index: 1;
+    transform: scale(1.1);
+    transition: background-image 0.5s ease;
+}
+
+.fp-close-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    z-index: 10;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.fp-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    padding: 60px 24px 40px 24px;
+    box-sizing: border-box;
+}
+
+.fp-header {
+    text-align: center;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.fp-artwork-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.fp-art {
+    width: 280px;
+    height: 280px;
+    max-width: 80vw;
+    max-height: 80vw;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.fp-meta {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.fp-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fp-artist {
+    font-size: 16px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fp-timeline-container {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.fp-timeline-slider input {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+}
+
+.fp-timeline-slider input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-color);
+    cursor: pointer;
+}
+
+.fp-time-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+.fp-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 20px;
+}
+
+.fp-control-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.fp-play-btn {
+    width: 64px;
+    height: 64px;
+    background: var(--text-color);
+    color: #000;
+    border-radius: 50%;
 }
