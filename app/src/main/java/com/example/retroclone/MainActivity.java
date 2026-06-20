@@ -332,6 +332,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             boolean showVis = sharedPreferences.getBoolean("show_visualizer", true);
 
             String[] options = {
+                    "Sync Now (Raspberry Pi)",
+                    "Set Sync Server IP",
                     "Backup Playlists (Export)",
                     "Restore Playlists (Import)",
                     is120 ? "Disable 120Hz Mode" : "Enable 120Hz Mode",
@@ -343,22 +345,26 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     .setTitle("VibeStation Settings")
                     .setItems(options, (dialog, which) -> {
                         if (which == 0) {
-                            backupFileLauncher.launch("VibeStation_Backup.txt");
+                            runSync();
                         } else if (which == 1) {
-                            restoreFileLauncher.launch(new String[]{"text/plain"});
+                            showSetIpDialog();
                         } else if (which == 2) {
+                            backupFileLauncher.launch("VibeStation_Backup.txt");
+                        } else if (which == 3) {
+                            restoreFileLauncher.launch(new String[]{"text/plain"});
+                        } else if (which == 4) {
                             boolean newValue = !is120;
                             sharedPreferences.edit().putBoolean("120hz", newValue).apply();
                             applyRefreshRate(newValue);
                             Toast.makeText(this, "120Hz " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
-                        } else if (which == 3) {
+                        } else if (which == 5) {
                             boolean newValue = !adaptiveBg;
                             sharedPreferences.edit().putBoolean("adaptive_bg", newValue).apply();
                             Toast.makeText(this, "Adaptive Background " + (newValue ? "Enabled" : "Disabled"), Toast.LENGTH_SHORT).show();
                             if (audioService != null && audioService.getCurrentArt() != null) {
                                 onTrackChanged(audioService.getCurrentSong(), audioService.getCurrentArt());
                             }
-                        } else if (which == 4) {
+                        } else if (which == 6) {
                             boolean newValue = !showVis;
                             sharedPreferences.edit().putBoolean("show_visualizer", newValue).apply();
                             audioVisualizerView.setVisibility(newValue ? View.VISIBLE : View.GONE);
@@ -1258,6 +1264,48 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         } catch (Exception e) {
             return "";
         }
+    }
+
+    private void showSetIpDialog() {
+        EditText inputField = new EditText(this);
+        inputField.setText(sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337"));
+        new AlertDialog.Builder(this)
+                .setTitle("Sync Server URL")
+                .setView(inputField)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String url = inputField.getText().toString().trim();
+                    sharedPreferences.edit().putString("sync_server_url", url).apply();
+                    Toast.makeText(this, "Server URL Saved!", Toast.LENGTH_SHORT).show();
+                }).show();
+    }
+
+    private void runSync() {
+        String serverUrl = sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337");
+        if (serverUrl.isEmpty()) {
+            Toast.makeText(this, "Please set server IP first!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Syncing started...", Toast.LENGTH_SHORT).show();
+        SyncManager.startSync(this, serverUrl, allSongs, new SyncManager.SyncCallback() {
+            @Override
+            public void onProgress(String message) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onComplete(String result) {
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, "Sync Complete: " + result, Toast.LENGTH_LONG).show();
+                    loadMusic(); // Refresh library
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Sync Error: " + error, Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     @Override
