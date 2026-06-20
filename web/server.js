@@ -32,15 +32,24 @@ const upload = multer({ storage });
 
 // Recursive helper to find all MP3 files
 function getMp3Files(dir, fileList = []) {
-    const files = fs.readdirSync(dir);
-    files.forEach(file => {
-        const filePath = path.join(dir, file);
-        if (fs.statSync(filePath).isDirectory()) {
-            getMp3Files(filePath, fileList);
-        } else if (file.toLowerCase().endsWith('.mp3')) {
-            fileList.push(filePath);
-        }
-    });
+    try {
+        const files = fs.readdirSync(dir);
+        files.forEach(file => {
+            const filePath = path.join(dir, file);
+            try {
+                const stat = fs.statSync(filePath);
+                if (stat.isDirectory()) {
+                    getMp3Files(filePath, fileList);
+                } else if (file.toLowerCase().endsWith('.mp3')) {
+                    fileList.push(filePath);
+                }
+            } catch (err) {
+                console.error(`Skipping file due to scan error: ${filePath}`, err);
+            }
+        });
+    } catch (err) {
+        console.error(`Skipping directory due to scan error: ${dir}`, err);
+    }
     return fileList;
 }
 

@@ -982,13 +982,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             ArrayList<Models.Song> tempSongs = new ArrayList<>();
             HashMap<String, Models.Album> albumMap = new HashMap<>();
             try {
-                Cursor musicCursor = getContentResolver().query(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        null,
-                        MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
-                        new String[]{"%Music/%"},
-                        null
-                );
+                Cursor musicCursor;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    musicCursor = getContentResolver().query(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            null,
+                            MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
+                            new String[]{"%Music/%"},
+                            null
+                    );
+                } else {
+                    musicCursor = getContentResolver().query(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            null,
+                            MediaStore.Audio.Media.DATA + " LIKE ?",
+                            new String[]{"%/Music/%"},
+                            null
+                    );
+                }
 
                 if (musicCursor != null && musicCursor.moveToFirst()) {
                     do {
