@@ -307,6 +307,20 @@ function setupAudioListeners() {
         }
     });
 
+    audioElement.addEventListener('play', () => {
+        const playPausePath = document.getElementById('play-pause-path');
+        const fpPlayPausePath = document.getElementById('fp-play-pause-path');
+        if (playPausePath) playPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'); // Pause bars
+        if (fpPlayPausePath) fpPlayPausePath.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+    });
+
+    audioElement.addEventListener('pause', () => {
+        const playPausePath = document.getElementById('play-pause-path');
+        const fpPlayPausePath = document.getElementById('fp-play-pause-path');
+        if (playPausePath) playPausePath.setAttribute('d', 'M8 5v14l11-7z'); // Play triangle
+        if (fpPlayPausePath) fpPlayPausePath.setAttribute('d', 'M8 5v14l11-7z');
+    });
+
     audioElement.addEventListener('timeupdate', () => {
         if (!audioElement.duration) return;
         const pct = (audioElement.currentTime / audioElement.duration) * 100;
@@ -828,7 +842,10 @@ function viewArtistDetail(encodedName) {
             }
             if (data && data.image) {
                 localStorage.setItem('artist_art_' + artist.name, data.image);
-                document.querySelector('.detail-art').src = data.image;
+                const detailArt = document.querySelector('.detail-art');
+                if (detailArt && detailArt.getAttribute('src') !== data.image) {
+                    detailArt.src = data.image;
+                }
             }
         }).catch(() => {});
 }
