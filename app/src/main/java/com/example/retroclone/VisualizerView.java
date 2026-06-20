@@ -118,59 +118,111 @@ public class VisualizerView extends View {
             }
         }
 
-        // Precompute actual render coordinates (adding ripple sine shifts for wavy style)
-        float[] drawX = new float[renderBins];
+        float barHeight = height / (renderBins - 1);
         float timeSec = (float) (System.currentTimeMillis() % 100000) / 1000f;
 
-        for (int i = 0; i < renderBins; i++) {
-            float baseVal = smoothedMagnitudes[i];
-            if (visualizerStyle == STYLE_WAVY) {
+        if (visualizerStyle == STYLE_WAVY) {
+            // Precompute Layer 1 (Background wave: smaller, slower, offset phase)
+            float[] drawX1 = new float[renderBins];
+            // Precompute Layer 2 (Foreground wave: normal size, standard speed)
+            float[] drawX2 = new float[renderBins];
+
+            for (int i = 0; i < renderBins; i++) {
+                float baseVal = smoothedMagnitudes[i];
                 float rippleScale = Math.min(baseVal / (width * 0.05f), 1.0f);
-                float sineOffset = (float) Math.sin(i * 0.40f - timeSec * 5f) * (baseVal * 0.3f + width * 0.01f) * rippleScale;
-                drawX[i] = baseVal + sineOffset;
-                if (drawX[i] < 0) drawX[i] = 0;
-                if (baseVal > 0.5f) needsMoreFrames = true; // Keep animating the ripple
-            } else {
-                drawX[i] = baseVal;
+                
+                float sineOffset1 = (float) Math.sin(i * 0.35f - timeSec * 4.2f) * (baseVal * 0.25f + width * 0.008f) * rippleScale;
+                drawX1[i] = baseVal * 0.8f + sineOffset1;
+                if (drawX1[i] < 0) drawX1[i] = 0;
+
+                float sineOffset2 = (float) Math.sin(i * 0.25f - timeSec * 6.0f) * (baseVal * 0.35f + width * 0.012f) * rippleScale;
+                drawX2[i] = baseVal + sineOffset2;
+                if (drawX2[i] < 0) drawX2[i] = 0;
+
+                if (baseVal > 0.5f) needsMoreFrames = true;
             }
-        }
 
-        wavePath.reset();
-        wavePath.moveTo(0, height);
-        float barHeight = height / (renderBins - 1);
-
-        for (int i = 0; i < renderBins; i++) {
-            float currentY = height - (i * barHeight);
-            float currentX = drawX[i];
-
-            if (i == 0) {
-                wavePath.lineTo(currentX, currentY);
-            } else {
-                if (visualizerStyle == STYLE_WAVY) {
-                    float x1 = drawX[i - 1];
+            // Render Layer 1: Background Wave (fainter, layered)
+            wavePath.reset();
+            wavePath.moveTo(0, height);
+            for (int i = 0; i < renderBins; i++) {
+                float currentY = height - (i * barHeight);
+                float currentX = drawX1[i];
+                if (i == 0) {
+                    wavePath.lineTo(currentX, currentY);
+                } else {
+                    float x1 = drawX1[i - 1];
                     float y1 = height - (i - 1) * barHeight;
-                    float x2 = drawX[i];
+                    float x2 = drawX1[i];
                     float y2 = height - i * barHeight;
-
-                    float x0 = (i < 2) ? x1 : drawX[i - 2];
-                    float x3 = (i >= renderBins - 1) ? x2 : drawX[i + 1];
-
+                    float x0 = (i < 2) ? x1 : drawX1[i - 2];
+                    float x3 = (i >= renderBins - 1) ? x2 : drawX1[i + 1];
                     wavePath.cubicTo(
                             x1 + (x2 - x0) / 6f, y1 - barHeight / 3f,
                             x2 - (x3 - x1) / 6f, y2 + barHeight / 3f,
                             x2, y2
                     );
-                } else {
-                    // Draw sharp triangular peak teeth for the classic YouTube visualizer look
-                    wavePath.lineTo(currentX, currentY);
-                    wavePath.lineTo(0, currentY - barHeight / 2f);
                 }
             }
-        }
+            wavePath.lineTo(0, 0);
+            wavePath.close();
+            wavePaint.setAlpha(WAVE_ALPHA / 2);
+            canvas.drawPath(wavePath, wavePaint);
 
-        wavePath.lineTo(0, 0);
-        wavePath.close();
-        canvas.drawPath(wavePath, wavePaint);
+            // Render Layer 2: Foreground Wave (primary outline)
+            wavePath.reset();
+            wavePath.moveTo(0, height);
+            for (int i = 0; i < renderBins; i++) {
+                float currentY = height - (i * barHeight);
+                float currentX = drawX2[i];
+                if (i == 0) {
+                    wavePath.lineTo(currentX, currentY);
+                } else {
+                    float x1 = drawX2[i - 1];
+                    float y1 = height - (i - 1) * barHeight;
+                    float x2 = drawX2[i];
+                    float y2 = height - i * barHeight;
+                    float x0 = (i < 2) ? x1 : drawX2[i - 2];
+                    float x3 = (i >= renderBins - 1) ? x2 : drawX2[i + 1];
+                    wavePath.cubicTo(
+                            x1 + (x2 - x0) / 6f, y1 - barHeight / 3f,
+                            x2 - (x3 - x1) / 6f, y2 + barHeight / 3f,
+                            x2, y2
+                    );
+                }
+            }
+            wavePath.lineTo(0, 0);
+            wavePath.close();
+            wavePaint.setAlpha(WAVE_ALPHA);
+            canvas.drawPath(wavePath, wavePaint);
+        } else {
+            // STYLE_SPIKY: Sharp triangular peaks with smooth curved bases
+            wavePath.reset();
+            wavePath.moveTo(0, height);
+            for (int i = 0; i < renderBins; i++) {
+                float currentY = height - (i * barHeight);
+                float currentX = smoothedMagnitudes[i];
+                if (i == 0) {
+                    wavePath.lineTo(currentX, currentY);
+                } else {
+                    float prevY = height - ((i - 1) * barHeight);
+                    wavePath.cubicTo(
+                            0, prevY - barHeight / 3f,
+                            currentX * 0.3f, currentY + barHeight / 3f,
+                            currentX, currentY
+                    );
+                    wavePath.cubicTo(
+                            currentX, currentY,
+                            currentX * 0.3f, currentY - barHeight / 3f,
+                            0, currentY - barHeight / 2f
+                    );
+                }
+            }
+            wavePath.lineTo(0, 0);
+            wavePath.close();
+            wavePaint.setAlpha(WAVE_ALPHA);
+            canvas.drawPath(wavePath, wavePaint);
+        }
 
         if (needsMoreFrames) {
             postInvalidateOnAnimation();
