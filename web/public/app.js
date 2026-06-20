@@ -30,6 +30,7 @@ const btnShowLibrary = document.getElementById('btn-show-library');
 const btnShowAlbums = document.getElementById('btn-show-albums');
 const btnShowArtists = document.getElementById('btn-show-artists');
 const btnShowPlaylists = document.getElementById('btn-show-playlists');
+const btnShowSettings = document.getElementById('btn-show-settings');
 
 let songs = [];
 let currentQueue = [];
@@ -38,6 +39,7 @@ let audioCtx = null;
 let analyser = null;
 let dataArray = null;
 let playlists = [];
+let consolidateArtists = localStorage.getItem('consolidateArtists') !== 'false';
 let currentView = 'library';
 let currentDetailItem = null;
 
@@ -214,6 +216,11 @@ function setupAudioListeners() {
     btnShowPlaylists.addEventListener('click', () => {
         searchBar.value = '';
         showPlaylists();
+    });
+
+    btnShowSettings.addEventListener('click', () => {
+        searchBar.value = '';
+        showSettings();
     });
 
     // Add to playlist modal event listeners
@@ -521,10 +528,21 @@ function viewAlbumDetail(encodedName) {
     `;
 }
 
+function getPrimaryArtist(artist) {
+    if (!artist) return 'Unknown Artist';
+    let primary = artist.trim();
+    const featRegex = /\s+(?:ft\.?|feat\.?|featuring|with|vs\.?|and|&)\s+/i;
+    primary = primary.split(featRegex)[0];
+    primary = primary.split('/')[0];
+    primary = primary.split(';')[0];
+    return primary.trim() || 'Unknown Artist';
+}
+
 function getArtists() {
     const artistMap = new Map();
     songs.forEach(song => {
-        const key = song.artist || 'Unknown Artist';
+        const rawArtist = song.artist || 'Unknown Artist';
+        const key = consolidateArtists ? getPrimaryArtist(rawArtist) : rawArtist;
         if (!artistMap.has(key)) {
             artistMap.set(key, {
                 name: key,
@@ -534,7 +552,7 @@ function getArtists() {
         }
         artistMap.get(key).tracks.push(song);
     });
-    return Array.from(artistMap.values());
+    return Array.from(artistMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function showArtists() {
@@ -637,7 +655,7 @@ function showPlaylists() {
             <div class="grid-container">
                 ${filteredPlaylists.map(playlist => {
                     const hasTracks = playlist.songData && playlist.songData.length > 0;
-                    const artworkUrl = hasTracks ? `/api/artwork/${playlist.songData[0].id}` : 'placeholder.png';
+                    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${playlist.songData[0].id}` : 'placeholder.png');
                     return `
                         <div class="grid-card" onclick="viewPlaylistDetail('${encodeURIComponent(playlist.name)}')">
                             <div class="card-art-container">
@@ -667,6 +685,8 @@ async function createPlaylist(name = null) {
 
     const newPlaylist = {
         name: playlistName,
+        imageUri: '',
+        lastModified: Date.now(),
         songData: []
     };
     playlists.push(newPlaylist);
@@ -679,7 +699,7 @@ async function createPlaylist(name = null) {
 
 async function syncPlaylists() {
     try {
-        const response = await fetch('/api/playlists', {
+        const response = await fetch('/api/playlists?client=web', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(playlists)
@@ -711,7 +731,7 @@ function viewPlaylistDetail(encodedName) {
     currentQueue = [...filteredTracks];
 
     const hasTracks = playlistSongs.length > 0;
-    const artworkUrl = hasTracks ? `/api/artwork/${playlistSongs[0].id}` : 'placeholder.png';
+    const artworkUrl = playlist.imageUri ? playlist.imageUri : (hasTracks ? `/api/artwork/${playlistSongs[0].id}` : 'placeholder.png');
 
     tracksContainer.innerHTML = `
         <button class="back-btn" onclick="searchBar.value=''; showPlaylists()">← Back to Playlists</button>
@@ -723,8 +743,11 @@ function viewPlaylistDetail(encodedName) {
                 <span class="detail-meta">${playlistSongs.length} track(s)</span>
                 <div class="detail-actions">
                     <button class="btn-primary" ${hasTracks ? '' : 'disabled'} onclick="playTrack(0)">Play All</button>
-                    <button class="btn-secondary" onclick="deletePlaylist('${encodeURIComponent(playlist.name)}')">Delete Playlist</button>
+                    <button class="btn-secondary" onclick="renamePlaylist('${encodeURIComponent(playlist.name)}')">Rename</button>
+                    <button class="btn-secondary" onclick="triggerPlaylistCoverUpload('${encodeURIComponent(playlist.name)}')">Change Cover</button>
+                    <button class="btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" onclick="deletePlaylist('${encodeURIComponent(playlist.name)}')">Delete Playlist</button>
                 </div>
+                <input type="file" id="playlist-cover-input-${encodeURIComponent(playlist.name)}" accept="image/*" style="display: none;" onchange="uploadPlaylistCover(event, '${encodeURIComponent(playlist.name)}')">
             </div>
         </div>
         <div class="tracks-list">
@@ -750,12 +773,58 @@ async function deletePlaylist(encodedName) {
     showPlaylists();
 }
 
+async function renamePlaylist(encodedName) {
+    const oldName = decodeURIComponent(encodedName);
+    const playlist = playlists.find(p => p.name === oldName);
+    if (!playlist) return;
+
+    const newName = prompt('Enter new playlist name:', oldName);
+    if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+
+    const trimmedName = newName.trim();
+    if (playlists.some(p => p.name.toLowerCase() === trimmedName.toLowerCase())) {
+        alert('A playlist with that name already exists!');
+        return;
+    }
+
+    playlist.name = trimmedName;
+    playlist.lastModified = Date.now();
+    await syncPlaylists();
+    viewPlaylistDetail(encodeURIComponent(trimmedName));
+}
+
+function triggerPlaylistCoverUpload(encodedName) {
+    const input = document.getElementById(`playlist-cover-input-${encodedName}`);
+    if (input) {
+        input.click();
+    }
+}
+
+async function uploadPlaylistCover(event, encodedName) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const playlistName = decodeURIComponent(encodedName);
+    const playlist = playlists.find(p => p.name === playlistName);
+    if (!playlist) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        playlist.imageUri = e.target.result;
+        playlist.lastModified = Date.now();
+        await syncPlaylists();
+        viewPlaylistDetail(encodedName);
+    };
+    reader.readAsDataURL(file);
+}
+
 async function removeTrackFromPlaylist(encodedPlaylistName, songId) {
     const playlistName = decodeURIComponent(encodedPlaylistName);
     const playlist = playlists.find(p => p.name === playlistName);
     if (!playlist) return;
 
     playlist.songData = playlist.songData.filter(s => s.id !== songId);
+    playlist.lastModified = Date.now();
     await syncPlaylists();
     viewPlaylistDetail(encodedPlaylistName);
 }
@@ -800,7 +869,16 @@ async function addTrackToPlaylist(encodedPlaylistName) {
             closePlaylistModal();
             return;
         }
-        playlist.songData.push(song);
+        playlist.songData.push({
+            id: song.id,
+            title: song.title,
+            artist: song.artist,
+            album: song.album,
+            duration: song.duration,
+            t: song.title,
+            a: song.artist
+        });
+        playlist.lastModified = Date.now();
         await syncPlaylists();
     }
     
@@ -819,6 +897,8 @@ async function modalCreatePlaylist() {
 
     const newPlaylist = {
         name: name,
+        imageUri: '',
+        lastModified: Date.now(),
         songData: []
     };
     playlists.push(newPlaylist);
@@ -830,5 +910,64 @@ async function modalCreatePlaylist() {
         await addTrackToPlaylist(encodeURIComponent(name));
     } else {
         closePlaylistModal();
+    }
+}
+
+function showSettings() {
+    currentView = 'settings';
+    updateActiveNavItem('btn-show-settings');
+    document.getElementById('view-title').textContent = 'Settings';
+    
+    tracksContainer.innerHTML = `
+        <div class="settings-container">
+            <div class="settings-card">
+                <h3>Library Tools</h3>
+                <p>Maintain and optimize your music collection database.</p>
+                <div class="settings-actions">
+                    <button class="btn-primary" id="btn-run-deduplicate">Run Library Deduplicator</button>
+                    <button class="btn-secondary" onclick="fileInput.click()">Upload More Tracks</button>
+                </div>
+                <div id="deduplicate-result" class="status-msg" style="display: none; margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;"></div>
+            </div>
+            
+            <div class="settings-card" style="margin-top: 24px;">
+                <h3>Display Customizations</h3>
+                <p>Adjust how metadata and artists are presented in the library.</p>
+                <div class="settings-option">
+                    <label class="switch-label">
+                        <input type="checkbox" id="toggle-consolidate-artists" ${consolidateArtists ? 'checked' : ''}>
+                        Consolidate Featured Artists (e.g. merge "Artist ft. guest" under "Artist")
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('btn-run-deduplicate').addEventListener('click', runDeduplication);
+    document.getElementById('toggle-consolidate-artists').addEventListener('change', (e) => {
+        consolidateArtists = e.target.checked;
+        localStorage.setItem('consolidateArtists', consolidateArtists);
+    });
+}
+
+async function runDeduplication() {
+    const btn = document.getElementById('btn-run-deduplicate');
+    const resultDiv = document.getElementById('deduplicate-result');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing Database...';
+    resultDiv.style.display = 'block';
+    resultDiv.textContent = 'Deduplication script is running in the background...';
+    
+    try {
+        const response = await fetch('/api/deduplicate', { method: 'POST' });
+        if (!response.ok) throw new Error('Deduplicate API returned error');
+        const res = await response.json();
+        resultDiv.innerHTML = `<span style="color: var(--vibe-color); font-weight: 600;">${res.message}</span><br>Scanned: ${res.scanned} files | Duplicates Removed: ${res.duplicatesFound}`;
+        await loadLibrary();
+    } catch (err) {
+        resultDiv.textContent = 'Error: Failed to execute library deduplication.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Library Deduplicator';
     }
 }
