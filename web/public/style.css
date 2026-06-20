@@ -1120,3 +1120,70 @@ body {
     color: #000;
     border-radius: 50%;
 }
+
+/* Lyrics Panel Styling */
+.lyrics-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70dvh;
+    background: rgba(8, 8, 12, 0.98);
+    backdrop-filter: blur(30px);
+    border-top: 1px solid var(--border-color);
+    border-radius: 20px 20px 0 0;
+    z-index: 11000;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.lyrics-panel.active {
+    transform: translateY(0);
+}
+
+.lyrics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lyrics-header h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.lyrics-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.lyrics-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+    font-size: 18px;
+    line-height: 2.2;
+    text-align: center;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.lyrics-content p {
+    margin: 0 0 16px 0;
+}
+
+.lyrics-content .status-msg {
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-top: 40px;
+}

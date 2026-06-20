@@ -350,6 +350,94 @@ app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
     }
 });
 
+// Helper to extract primary artist for searches
+function cleanArtist(artist) {
+    if (!artist) return '';
+    return artist.split(/\s+(?:ft\.?|feat\.?|featuring|with|vs\.?|and|&)\s+/i)[0].trim();
+}
+
+// Metadata Artist endpoint
+app.get('/api/metadata/artist', async (req, res) => {
+    try {
+        const { name } = req.query;
+        if (!name) return res.status(400).json({ error: 'Name is required' });
+        console.log(`GET /api/metadata/artist - Fetching metadata for: ${name}`);
+        
+        const cleaned = cleanArtist(name);
+        const response = await fetch(`https://www.theaudiodb.com/api/v1/json/2/search.php?s=${encodeURIComponent(cleaned)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        if (data && data.artists && data.artists.length > 0) {
+            const artist = data.artists[0];
+            return res.json({
+                biography: artist.strBiographyEN,
+                image: artist.strArtistThumb,
+                logo: artist.strArtistLogo,
+                banner: artist.strArtistBanner,
+                genre: artist.strGenre,
+                style: artist.strStyle
+            });
+        }
+        res.status(404).json({ error: 'Artist not found' });
+    } catch (e) {
+        console.error('Error fetching artist metadata:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Metadata Album endpoint
+app.get('/api/metadata/album', async (req, res) => {
+    try {
+        const { artist, album } = req.query;
+        if (!artist || !album) return res.status(400).json({ error: 'Artist and album are required' });
+        console.log(`GET /api/metadata/album - Fetching metadata for: ${artist} - ${album}`);
+        
+        const cleanedArtist = cleanArtist(artist);
+        const response = await fetch(`https://www.theaudiodb.com/api/v1/json/2/searchalbum.php?s=${encodeURIComponent(cleanedArtist)}&a=${encodeURIComponent(album)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        if (data && data.album && data.album.length > 0) {
+            const albumData = data.album[0];
+            return res.json({
+                description: albumData.strDescriptionEN,
+                year: albumData.intYearReleased,
+                genre: albumData.strGenre,
+                artwork: albumData.strAlbumThumb
+            });
+        }
+        res.status(404).json({ error: 'Album not found' });
+    } catch (e) {
+        console.error('Error fetching album metadata:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Lyrics endpoint
+app.get('/api/metadata/lyrics', async (req, res) => {
+    try {
+        const { artist, title } = req.query;
+        if (!artist || !title) return res.status(400).json({ error: 'Artist and title are required' });
+        console.log(`GET /api/metadata/lyrics - Fetching lyrics for: ${artist} - ${title}`);
+        
+        const cleanedArtist = cleanArtist(artist);
+        const response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(cleanedArtist)}/${encodeURIComponent(title)}`);
+        if (!response.ok) {
+            if (response.status === 404) return res.status(404).json({ error: 'Lyrics not found' });
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data && data.lyrics) {
+            return res.json({ lyrics: data.lyrics });
+        }
+        res.status(404).json({ error: 'Lyrics not found' });
+    } catch (e) {
+        console.error('Error fetching lyrics:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/api/deduplicate', async (req, res) => {
     console.log('POST /api/deduplicate - Running library deduplication');
     try {
