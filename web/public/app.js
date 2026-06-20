@@ -262,6 +262,10 @@ function playTrack(index) {
 }
 
 function setupAudioListeners() {
+    if (volumeBar && audioElement) {
+        audioElement.volume = volumeBar.value / 100;
+    }
+
     btnPlayPause.addEventListener('click', () => {
         const playPausePath = document.getElementById('play-pause-path');
         const fpPlayPausePath = document.getElementById('fp-play-pause-path');
