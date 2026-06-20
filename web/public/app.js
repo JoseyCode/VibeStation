@@ -46,6 +46,13 @@ const fpBtnPrev = document.getElementById('fp-btn-prev');
 const fpBtnPlayPause = document.getElementById('fp-btn-play-pause');
 const fpBtnNext = document.getElementById('fp-btn-next');
 
+// Lyrics elements
+const lyricsPanel = document.getElementById('lyrics-panel');
+const lyricsCloseBtn = document.getElementById('lyrics-close-btn');
+const lyricsContent = document.getElementById('lyrics-content');
+const btnLyrics = document.getElementById('btn-lyrics');
+const fpBtnLyrics = document.getElementById('fp-btn-lyrics');
+
 let songs = [];
 let currentQueue = [];
 let currentSongIndex = -1;
@@ -62,6 +69,7 @@ window.addEventListener('load', async () => {
     await loadLibrary();
     setupAudioListeners();
     setupFullscreenPlayer();
+    setupLyricsListeners();
 });
 
 function setupFullscreenPlayer() {
@@ -84,6 +92,56 @@ function setupFullscreenPlayer() {
         if (!audioElement.duration) return;
         audioElement.currentTime = (fpSeekBar.value / 100) * audioElement.duration;
     });
+}
+
+function setupLyricsListeners() {
+    lyricsCloseBtn.addEventListener('click', () => {
+        lyricsPanel.classList.remove('active');
+    });
+    btnLyrics.addEventListener('click', toggleLyrics);
+    if (fpBtnLyrics) {
+        fpBtnLyrics.addEventListener('click', toggleLyrics);
+    }
+}
+
+function toggleLyrics() {
+    if (lyricsPanel.classList.contains('active')) {
+        lyricsPanel.classList.remove('active');
+    } else {
+        lyricsPanel.classList.add('active');
+        loadLyrics();
+    }
+}
+
+async function loadLyrics() {
+    if (currentSongIndex === -1) {
+        lyricsContent.innerHTML = '<p class="status-msg">No song playing</p>';
+        return;
+    }
+    const song = currentQueue[currentSongIndex];
+    lyricsContent.innerHTML = '<p class="status-msg">Searching lyrics...</p>';
+    try {
+        const response = await fetch(`/api/metadata/lyrics?artist=${encodeURIComponent(song.artist)}&title=${encodeURIComponent(song.title)}`);
+        const data = await response.json();
+        if (data && data.lyrics) {
+            lyricsContent.innerHTML = data.lyrics.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
+        } else {
+            lyricsContent.innerHTML = '<p class="status-msg">Lyrics not found for this track.</p>';
+        }
+    } catch (e) {
+        lyricsContent.innerHTML = '<p class="status-msg">Lyrics not found for this track.</p>';
+    }
+}
+
+function shufflePlay() {
+    if (currentQueue.length === 0) return;
+    const shuffled = [...currentQueue];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    currentQueue = shuffled;
+    playTrack(0);
 }
 
 async function loadLibrary() {
@@ -194,6 +252,10 @@ function playTrack(index) {
                 { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
             ]
         });
+    }
+
+    if (lyricsPanel.classList.contains('active')) {
+        loadLyrics();
     }
 
     initVisualizer();
@@ -602,9 +664,11 @@ function viewAlbumDetail(encodedName) {
                 <span class="detail-meta">${album.artist} • ${album.tracks.length} track(s)</span>
                 <div class="detail-actions">
                     <button class="btn-primary" onclick="playTrack(0)">Play All</button>
+                    <button class="btn-secondary" onclick="shufflePlay()">Shuffle Play</button>
                 </div>
             </div>
         </div>
+        <div id="album-desc" class="detail-summary" style="display: none; margin-bottom: 24px; max-height: 180px; overflow-y: auto; padding: 16px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; line-height: 1.6; color: var(--text-muted);"></div>
         <div class="tracks-list">
             ${filteredTracks.map((song, index) => `
                 <div class="track-row" onclick="playTrack(${index})">
@@ -617,6 +681,16 @@ function viewAlbumDetail(encodedName) {
             `).join('')}
         </div>
     `;
+
+    fetch(`/api/metadata/album?artist=${encodeURIComponent(album.artist)}&album=${encodeURIComponent(album.name)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.description) {
+                const descElement = document.getElementById('album-desc');
+                descElement.innerHTML = `<p>${data.description.replace(/\n/g, '<br>')}</p>`;
+                descElement.style.display = 'block';
+            }
+        }).catch(() => {});
 }
 
 function getPrimaryArtist(artist) {
@@ -705,9 +779,11 @@ function viewArtistDetail(encodedName) {
                 <span class="detail-meta">${artist.tracks.length} track(s)</span>
                 <div class="detail-actions">
                     <button class="btn-primary" onclick="playTrack(0)">Play All</button>
+                    <button class="btn-secondary" onclick="shufflePlay()">Shuffle Play</button>
                 </div>
             </div>
         </div>
+        <div id="artist-bio" class="detail-summary" style="display: none; margin-bottom: 24px; max-height: 180px; overflow-y: auto; padding: 16px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; line-height: 1.6; color: var(--text-muted);"></div>
         <div class="tracks-list">
             ${filteredTracks.map((song, index) => `
                 <div class="track-row" onclick="playTrack(${index})">
@@ -720,6 +796,19 @@ function viewArtistDetail(encodedName) {
             `).join('')}
         </div>
     `;
+
+    fetch(`/api/metadata/artist?name=${encodeURIComponent(artist.name)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.biography) {
+                const bioElement = document.getElementById('artist-bio');
+                bioElement.innerHTML = `<p>${data.biography.replace(/\n/g, '<br>')}</p>`;
+                bioElement.style.display = 'block';
+            }
+            if (data && data.image) {
+                document.querySelector('.detail-art').src = data.image;
+            }
+        }).catch(() => {});
 }
 
 function showPlaylists() {
@@ -866,6 +955,7 @@ function viewPlaylistDetail(encodedName) {
                 <span class="detail-meta">${playlistSongs.length} track(s)</span>
                 <div class="detail-actions">
                     <button class="btn-primary" ${hasTracks ? '' : 'disabled'} onclick="playTrack(0)">Play All</button>
+                    <button class="btn-secondary" ${hasTracks ? '' : 'disabled'} onclick="shufflePlay()">Shuffle Play</button>
                     <button class="btn-secondary" onclick="renamePlaylist('${encodeURIComponent(playlist.name)}')">Rename</button>
                     <button class="btn-secondary" onclick="triggerPlaylistCoverUpload('${encodeURIComponent(playlist.name)}')">Change Cover</button>
                     <button class="btn-secondary" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" onclick="deletePlaylist('${encodeURIComponent(playlist.name)}')">Delete Playlist</button>
