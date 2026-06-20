@@ -16,7 +16,7 @@ public class VisualizerView extends View {
     private final Paint wavePaint = new Paint();
     private final Path wavePath = new Path();
     private static final int WAVE_ALPHA = 70;
-    private static final float DAMPING_FACTOR = 0.20f;
+    private static final float DAMPING_FACTOR = 0.24f;
 
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -63,9 +63,9 @@ public class VisualizerView extends View {
                     }
                 }
                 float magnitude = count > 0 ? (sum / count) : 0;
-                float amplitude = (magnitude / 128f) * (width * 0.5f);
-                if (amplitude > width * 0.6f) {
-                    amplitude = width * 0.6f;
+                float amplitude = (magnitude / 128f) * (width * 0.35f);
+                if (amplitude > width * 0.45f) {
+                    amplitude = width * 0.45f;
                 }
                 targetAmplitudes[i] = amplitude;
             }
