@@ -666,9 +666,9 @@ function viewAlbumDetail(encodedName) {
                     <button class="btn-primary" onclick="playTrack(0)">Play All</button>
                     <button class="btn-secondary" onclick="shufflePlay()">Shuffle Play</button>
                 </div>
+                <div id="album-desc" class="detail-summary" style="display: none;" onclick="this.classList.toggle('expanded')"></div>
             </div>
         </div>
-        <div id="album-desc" class="detail-summary" style="display: none; margin-bottom: 24px; max-height: 180px; overflow-y: auto; padding: 16px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; line-height: 1.6; color: var(--text-muted);"></div>
         <div class="tracks-list">
             ${filteredTracks.map((song, index) => `
                 <div class="track-row" onclick="playTrack(${index})">
@@ -738,17 +738,35 @@ function showArtists() {
 
     tracksContainer.innerHTML = `
         <div class="grid-container">
-            ${filteredArtists.map(artist => `
-                <div class="grid-card" onclick="viewArtistDetail('${encodeURIComponent(artist.name)}')">
-                    <div class="card-art-container" style="border-radius: 50%;">
-                        <img class="card-art" src="/api/artwork/${artist.artworkSongId}" alt="${artist.name}">
+            ${filteredArtists.map(artist => {
+                const cachedArt = localStorage.getItem('artist_art_' + artist.name);
+                const imgSrc = cachedArt ? cachedArt : `/api/artwork/${artist.artworkSongId}`;
+                return `
+                    <div class="grid-card" onclick="viewArtistDetail('${encodeURIComponent(artist.name)}')">
+                        <div class="card-art-container" style="border-radius: 50%;">
+                            <img class="card-art" id="artist-grid-art-${encodeURIComponent(artist.name)}" src="${imgSrc}" alt="${artist.name}">
+                        </div>
+                        <div class="card-title">${artist.name}</div>
+                        <div class="card-subtitle">${artist.tracks.length} Track(s)</div>
                     </div>
-                    <div class="card-title">${artist.name}</div>
-                    <div class="card-subtitle">${artist.tracks.length} Track(s)</div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
+
+    filteredArtists.forEach(artist => {
+        if (!localStorage.getItem('artist_art_' + artist.name)) {
+            fetch(`/api/metadata/artist?name=${encodeURIComponent(artist.name)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.image) {
+                        localStorage.setItem('artist_art_' + artist.name, data.image);
+                        const img = document.getElementById(`artist-grid-art-${encodeURIComponent(artist.name)}`);
+                        if (img) img.src = data.image;
+                    }
+                }).catch(() => {});
+        }
+    });
 }
 
 function viewArtistDetail(encodedName) {
@@ -781,9 +799,9 @@ function viewArtistDetail(encodedName) {
                     <button class="btn-primary" onclick="playTrack(0)">Play All</button>
                     <button class="btn-secondary" onclick="shufflePlay()">Shuffle Play</button>
                 </div>
+                <div id="artist-bio" class="detail-summary" style="display: none;" onclick="this.classList.toggle('expanded')"></div>
             </div>
         </div>
-        <div id="artist-bio" class="detail-summary" style="display: none; margin-bottom: 24px; max-height: 180px; overflow-y: auto; padding: 16px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; line-height: 1.6; color: var(--text-muted);"></div>
         <div class="tracks-list">
             ${filteredTracks.map((song, index) => `
                 <div class="track-row" onclick="playTrack(${index})">
@@ -806,6 +824,7 @@ function viewArtistDetail(encodedName) {
                 bioElement.style.display = 'block';
             }
             if (data && data.image) {
+                localStorage.setItem('artist_art_' + artist.name, data.image);
                 document.querySelector('.detail-art').src = data.image;
             }
         }).catch(() => {});
