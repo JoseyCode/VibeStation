@@ -26,6 +26,10 @@ const tracksContainer = document.getElementById('tracks-container');
 const searchBar = document.getElementById('search-bar');
 const fileInput = document.getElementById('file-input');
 const btnUpload = document.getElementById('btn-upload');
+const btnShowLibrary = document.getElementById('btn-show-library');
+const btnShowAlbums = document.getElementById('btn-show-albums');
+const btnShowArtists = document.getElementById('btn-show-artists');
+const btnShowPlaylists = document.getElementById('btn-show-playlists');
 
 let songs = [];
 let currentQueue = [];
@@ -33,6 +37,9 @@ let currentSongIndex = -1;
 let audioCtx = null;
 let analyser = null;
 let dataArray = null;
+let playlists = [];
+let currentView = 'library';
+let currentDetailItem = null;
 
 // Initialize layout
 window.addEventListener('load', async () => {
@@ -44,8 +51,14 @@ async function loadLibrary() {
     try {
         const response = await fetch('/api/songs');
         songs = await response.json();
+        try {
+            const plResponse = await fetch('/api/playlists');
+            playlists = await plResponse.json();
+        } catch (e) {
+            console.error('Failed to load playlists', e);
+        }
         currentQueue = [...songs];
-        renderTracks(currentQueue);
+        showLibrary();
     } catch (err) {
         tracksContainer.innerHTML = `<p class="status-msg">Failed to connect to VibeStation library server.</p>`;
     }
@@ -63,6 +76,7 @@ function renderTracks(trackList) {
             <div class="row-title">${song.title}</div>
             <div class="row-artist">${song.artist}</div>
             <div class="row-album">${song.album}</div>
+            <button class="btn-add-to-playlist" onclick="event.stopPropagation(); openAddToPlaylistModal('${song.id}')">+</button>
         </div>
     `).join('');
 }
@@ -160,13 +174,55 @@ function setupAudioListeners() {
     });
 
     searchBar.addEventListener('input', () => {
-        const query = searchBar.value.toLowerCase().trim();
-        currentQueue = songs.filter(s => 
-            s.title.toLowerCase().includes(query) || 
-            s.artist.toLowerCase().includes(query) || 
-            s.album.toLowerCase().includes(query)
-        );
-        renderTracks(currentQueue);
+        if (currentView === 'library') {
+            showLibrary();
+        } else if (currentView === 'albums') {
+            showAlbums();
+        } else if (currentView === 'artists') {
+            showArtists();
+        } else if (currentView === 'playlists') {
+            showPlaylists();
+        } else if (currentView === 'album-detail') {
+            viewAlbumDetail(encodeURIComponent(currentDetailItem));
+        } else if (currentView === 'artist-detail') {
+            viewArtistDetail(encodeURIComponent(currentDetailItem));
+        } else if (currentView === 'playlist-detail') {
+            viewPlaylistDetail(encodeURIComponent(currentDetailItem));
+        }
+    });
+
+    // Tab switching event listeners
+    btnShowLibrary.addEventListener('click', () => {
+        searchBar.value = '';
+        showLibrary();
+    });
+    btnShowAlbums.addEventListener('click', () => {
+        searchBar.value = '';
+        showAlbums();
+    });
+    btnShowArtists.addEventListener('click', () => {
+        searchBar.value = '';
+        showArtists();
+    });
+    btnShowPlaylists.addEventListener('click', () => {
+        searchBar.value = '';
+        showPlaylists();
+    });
+
+    // Add to playlist modal event listeners
+    const btnModalCreatePlaylist = document.getElementById('btn-modal-create-playlist');
+    if (btnModalCreatePlaylist) {
+        btnModalCreatePlaylist.addEventListener('click', modalCreatePlaylist);
+    }
+    const closePlaylistModalBtn = document.getElementById('close-playlist-modal');
+    if (closePlaylistModalBtn) {
+        closePlaylistModalBtn.addEventListener('click', closePlaylistModal);
+    }
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('playlist-modal');
+        if (event.target === modal) {
+            closePlaylistModal();
+        }
     });
 
     // Manual file selector trigger
@@ -337,4 +393,435 @@ function initVisualizer() {
     }
     
     draw();
+}
+
+function showLibrary() {
+    currentView = 'library';
+    updateActiveNavItem('btn-show-library');
+    document.getElementById('view-title').textContent = 'Your Collection';
+    
+    const query = searchBar.value.toLowerCase().trim();
+    currentQueue = songs.filter(s => 
+        s.title.toLowerCase().includes(query) || 
+        s.artist.toLowerCase().includes(query) || 
+        s.album.toLowerCase().includes(query)
+    );
+    renderTracks(currentQueue);
+}
+
+function updateActiveNavItem(activeId) {
+    const items = document.querySelectorAll('.nav-item');
+    items.forEach(item => {
+        if (item.id === activeId) {
+            item.classList.add('active');
+        } else if (item.id !== 'btn-upload') {
+            item.classList.remove('active');
+        }
+    });
+}
+
+function getAlbums() {
+    const albumMap = new Map();
+    songs.forEach(song => {
+        const key = song.album || 'Unknown Album';
+        if (!albumMap.has(key)) {
+            albumMap.set(key, {
+                name: key,
+                artist: song.artist || 'Unknown Artist',
+                tracks: [],
+                artworkSongId: song.id
+            });
+        }
+        albumMap.get(key).tracks.push(song);
+    });
+    return Array.from(albumMap.values());
+}
+
+function showAlbums() {
+    currentView = 'albums';
+    updateActiveNavItem('btn-show-albums');
+    document.getElementById('view-title').textContent = 'Albums';
+    
+    const albums = getAlbums();
+    const query = searchBar.value.toLowerCase().trim();
+    const filteredAlbums = albums.filter(a => 
+        a.name.toLowerCase().includes(query) || 
+        a.artist.toLowerCase().includes(query)
+    );
+
+    if (filteredAlbums.length === 0) {
+        tracksContainer.innerHTML = `<p class="status-msg">No albums found.</p>`;
+        return;
+    }
+
+    tracksContainer.innerHTML = `
+        <div class="grid-container">
+            ${filteredAlbums.map(album => `
+                <div class="grid-card" onclick="viewAlbumDetail('${encodeURIComponent(album.name)}')">
+                    <div class="card-art-container">
+                        <img class="card-art" src="/api/artwork/${album.artworkSongId}" alt="${album.name}">
+                    </div>
+                    <div class="card-title">${album.name}</div>
+                    <div class="card-subtitle">${album.artist}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function viewAlbumDetail(encodedName) {
+    const albumName = decodeURIComponent(encodedName);
+    currentDetailItem = albumName;
+    const album = getAlbums().find(a => a.name === albumName);
+    if (!album) return;
+
+    currentView = 'album-detail';
+    updateActiveNavItem('btn-show-albums');
+    document.getElementById('view-title').textContent = albumName;
+    
+    const query = searchBar.value.toLowerCase().trim();
+    const filteredTracks = album.tracks.filter(song => 
+        song.title.toLowerCase().includes(query) || 
+        song.artist.toLowerCase().includes(query)
+    );
+
+    currentQueue = [...filteredTracks];
+
+    tracksContainer.innerHTML = `
+        <button class="back-btn" onclick="searchBar.value=''; showAlbums()">← Back to Albums</button>
+        <div class="detail-header">
+            <img class="detail-art" src="/api/artwork/${album.artworkSongId}" alt="${album.name}">
+            <div class="detail-info">
+                <span class="detail-type">Album</span>
+                <h1 class="detail-title">${album.name}</h1>
+                <span class="detail-meta">${album.artist} • ${album.tracks.length} track(s)</span>
+                <div class="detail-actions">
+                    <button class="btn-primary" onclick="playTrack(0)">Play All</button>
+                </div>
+            </div>
+        </div>
+        <div class="tracks-list">
+            ${filteredTracks.map((song, index) => `
+                <div class="track-row" onclick="playTrack(${index})">
+                    <img class="row-art" src="/api/artwork/${song.id}" alt="Cover">
+                    <div class="row-title">${song.title}</div>
+                    <div class="row-artist">${song.artist}</div>
+                    <div class="row-album">${song.album}</div>
+                    <button class="btn-add-to-playlist" onclick="event.stopPropagation(); openAddToPlaylistModal('${song.id}')">+</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function getArtists() {
+    const artistMap = new Map();
+    songs.forEach(song => {
+        const key = song.artist || 'Unknown Artist';
+        if (!artistMap.has(key)) {
+            artistMap.set(key, {
+                name: key,
+                tracks: [],
+                artworkSongId: song.id
+            });
+        }
+        artistMap.get(key).tracks.push(song);
+    });
+    return Array.from(artistMap.values());
+}
+
+function showArtists() {
+    currentView = 'artists';
+    updateActiveNavItem('btn-show-artists');
+    document.getElementById('view-title').textContent = 'Artists';
+    
+    const artists = getArtists();
+    const query = searchBar.value.toLowerCase().trim();
+    const filteredArtists = artists.filter(a => 
+        a.name.toLowerCase().includes(query)
+    );
+
+    if (filteredArtists.length === 0) {
+        tracksContainer.innerHTML = `<p class="status-msg">No artists found.</p>`;
+        return;
+    }
+
+    tracksContainer.innerHTML = `
+        <div class="grid-container">
+            ${filteredArtists.map(artist => `
+                <div class="grid-card" onclick="viewArtistDetail('${encodeURIComponent(artist.name)}')">
+                    <div class="card-art-container" style="border-radius: 50%;">
+                        <img class="card-art" src="/api/artwork/${artist.artworkSongId}" alt="${artist.name}">
+                    </div>
+                    <div class="card-title">${artist.name}</div>
+                    <div class="card-subtitle">${artist.tracks.length} Track(s)</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function viewArtistDetail(encodedName) {
+    const artistName = decodeURIComponent(encodedName);
+    currentDetailItem = artistName;
+    const artist = getArtists().find(a => a.name === artistName);
+    if (!artist) return;
+
+    currentView = 'artist-detail';
+    updateActiveNavItem('btn-show-artists');
+    document.getElementById('view-title').textContent = artistName;
+    
+    const query = searchBar.value.toLowerCase().trim();
+    const filteredTracks = artist.tracks.filter(song => 
+        song.title.toLowerCase().includes(query) || 
+        song.album.toLowerCase().includes(query)
+    );
+
+    currentQueue = [...filteredTracks];
+
+    tracksContainer.innerHTML = `
+        <button class="back-btn" onclick="searchBar.value=''; showArtists()">← Back to Artists</button>
+        <div class="detail-header">
+            <img class="detail-art" src="/api/artwork/${artist.artworkSongId}" alt="${artist.name}" style="border-radius: 50%;">
+            <div class="detail-info">
+                <span class="detail-type">Artist</span>
+                <h1 class="detail-title">${artist.name}</h1>
+                <span class="detail-meta">${artist.tracks.length} track(s)</span>
+                <div class="detail-actions">
+                    <button class="btn-primary" onclick="playTrack(0)">Play All</button>
+                </div>
+            </div>
+        </div>
+        <div class="tracks-list">
+            ${filteredTracks.map((song, index) => `
+                <div class="track-row" onclick="playTrack(${index})">
+                    <img class="row-art" src="/api/artwork/${song.id}" alt="Cover">
+                    <div class="row-title">${song.title}</div>
+                    <div class="row-artist">${song.artist}</div>
+                    <div class="row-album">${song.album}</div>
+                    <button class="btn-add-to-playlist" onclick="event.stopPropagation(); openAddToPlaylistModal('${song.id}')">+</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function showPlaylists() {
+    currentView = 'playlists';
+    updateActiveNavItem('btn-show-playlists');
+    document.getElementById('view-title').textContent = 'Playlists';
+
+    const query = searchBar.value.toLowerCase().trim();
+    const filteredPlaylists = playlists.filter(p => 
+        p.name.toLowerCase().includes(query)
+    );
+
+    let html = `
+        <div class="playlist-create-bar">
+            <input type="text" id="playlist-name-input" class="playlist-input" placeholder="New playlist name...">
+            <button class="btn-primary" onclick="createPlaylist()">Create Playlist</button>
+        </div>
+    `;
+
+    if (filteredPlaylists.length === 0) {
+        html += `<p class="status-msg">No playlists found. Create one above!</p>`;
+    } else {
+        html += `
+            <div class="grid-container">
+                ${filteredPlaylists.map(playlist => {
+                    const hasTracks = playlist.songData && playlist.songData.length > 0;
+                    const artworkUrl = hasTracks ? `/api/artwork/${playlist.songData[0].id}` : 'placeholder.png';
+                    return `
+                        <div class="grid-card" onclick="viewPlaylistDetail('${encodeURIComponent(playlist.name)}')">
+                            <div class="card-art-container">
+                                <img class="card-art" src="${artworkUrl}" alt="${playlist.name}">
+                            </div>
+                            <div class="card-title">${playlist.name}</div>
+                            <div class="card-subtitle">${playlist.songData ? playlist.songData.length : 0} Track(s)</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    tracksContainer.innerHTML = html;
+}
+
+async function createPlaylist(name = null) {
+    const input = document.getElementById('playlist-name-input');
+    const playlistName = name || (input ? input.value.trim() : '');
+    if (!playlistName) return;
+
+    if (playlists.some(p => p.name.toLowerCase() === playlistName.toLowerCase())) {
+        alert('A playlist with that name already exists!');
+        return;
+    }
+
+    const newPlaylist = {
+        name: playlistName,
+        songData: []
+    };
+    playlists.push(newPlaylist);
+    
+    if (input) input.value = '';
+
+    await syncPlaylists();
+    showPlaylists();
+}
+
+async function syncPlaylists() {
+    try {
+        const response = await fetch('/api/playlists', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(playlists)
+        });
+        playlists = await response.json();
+    } catch (err) {
+        console.error('Failed to sync playlists with server:', err);
+    }
+}
+
+function viewPlaylistDetail(encodedName) {
+    const playlistName = decodeURIComponent(encodedName);
+    currentDetailItem = playlistName;
+    const playlist = playlists.find(p => p.name === playlistName);
+    if (!playlist) return;
+
+    currentView = 'playlist-detail';
+    updateActiveNavItem('btn-show-playlists');
+    document.getElementById('view-title').textContent = playlistName;
+    
+    const query = searchBar.value.toLowerCase().trim();
+    const playlistSongs = playlist.songData || [];
+    const filteredTracks = playlistSongs.filter(song => 
+        song.title.toLowerCase().includes(query) || 
+        song.artist.toLowerCase().includes(query) || 
+        song.album.toLowerCase().includes(query)
+    );
+
+    currentQueue = [...filteredTracks];
+
+    const hasTracks = playlistSongs.length > 0;
+    const artworkUrl = hasTracks ? `/api/artwork/${playlistSongs[0].id}` : 'placeholder.png';
+
+    tracksContainer.innerHTML = `
+        <button class="back-btn" onclick="searchBar.value=''; showPlaylists()">← Back to Playlists</button>
+        <div class="detail-header">
+            <img class="detail-art" src="${artworkUrl}" alt="${playlist.name}">
+            <div class="detail-info">
+                <span class="detail-type">Playlist</span>
+                <h1 class="detail-title">${playlist.name}</h1>
+                <span class="detail-meta">${playlistSongs.length} track(s)</span>
+                <div class="detail-actions">
+                    <button class="btn-primary" ${hasTracks ? '' : 'disabled'} onclick="playTrack(0)">Play All</button>
+                    <button class="btn-secondary" onclick="deletePlaylist('${encodeURIComponent(playlist.name)}')">Delete Playlist</button>
+                </div>
+            </div>
+        </div>
+        <div class="tracks-list">
+            ${filteredTracks.map((song, index) => `
+                <div class="track-row" onclick="playTrack(${index})">
+                    <img class="row-art" src="/api/artwork/${song.id}" alt="Cover">
+                    <div class="row-title">${song.title}</div>
+                    <div class="row-artist">${song.artist}</div>
+                    <div class="row-album">${song.album}</div>
+                    <button class="btn-add-to-playlist" style="font-size: 16px; color: #ef4444;" onclick="event.stopPropagation(); removeTrackFromPlaylist('${encodeURIComponent(playlist.name)}', '${song.id}')">✕</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function deletePlaylist(encodedName) {
+    const playlistName = decodeURIComponent(encodedName);
+    if (!confirm(`Are you sure you want to delete the playlist "${playlistName}"?`)) return;
+
+    playlists = playlists.filter(p => p.name !== playlistName);
+    await syncPlaylists();
+    showPlaylists();
+}
+
+async function removeTrackFromPlaylist(encodedPlaylistName, songId) {
+    const playlistName = decodeURIComponent(encodedPlaylistName);
+    const playlist = playlists.find(p => p.name === playlistName);
+    if (!playlist) return;
+
+    playlist.songData = playlist.songData.filter(s => s.id !== songId);
+    await syncPlaylists();
+    viewPlaylistDetail(encodedPlaylistName);
+}
+
+let songIdToAdd = null;
+
+function openAddToPlaylistModal(songId) {
+    songIdToAdd = songId;
+    const modal = document.getElementById('playlist-modal');
+    const listContainer = document.getElementById('modal-playlists-list');
+    
+    listContainer.innerHTML = '';
+    
+    if (playlists.length === 0) {
+        listContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">No playlists. Create one below!</p>';
+    } else {
+        listContainer.innerHTML = playlists.map(playlist => `
+            <div class="modal-list-item" onclick="addTrackToPlaylist('${encodeURIComponent(playlist.name)}')">
+                ${playlist.name}
+            </div>
+        `).join('');
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closePlaylistModal() {
+    const modal = document.getElementById('playlist-modal');
+    modal.style.display = 'none';
+    songIdToAdd = null;
+    document.getElementById('modal-playlist-name').value = '';
+}
+
+async function addTrackToPlaylist(encodedPlaylistName) {
+    const playlistName = decodeURIComponent(encodedPlaylistName);
+    const playlist = playlists.find(p => p.name === playlistName);
+    const song = songs.find(s => s.id === songIdToAdd);
+    
+    if (playlist && song) {
+        if (playlist.songData.some(s => s.id === song.id)) {
+            alert('This track is already in the playlist!');
+            closePlaylistModal();
+            return;
+        }
+        playlist.songData.push(song);
+        await syncPlaylists();
+    }
+    
+    closePlaylistModal();
+}
+
+async function modalCreatePlaylist() {
+    const input = document.getElementById('modal-playlist-name');
+    const name = input.value.trim();
+    if (!name) return;
+
+    if (playlists.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        alert('A playlist with that name already exists!');
+        return;
+    }
+
+    const newPlaylist = {
+        name: name,
+        songData: []
+    };
+    playlists.push(newPlaylist);
+    input.value = '';
+
+    await syncPlaylists();
+    
+    if (songIdToAdd) {
+        await addTrackToPlaylist(encodeURIComponent(name));
+    } else {
+        closePlaylistModal();
+    }
 }
