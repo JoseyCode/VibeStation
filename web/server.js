@@ -36,6 +36,13 @@ function getMp3Files(dir, fileList = []) {
         const files = fs.readdirSync(dir);
         files.forEach(file => {
             const filePath = path.join(dir, file);
+            
+            const filenameByteLength = Buffer.byteLength(file, 'utf8');
+            if (filenameByteLength >= 250) {
+                console.warn(`Skipping scan of extremely long filename (${filenameByteLength} bytes): ${file}`);
+                return;
+            }
+
             try {
                 const stat = fs.statSync(filePath);
                 if (stat.isDirectory()) {
