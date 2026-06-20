@@ -32,6 +32,11 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Foreground service that handles audio playback using Android's MediaPlayer.
+ * Integrates with MediaSessionCompat to provide system notification controls,
+ * lock-screen media actions, and coordinates audio focus requests with the OS.
+ */
 public class AudioService extends Service {
 
     public static final String ACTION_PLAY_PAUSE = "com.example.retroclone.ACTION_PLAY_PAUSE";
@@ -54,32 +59,55 @@ public class AudioService extends Service {
     private Models.Song currentSong;
     private Bitmap currentAlbumArt;
 
+    /**
+     * Interface callback triggered when playback state changes or the active track changes.
+     */
     public interface ServiceCallback {
+        /** Triggered when the service changes active track, passing metadata and art. */
         void onTrackChanged(Models.Song song, Bitmap albumArt);
+        /** Triggered when active playback starts or pauses. */
         void onPlaybackStateChanged(boolean isPlaying);
     }
 
     private ServiceCallback serviceCallback;
 
+    /**
+     * Returns the active audio session ID for visualizer attachment.
+     *
+     * @return Unique ID mapping to the activeMediaPlayer session.
+     */
     public int getAudioSessionId() {
         return mediaPlayer != null ? mediaPlayer.getAudioSessionId() : 0;
     }
 
+    /**
+     * Local Binder implementation returning this Service instance to bound Activities.
+     */
     public class LocalBinder extends Binder {
         AudioService getService() {
             return AudioService.this;
         }
     }
 
+    /**
+     * Service binding handler returning the service communication binder.
+     */
     @Override
     public IBinder onBind(Intent intent) {
         return serviceBinder;
     }
 
+    /**
+     * Attaches callback listener to receive player updates.
+     */
     public void setCallback(ServiceCallback callback) {
         this.serviceCallback = callback;
     }
 
+    /**
+     * Prepares components at initialization: MediaPlayer, notification channel,
+     * MediaSession registers, and AudioFocus change listeners.
+     */
     @Override
     public void onCreate() {
         super.onCreate();
@@ -94,12 +122,22 @@ public class AudioService extends Service {
         mediaPlayer.setOnCompletionListener(player -> playNext());
     }
 
+    /**
+     * Sets the active queue and starts playing a specific track within it.
+     *
+     * @param newQueue        ArrayList of songs mapping the new queue list.
+     * @param initialPosition Index position in list to begin playback at.
+     */
     public void setQueueAndPlay(ArrayList<Models.Song> newQueue, int initialPosition) {
         this.currentQueue = newQueue;
         this.currentIndex = initialPosition;
         playTrack();
     }
 
+    /**
+     * Prepares the MediaPlayer with the selected track URI from the queue.
+     * Requests OS audio focus before initiating.
+     */
     private void playTrack() {
         if (currentQueue.isEmpty() || currentIndex < 0 || currentIndex >= currentQueue.size()) {
             return;
@@ -127,6 +165,9 @@ public class AudioService extends Service {
         }
     }
 
+    /**
+     * Alternates playback state (Play/Pause) based on current MediaPlayer state.
+     */
     public void togglePlayPause() {
         if (currentSong == null) {
             return;
@@ -139,6 +180,9 @@ public class AudioService extends Service {
         updateSystemPlayerAndUI();
     }
 
+    /**
+     * Skips to the next song in the active queue list (wraps around on end).
+     */
     public void playNext() {
         if (currentQueue.isEmpty()) {
             return;
@@ -147,6 +191,9 @@ public class AudioService extends Service {
         playTrack();
     }
 
+    /**
+     * Skips to the previous song in the active queue list (wraps around on start).
+     */
     public void playPrev() {
         if (currentQueue.isEmpty()) {
             return;
@@ -155,32 +202,65 @@ public class AudioService extends Service {
         playTrack();
     }
 
+    /**
+     * Seeks to a designated time offset position in the current track.
+     *
+     * @param positionMs Target track location in milliseconds.
+     */
     public void seekTo(int positionMs) {
         if (mediaPlayer != null) {
             mediaPlayer.seekTo(positionMs);
         }
     }
 
+    /**
+     * Gets the current track progress position.
+     *
+     * @return Playback elapsed offset in milliseconds.
+     */
     public int getCurrentPosition() {
         return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
     }
 
+    /**
+     * Gets total duration of the active song.
+     *
+     * @return Total song length in milliseconds.
+     */
     public int getDuration() {
         return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
     }
 
+    /**
+     * Verifies if audio is currently playing.
+     *
+     * @return True if the MediaPlayer is playing, false otherwise.
+     */
     public boolean isPlaying() {
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }
 
+    /**
+     * Returns the active Song object.
+     *
+     * @return Currently loaded Song container.
+     */
     public Models.Song getCurrentSong() {
         return currentSong;
     }
 
+    /**
+     * Returns the loaded album art bitmap for the active song.
+     *
+     * @return Cached bitmap or null.
+     */
     public Bitmap getCurrentArt() {
         return currentAlbumArt;
     }
 
+    /**
+     * Handles service start action intents dispatched from notifications.
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction() != null) {
@@ -199,6 +279,12 @@ public class AudioService extends Service {
         return START_NOT_STICKY;
     }
 
+    /**
+     * Reads track album artwork on a background thread. Decimates the image resolution
+     * to prevent UI lags or Binder payload size constraint exceptions when sending to notification.
+     *
+     * @param trackUri Shared content resolver URI pointing to the track file path.
+     */
     private void loadAlbumArtAndNotify(Uri trackUri) {
         artworkExecutor.execute(() -> {
             currentAlbumArt = null;
@@ -228,6 +314,10 @@ public class AudioService extends Service {
         });
     }
 
+    /**
+     * Syncs playback changes across the system Media Session (for lock screens),
+     * updates the foreground notification, and alerts bound Activity callbacks.
+     */
     private void updateSystemPlayerAndUI() {
         if (currentSong == null) {
             return;
@@ -266,6 +356,13 @@ public class AudioService extends Service {
         }
     }
 
+    /**
+     * Builds the system media style notification showing player action buttons
+     * (Prev, Play/Pause, Next) and active metadata.
+     *
+     * @param isPlaying Active status indicating play or pause buttons.
+     * @return          Formed System Notification.
+     */
     private Notification buildNotification(boolean isPlaying) {
         Intent appLaunchIntent = new Intent(this, MainActivity.class);
         PendingIntent appPendingIntent = PendingIntent.getActivity(
@@ -313,6 +410,9 @@ public class AudioService extends Service {
                 .build();
     }
 
+    /**
+     * Instantiates audio focus listener details, pausing playback when focus is lost.
+     */
     private void setupAudioFocus() {
         audioFocusChangeListener = focusChangeState -> {
             if (focusChangeState == AudioManager.AUDIOFOCUS_LOSS || focusChangeState == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
@@ -323,6 +423,11 @@ public class AudioService extends Service {
         };
     }
 
+    /**
+     * Requests audio focus from the OS AudioManager. Adapts API levels (pre-Oreo vs modern Oreo+).
+     *
+     * @return True if focus was successfully granted, false otherwise.
+     */
     private boolean requestFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
@@ -338,6 +443,9 @@ public class AudioService extends Service {
         }
     }
 
+    /**
+     * Sets up MediaSessionCompat options and callback listener definitions.
+     */
     private void setupMediaSession() {
         mediaSession = new MediaSessionCompat(this, "VibeStation");
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -369,6 +477,9 @@ public class AudioService extends Service {
         mediaSession.setActive(true);
     }
 
+    /**
+     * Registers low-priority Notification Channels required by Android 8.0+ Oreo APIs.
+     */
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(
@@ -381,6 +492,10 @@ public class AudioService extends Service {
         }
     }
 
+    /**
+     * Service teardown callback. Releases MediaPlayer resources,
+     * destroys active MediaSessions, and terminates thread executors.
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();

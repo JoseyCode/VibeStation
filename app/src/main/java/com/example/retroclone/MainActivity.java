@@ -71,6 +71,11 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Main Activity for VibeStation. Coordinates UI, media lists (songs, albums, playlists),
+ * binds to the background AudioService, manages the visualizer view, handles search querying,
+ * handles runtime permissions, and imports/exports playlists.
+ */
 public class MainActivity extends AppCompatActivity implements AudioService.ServiceCallback {
 
     // Audio Playback Content Lists
@@ -153,7 +158,15 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private static final int QUALITY_MED = 2;
     private static final int QUALITY_HIGH = 1;
 
+    /**
+     * Connection handler for the bound AudioService, enabling callback registration and
+     * initial state synchronization when connection is established.
+     */
     private final ServiceConnection serviceConnection = new ServiceConnection() {
+        /**
+         * Triggered when binding succeeds. Retrieves the service binder, registers callbacks,
+         * and initializes playback controls if a track is already active.
+         */
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
@@ -167,18 +180,28 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             }
         }
 
+        /**
+         * Triggered if the service connection is unexpectedly lost.
+         */
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             isBound = false;
         }
     };
 
+    /**
+     * Initializes activity layouts, sets up LruCache for artwork, configures views,
+     * registers activity launchers, starts/binds AudioService, registers the back-button handler,
+     * and triggers permission checks.
+     *
+     * @param savedInstanceState Saved instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Configure dynamic bitmap cache based on runtime hardware memory
+        // Configure dynamic bitmap cache based on runtime hardware memory (allocating 25% of memory)
         final int maxMemoryKb = (int) (Runtime.getRuntime().maxMemory() / 1024);
         artworkCache = new LruCache<String, Bitmap>(maxMemoryKb / 4) {
             @Override
@@ -203,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-        // System back navigation handling
+        // System back navigation handling: collapse player panels or clear selections first
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -224,10 +247,21 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         checkPermissions();
     }
 
+    /**
+     * Triggers a subtle tactile haptic vibration keypress event on the targeted view.
+     *
+     * @param view View triggering the haptic feedback.
+     */
     private void triggerHapticFeedback(View view) {
         view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
     }
 
+    /**
+     * Configures the display refresh rate. If 120Hz option is enabled, it queries
+     * and selects the highest refresh rate mode supported by the hardware display.
+     *
+     * @param is120Hz Active boolean status flag.
+     */
     private void applyRefreshRate(boolean is120Hz) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             WindowManager.LayoutParams windowAttributes = getWindow().getAttributes();
@@ -249,6 +283,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Connects all layout widgets to their XML views, binds click listeners for playback
+     * controls, settings panel, playlist generation dialog, navigation menus, search filtering,
+     * and seek bar changes.
+     */
     private void setupViews() {
         rootRelativeLayout = findViewById(R.id.rootLayout);
         albumsGridView = findViewById(R.id.gridAlbums);
@@ -411,6 +450,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
     }
 
+    /**
+     * Initializes the system Visualizer object using the bound AudioService session ID.
+     * Binds FFT capture listeners to pipe frequency data to the visualizer wave view.
+     */
     private void setupVisualizer() {
         if (!isBound || audioService.getAudioSessionId() == 0) return;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
@@ -443,6 +486,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Service callback invoked when active track shifts. Updates text views, metadata art,
+     * reinitializes visualizer attachments, and generates dynamic background color palettes using Android Palette.
+     *
+     * @param song     The new Song record metadata.
+     * @param albumArt Bitmap art retrieved from metadata.
+     */
     @Override
     public void onTrackChanged(Models.Song song, Bitmap albumArt) {
         miniTitleTextView.setText(song.title);
@@ -461,6 +511,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if (albumArt != null) {
             miniArtImageView.setImageBitmap(albumArt);
 
+            // Generate an adaptive UI theme gradient matching the track artwork colors
             Palette.from(albumArt).generate(palette -> {
                 if (palette == null) return;
                 int vibrantColor = palette.getVibrantColor(0xFFFFFFFF);
@@ -493,6 +544,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Service callback invoked when audio changes playback status (e.g. pauses or starts).
+     * Automatically coordinates seekBar updating timers.
+     *
+     * @param isPlaying True if actively playing, false if paused.
+     */
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
         miniPlayButton.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
@@ -506,6 +563,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Recurring Runnable task updating the seek bar progress slider and time label.
+     */
     private final Runnable updateSeekBarTask = new Runnable() {
         @Override
         public void run() {
@@ -518,6 +578,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     };
 
+    /**
+     * Submits a playback queue and starting track offset to the bound AudioService.
+     *
+     * @param queue    List of Songs representing the queue.
+     * @param position Starting index position.
+     */
     private void playAudio(ArrayList<Models.Song> queue, int position) {
         if (isBound) {
             audioService.setQueueAndPlay(queue, position);
@@ -526,6 +592,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Toggles long-press batch action selection modes for songs. Manages selected
+     * track state sets and switches layout action toolbars.
+     *
+     * @param song Song target toggled.
+     */
     private void toggleSelectionMode(Models.Song song) {
         if (!isSelectionMode) {
             isSelectionMode = true;
@@ -548,6 +620,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Resets active batch choice selections, clearing selection tracking sets and
+     * swapping the action toolbar layout back to normal search mode.
+     */
     private void clearSelection() {
         isSelectionMode = false;
         selectedSongs.clear();
@@ -556,6 +632,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         refreshAllAdapters();
     }
 
+    /**
+     * Refreshes view state adapters for all collection lists on screen.
+     */
     private void refreshAllAdapters() {
         if (librarySongAdapter != null) librarySongAdapter.notifyDataSetChanged();
         if (detailSongListAdapter != null) detailSongListAdapter.notifyDataSetChanged();
@@ -563,6 +642,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if (playlistListAdapter != null) playlistListAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Displays a dialog selection list prompting users to assign all currently selected
+     * tracks to an existing playlist or create a new playlist with them.
+     */
     private void showBatchAddToPlaylistDialog() {
         if (selectedSongs.isEmpty()) return;
         String[] options = new String[allPlaylists.size() + 1];
@@ -619,6 +702,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }).show();
     }
 
+    /**
+     * Removes selected songs from the active playlist folder, updates persistent data
+     * settings representation, and refreshes list layout adapters.
+     */
     private void batchDeleteFromPlaylist() {
         if (currentOpenPlaylist == null || selectedSongs.isEmpty()) return;
         new AlertDialog.Builder(this)
@@ -634,6 +721,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }).setNegativeButton("No", null).show();
     }
 
+    /**
+     * Instantiates view adapters, assigns adapters to lists/grids on screen,
+     * and sets click/long-click selectors.
+     */
     private void setupAdapters() {
         librarySongAdapter = new SongAdapter(displaySongs);
         libraryListView.setAdapter(librarySongAdapter);
@@ -686,6 +777,17 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         detailSongsListView.setAdapter(detailSongListAdapter);
     }
 
+    /**
+     * Asynchronously decodes and loads artwork bitmaps on a fixed thread pool.
+     * Uses cache lookup mechanisms (LruCache) to prevent redundant file/retriever operations
+     * and prevents flickering by validating image view tracking tags.
+     *
+     * @param imageView         Target container to display image.
+     * @param artworkPath       Source path (local audio file path or URI string).
+     * @param isUri             True if path points to content provider URI or base64 data.
+     * @param qualityMode       Sample size scaling divisor factor (QUALITY_LOW/MED/HIGH).
+     * @param preloadedFallback Fallback bitmap to show while decoding progresses.
+     */
     private void loadArtAsync(ImageView imageView, String artworkPath, boolean isUri, int qualityMode, Bitmap preloadedFallback) {
         if (artworkPath == null || artworkPath.isEmpty()) {
             imageView.setImageResource(android.R.drawable.ic_menu_gallery);
@@ -759,6 +861,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
     }
 
+    /**
+     * ViewHolder caching references to a song item's subviews to reduce findViewById calls.
+     */
     static class SongViewHolder {
         CheckBox selectionCheckBox;
         TextView titleTextView;
@@ -766,6 +871,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         ImageView artworkImageView;
     }
 
+    /**
+     * Adapter for displaying songs in the primary library list view.
+     */
     private class SongAdapter extends android.widget.ArrayAdapter<Models.Song> {
         final ArrayList<Models.Song> songsList;
 
@@ -821,6 +929,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Adapter for displaying songs in the expanded details overlay sheet.
+     */
     private class DetailSongAdapter extends BaseAdapter {
         @Override
         public int getCount() {
@@ -883,6 +994,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Adapter for rendering Album grid card layouts.
+     */
     private class AlbumAdapter extends BaseAdapter {
         @Override
         public int getCount() {
@@ -918,6 +1032,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Adapter for rendering Playlist grid card layouts.
+     */
     private class PlaylistAdapter extends BaseAdapter {
         @Override
         public int getCount() {
@@ -958,6 +1075,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Filters lists for songs, albums, and playlists based on text search queries.
+     *
+     * @param query Search query string input.
+     */
     private void filterData(String query) {
         String trimmedQuery = query.toLowerCase().trim();
         displaySongs.clear();
@@ -988,6 +1110,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         refreshAllAdapters();
     }
 
+    /**
+     * Reads shared system external storage files using a ContentResolver.
+     * Constructs the local database maps, scans playlists from SharedPreferences,
+     * sorts tracks, and updates lists on the UI thread.
+     */
     private void loadMusic() {
         new Thread(() -> {
             ArrayList<Models.Song> tempSongs = new ArrayList<>();
@@ -1114,6 +1241,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }).start();
     }
 
+    /**
+     * Serializes playlist collection structures to a JSON String array, saving it
+     * persistently to the app's SharedPreferences storage.
+     */
     private void savePlaylists() {
         try {
             JSONArray playlistsJsonArray = new JSONArray();
@@ -1137,6 +1268,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Sorts song and album datasets alphabetically or by add date.
+     *
+     * @param sortType Sort selector key index (0: A-Z, 1: Z-A, 2: Newest).
+     */
     private void sortData(int sortType) {
         Comparator<Models.Song> songComparator = sortType == 0 
                 ? (a, b) -> a.title.compareToIgnoreCase(b.title) 
@@ -1152,6 +1288,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         Collections.sort(allAlbums, albumComparator);
     }
 
+    /**
+     * Animates and reveals the detailed tracks list view for an album or playlist.
+     *
+     * @param viewTitle      Heading title text to display (e.g. Playlist or Album name).
+     * @param songsList      List of contained track Song objects.
+     * @param isPlaylist     Boolean specifying if this is a playlist or album details view.
+     * @param playlistObject Associated playlist metadata wrapper if applicable.
+     */
     private void openDetailView(String viewTitle, ArrayList<Models.Song> songsList, boolean isPlaylist, Models.Playlist playlistObject) {
         expandedDetailsContainer.setVisibility(View.VISIBLE);
         detailTitleTextView.setText(viewTitle);
@@ -1190,6 +1334,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Queries and requests OS access permissions needed for media retrieval,
+     * notification dispatches, and audio recording (required for the visualizer FFT API).
+     */
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
@@ -1220,12 +1368,22 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         loadMusic();
     }
 
+    /**
+     * Converts raw millisecond values to standard MM:SS time string formats.
+     *
+     * @param positionMs Position value in milliseconds.
+     * @return           Formatted time string.
+     */
     private String formatTime(int positionMs) {
         int seconds = (positionMs / 1000) % 60;
         int minutes = (positionMs / (1000 * 60)) % 60;
         return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
     }
 
+    /**
+     * Configures document picker contracts and activity launchers for choosing custom playlist cover images,
+     * exporting playlist backup backups, and restoring backups.
+     */
     private void setupLaunchers() {
         imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), documentUri -> {
             if (documentUri != null && activePlaylistForImage != null) {
@@ -1287,6 +1445,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
     }
 
+    /**
+     * Reads a image file content from a provider, scales it to standard size constraints (400x400),
+     * and compiles it to a compressed Base64 representation for JSON persistence.
+     *
+     * @param uri Provider path pointing to the selected image.
+     * @return    Base64 encoded representation string.
+     */
     private String getBase64Image(Uri uri) {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -1301,6 +1466,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Displays a text dialog input window for configuring the Raspberry Pi sync server IP destination.
+     */
     private void showSetIpDialog() {
         EditText inputField = new EditText(this);
         inputField.setText(sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337"));
@@ -1318,6 +1486,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private TextView syncStatusTextView;
     private ProgressBar syncProgressBar;
 
+    /**
+     * Coordinates the background SyncManager execution process, revealing progress updates
+     * and handling server network connection results inside dialog elements.
+     */
     private void runSync() {
         String serverUrl = sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337");
         if (serverUrl.isEmpty()) {
@@ -1401,6 +1573,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
     }
 
+    /**
+     * Releases active visualizers, terminates bound service connections,
+     * and shuts down image loading thread executors.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -1419,6 +1595,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         seekHandler.removeCallbacks(updateSeekBarTask);
     }
 
+    /**
+     * Displays the parent settings list dialog window.
+     */
     private void showMainSettingsDialog() {
         String[] mainOptions = {
                 "Sync & Server Settings",
@@ -1441,6 +1620,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 .show();
     }
 
+    /**
+     * Displays the sync and server settings dialog options.
+     */
     private void showSyncSettingsDialog() {
         String[] syncOptions = {
                 "Sync Now (Raspberry Pi)",
@@ -1460,6 +1642,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 .show();
     }
 
+    /**
+     * Displays the visualizer display and hardware refresh rate toggle configurations.
+     */
     private void showVisualSettingsDialog() {
         boolean is120 = sharedPreferences.getBoolean("120hz", true);
         boolean adaptiveBg = sharedPreferences.getBoolean("adaptive_bg", true);
@@ -1497,6 +1682,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 .show();
     }
 
+    /**
+     * Displays import/export profile backup action dialog selections.
+     */
     private void showBackupSettingsDialog() {
         String[] backupOptions = {
                 "Export Playlists Backup",

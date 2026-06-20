@@ -8,8 +8,13 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Random;
 
+/**
+ * Splash screen activity that runs at app launch. Displays a random vibe phrase
+ * for a designated delay duration, then redirects users to the MainActivity.
+ */
 public class SplashActivity extends AppCompatActivity {
 
+    /** List of random splash screen subtitle phrases that set the user's initial mood. */
     private final String[] vibePhrases = {
             "What's the vibe?",
             "All aboard the Vibe Station.",
@@ -30,8 +35,15 @@ public class SplashActivity extends AppCompatActivity {
             "Nico Robin, my beloved..."
     };
 
+    /** Delay duration in milliseconds before moving to the main player view. */
     private static final int SPLASH_DELAY_MS = 1500;
 
+    /**
+     * Initializes the splash layout, selects a random subtitle vibe phrase,
+     * and sets up a delayed handler to launch MainActivity.
+     *
+     * @param savedInstanceState Saved instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,9 +51,11 @@ public class SplashActivity extends AppCompatActivity {
 
         TextView splashVibeTextView = findViewById(R.id.txtSplashVibe);
 
+        // Select a random phrase index from the list of vibe options
         int randomIndex = new Random().nextInt(vibePhrases.length);
         splashVibeTextView.setText(vibePhrases[randomIndex]);
 
+        // Post a delayed runnable to shift execution contexts to MainActivity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(SplashActivity.this, MainActivity.class);
             startActivity(intent);
