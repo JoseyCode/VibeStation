@@ -62,6 +62,51 @@ VibeStation/
 
 ---
 
+## Web Stream & Sync Hub API Reference
+
+The Node.js Express server (`web/server.js`) coordinates local database syncs, stream routing, external metadata fetching, and local data overrides.
+
+### 🌐 Endpoints
+
+#### Playback & Streaming APIs
+*   **`GET /api/songs`**: Retrieves a JSON array of all songs scanned and indexed in the library.
+*   **`GET /api/stream/:id`**: Streams the binary audio content for the track specified by `:id`.
+*   **`GET /api/artwork/:id`**: Serves the embedded album artwork parsed from the track metadata. Falls back to `placeholder.webp` if unavailable.
+
+#### Device Synchronization APIs
+*   **`POST /api/upload`**: Receives multi-file binary uploads (MP3 files synced from the Android app) and saves them in the `music/` directory.
+*   **`GET /api/playlists`**: Returns the list of synced custom playlists.
+*   **`POST /api/playlists`**: Synchronizes playlist layouts and custom cover images from the mobile client.
+*   **`POST /api/deduplicate`**: Scans and removes duplicate entries from the library sync database.
+
+#### Metadata & Integration APIs
+*   **`GET /api/metadata/artist?name={artist}`**: Fetches biographical records, logos, and artist images from TheAudioDB.
+*   **`GET /api/metadata/album?artist={artist}&album={album}`**: Fetches release year, genre, artwork, and descriptions from TheAudioDB. Merges results with local JSON overrides when description fields are empty or null.
+*   **`GET /api/metadata/lyrics?artist={artist}&title={title}`**: Fetches matching song lyrics from the Lyrics.ovh API.
+
+---
+
+## 🛠 Local Metadata Overrides
+
+For albums or artists that return `null` descriptions in public databases (for instance, NF's *HOPE*), VibeStation supports manual offline database overrides. 
+
+*   **File Path**: [`web/metadata_overrides.json`](web/metadata_overrides.json)
+*   **Key Mapping**: Target matches are normalized automatically by removing non-alphanumeric characters and converting to lowercase (e.g., `nf_hope` for artist `NF` and album `HOPE`).
+
+**Example Override Entry**:
+```json
+{
+  "artists": {},
+  "albums": {
+    "nf_hope": {
+      "description": "HOPE is the fifth studio album by American rapper NF, released on April 7, 2023. Marked by a shift in tone towards healing, peace, and self-acceptance, the album represents a powerful transition from NF's previous darker themes of trauma and depression. It features notable collaborations with Julia Michaels and Cordae."
+    }
+  }
+}
+```
+
+---
+
 ## Getting Started
 
 ### Prerequisites

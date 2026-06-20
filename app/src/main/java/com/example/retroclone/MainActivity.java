@@ -710,12 +710,23 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             Bitmap decodedBitmap = null;
             try {
                 if (isUri) {
-                    InputStream inputStream = getContentResolver().openInputStream(Uri.parse(artworkPath));
-                    BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-                    decodeOptions.inSampleSize = qualityMode;
-                    decodedBitmap = BitmapFactory.decodeStream(inputStream, null, decodeOptions);
-                    if (inputStream != null) {
-                        inputStream.close();
+                    if (artworkPath.startsWith("data:image/")) {
+                        int commaIndex = artworkPath.indexOf(",");
+                        if (commaIndex != -1) {
+                            String base64Data = artworkPath.substring(commaIndex + 1);
+                            byte[] decodedBytes = Base64.decode(base64Data, Base64.DEFAULT);
+                            BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+                            decodeOptions.inSampleSize = qualityMode;
+                            decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length, decodeOptions);
+                        }
+                    } else {
+                        InputStream inputStream = getContentResolver().openInputStream(Uri.parse(artworkPath));
+                        BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+                        decodeOptions.inSampleSize = qualityMode;
+                        decodedBitmap = BitmapFactory.decodeStream(inputStream, null, decodeOptions);
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
                     }
                 } else {
                     MediaMetadataRetriever retriever = null;
@@ -982,13 +993,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             ArrayList<Models.Song> tempSongs = new ArrayList<>();
             HashMap<String, Models.Album> albumMap = new HashMap<>();
             try {
-                Cursor musicCursor = getContentResolver().query(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        null,
-                        MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
-                        new String[]{"%Music/%"},
-                        null
-                );
+                Cursor musicCursor;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    musicCursor = getContentResolver().query(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            null,
+                            MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
+                            new String[]{"%Music/%"},
+                            null
+                    );
+                } else {
+                    musicCursor = getContentResolver().query(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            null,
+                            MediaStore.Audio.Media.DATA + " LIKE ?",
+                            new String[]{"%/Music/%"},
+                            null
+                    );
+                }
 
                 if (musicCursor != null && musicCursor.moveToFirst()) {
                     do {
@@ -1210,9 +1232,16 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 try {
                     getContentResolver().takePersistableUriPermission(documentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 } catch (Exception ignored) {}
-                activePlaylistForImage.imageUri = documentUri.toString();
-                savePlaylists();
-                filterData("");
+                new Thread(() -> {
+                    String b64 = getBase64Image(documentUri);
+                    if (!b64.isEmpty()) {
+                        activePlaylistForImage.imageUri = "data:image/jpeg;base64," + b64.replaceAll("\\s", "");
+                        runOnUiThread(() -> {
+                            savePlaylists();
+                            filterData("");
+                        });
+                    }
+                }).start();
             }
         });
 
