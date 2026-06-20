@@ -1394,9 +1394,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private void showMainSettingsDialog() {
         String[] mainOptions = {
-                "📡 Sync & Server Settings",
-                "🎨 Visualizer & Display Options",
-                "💾 Backup & Portability Profiles"
+                "Sync & Server Settings",
+                "Visualizer & Display Options",
+                "Backup & Portability Profiles"
         };
 
         new AlertDialog.Builder(this)
@@ -1421,7 +1421,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         };
 
         new AlertDialog.Builder(this)
-                .setTitle("📡 Sync & Server")
+                .setTitle("Sync & Server")
                 .setItems(syncOptions, (dialog, which) -> {
                     if (which == 0) {
                         runSync();
@@ -1447,7 +1447,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         };
 
         new AlertDialog.Builder(this)
-                .setTitle("🎨 Visualizer & Display")
+                .setTitle("Visualizer & Display")
                 .setItems(visualOptions, (dialog, which) -> {
                     if (which == 0) {
                         boolean newValue = !showVis;
@@ -1484,7 +1484,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         };
 
         new AlertDialog.Builder(this)
-                .setTitle("💾 Backup Profiles")
+                .setTitle("Backup Profiles")
                 .setItems(backupOptions, (dialog, which) -> {
                     if (which == 0) {
                         backupFileLauncher.launch("VibeStation_Backup.txt");
