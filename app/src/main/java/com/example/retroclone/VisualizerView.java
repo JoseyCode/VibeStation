@@ -14,6 +14,7 @@ public class VisualizerView extends View {
     private final float[] targetAmplitudes = new float[MAX_BINS];
     private final float[] smoothedMagnitudes = new float[MAX_BINS];
     private final Paint wavePaint = new Paint();
+    private final Paint pointPaint = new Paint();
     private final Path wavePath = new Path();
     private static final int WAVE_ALPHA = 70;
     private static final float DAMPING_FACTOR = 0.25f;
@@ -28,6 +29,10 @@ public class VisualizerView extends View {
         wavePaint.setAntiAlias(true);
         wavePaint.setColor(Color.WHITE);
         wavePaint.setStyle(Paint.Style.FILL);
+
+        pointPaint.setAntiAlias(true);
+        pointPaint.setColor(Color.WHITE);
+        pointPaint.setStyle(Paint.Style.FILL);
     }
 
     public void setVisualizerStyle(int style) {
@@ -39,7 +44,6 @@ public class VisualizerView extends View {
     public void updateVisualizer(byte[] bytes) {
         if (bytes == null || bytes.length == 0) return;
 
-        // Process FFT and group into logarithmic bands on the background data capture thread
         int fftSize = bytes.length / 2;
         if (fftSize <= 0) return;
 
@@ -49,37 +53,61 @@ public class VisualizerView extends View {
         if (width <= 0) width = 1080f; // Fallback
 
         synchronized (this) {
-            for (int i = 0; i < renderBins; i++) {
-                float pct = (float) i / (renderBins - 1);
-                int startBin = (int) Math.exp(logMin + pct * (logMax - logMin));
-                int endBin = (int) Math.exp(logMin + (pct + 1f / renderBins) * (logMax - logMin));
-
-                if (endBin <= startBin) {
-                    endBin = startBin + 1;
-                }
-                if (endBin > fftSize) {
-                    endBin = fftSize;
-                }
-
-                float maxMagnitude = 0;
-                for (int k = startBin; k < endBin; k++) {
+            if (visualizerStyle == STYLE_WAVY) {
+                // Calculate overall volume to feed the ripple at the bottom
+                float sum = 0;
+                for (int k = 0; k < fftSize; k++) {
                     int rIdx = k * 2;
                     int iIdx = k * 2 + 1;
                     if (iIdx < bytes.length) {
                         float r = bytes[rIdx];
                         float im = bytes[iIdx];
-                        float mag = (float) Math.sqrt(r * r + im * im);
-                        if (mag > maxMagnitude) {
-                            maxMagnitude = mag;
-                        }
+                        sum += (float) Math.sqrt(r * r + im * im);
                     }
                 }
-                float magnitude = maxMagnitude;
-                float amplitude = (magnitude / 128f) * (width * 0.15f);
-                if (amplitude > width * 0.18f) {
-                    amplitude = width * 0.18f;
+                float avgVolume = fftSize > 0 ? (sum / fftSize) : 0;
+                float targetVal = (avgVolume / 128f) * (width * 0.15f);
+                if (targetVal > width * 0.18f) targetVal = width * 0.18f;
+
+                // Shift target values upward to create a wave propagation ripple
+                for (int i = renderBins - 1; i > 0; i--) {
+                    targetAmplitudes[i] = targetAmplitudes[i - 1];
                 }
-                targetAmplitudes[i] = amplitude;
+                targetAmplitudes[0] = targetVal;
+            } else {
+                // STYLE_SPIKY: group into 96 bands with non-linear power-spikes
+                for (int i = 0; i < renderBins; i++) {
+                    float pct = (float) i / (renderBins - 1);
+                    int startBin = (int) Math.exp(logMin + pct * (logMax - logMin));
+                    int endBin = (int) Math.exp(logMin + (pct + 1f / renderBins) * (logMax - logMin));
+
+                    if (endBin <= startBin) {
+                        endBin = startBin + 1;
+                    }
+                    if (endBin > fftSize) {
+                        endBin = fftSize;
+                    }
+
+                    float maxMagnitude = 0;
+                    for (int k = startBin; k < endBin; k++) {
+                        int rIdx = k * 2;
+                        int iIdx = k * 2 + 1;
+                        if (iIdx < bytes.length) {
+                            float r = bytes[rIdx];
+                            float im = bytes[iIdx];
+                            float mag = (float) Math.sqrt(r * r + im * im);
+                            if (mag > maxMagnitude) {
+                                maxMagnitude = mag;
+                            }
+                        }
+                    }
+                    float ratio = maxMagnitude / 128f;
+                    float amplitude = (float) Math.pow(ratio, 1.6f) * (width * 0.15f);
+                    if (amplitude > width * 0.18f) {
+                        amplitude = width * 0.18f;
+                    }
+                    targetAmplitudes[i] = amplitude;
+                }
             }
         }
         postInvalidateOnAnimation();
@@ -88,6 +116,8 @@ public class VisualizerView extends View {
     public void setColor(int color) {
         wavePaint.setColor(color);
         wavePaint.setAlpha(WAVE_ALPHA);
+        pointPaint.setColor(color);
+        pointPaint.setAlpha(255);
     }
 
     @Override
@@ -113,25 +143,42 @@ public class VisualizerView extends View {
             }
         }
 
+        // Precompute actual render coordinates (adding ripple sine shifts for wavy style)
+        float[] drawX = new float[renderBins];
+        float timeSec = (float) (System.currentTimeMillis() % 100000) / 1000f;
+
+        for (int i = 0; i < renderBins; i++) {
+            float baseVal = smoothedMagnitudes[i];
+            if (visualizerStyle == STYLE_WAVY) {
+                float rippleScale = Math.min(baseVal / (width * 0.05f), 1.0f);
+                float sineOffset = (float) Math.sin(i * 0.25f - timeSec * 6f) * (width * 0.015f) * rippleScale;
+                drawX[i] = baseVal + sineOffset;
+                if (drawX[i] < 0) drawX[i] = 0;
+                if (baseVal > 0.5f) needsMoreFrames = true; // Keep animating the ripple
+            } else {
+                drawX[i] = baseVal;
+            }
+        }
+
         wavePath.reset();
         wavePath.moveTo(0, height);
         float barHeight = height / (renderBins - 1);
 
         for (int i = 0; i < renderBins; i++) {
             float currentY = height - (i * barHeight);
-            float currentX = smoothedMagnitudes[i];
+            float currentX = drawX[i];
 
             if (i == 0) {
                 wavePath.lineTo(currentX, currentY);
             } else {
                 if (visualizerStyle == STYLE_WAVY) {
-                    float x1 = smoothedMagnitudes[i - 1];
+                    float x1 = drawX[i - 1];
                     float y1 = height - (i - 1) * barHeight;
-                    float x2 = smoothedMagnitudes[i];
+                    float x2 = drawX[i];
                     float y2 = height - i * barHeight;
 
-                    float x0 = (i < 2) ? x1 : smoothedMagnitudes[i - 2];
-                    float x3 = (i >= renderBins - 1) ? x2 : smoothedMagnitudes[i + 1];
+                    float x0 = (i < 2) ? x1 : drawX[i - 2];
+                    float x3 = (i >= renderBins - 1) ? x2 : drawX[i + 1];
 
                     wavePath.cubicTo(
                             x1 + (x2 - x0) / 6f, y1 - barHeight / 3f,
@@ -147,6 +194,17 @@ public class VisualizerView extends View {
         wavePath.lineTo(0, 0);
         wavePath.close();
         canvas.drawPath(wavePath, wavePaint);
+
+        // Draw physical vertices (dots) at spiky points
+        if (visualizerStyle == STYLE_SPIKY) {
+            for (int i = 0; i < renderBins; i++) {
+                float currentY = height - (i * barHeight);
+                float currentX = drawX[i];
+                if (currentX > 3f) {
+                    canvas.drawCircle(currentX, currentY, 3.5f, pointPaint);
+                }
+            }
+        }
 
         if (needsMoreFrames) {
             postInvalidateOnAnimation();
