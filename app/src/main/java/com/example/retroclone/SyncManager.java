@@ -169,8 +169,11 @@ public class SyncManager {
                 values.put(MediaStore.Audio.Media.IS_PENDING, 1);
             }
 
-            Uri uri = context.getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
-            if (uri != null) {
+            Uri uri = null;
+            try {
+                uri = context.getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IOException("Failed to insert MediaStore record");
+
                 try (InputStream is = response.body().byteStream();
                      OutputStream os = context.getContentResolver().openOutputStream(uri)) {
                     byte[] buffer = new byte[8192];
@@ -185,6 +188,13 @@ public class SyncManager {
                     values.put(MediaStore.Audio.Media.IS_PENDING, 0);
                     context.getContentResolver().update(uri, values, null, null);
                 }
+            } catch (Exception e) {
+                if (uri != null) {
+                    try {
+                        context.getContentResolver().delete(uri, null, null);
+                    } catch (Exception ignored) {}
+                }
+                throw e;
             }
         }
     }
