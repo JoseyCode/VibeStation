@@ -113,13 +113,13 @@ public class VisualizerView extends View {
         float barHeight = height / (RENDER_BINS - 1);
         float timeSec = (float) (System.currentTimeMillis() % 100000) / 1000f;
 
-        float maxAllowedWidth = width * 0.15f;
+        float maxAllowedWidth = width * 0.25f;
         float bassAmp = smoothedBass * maxAllowedWidth;
         float midAmp = smoothedMid * maxAllowedWidth;
         float highAmp = smoothedHigh * maxAllowedWidth;
 
-        // Clamp individual amplitudes to visualizer max allowed boundary (18% width)
-        float maxBoundary = width * 0.18f;
+        // Clamp individual amplitudes to visualizer max allowed boundary (95% width)
+        float maxBoundary = width * 0.95f;
         if (bassAmp > maxBoundary) bassAmp = maxBoundary;
         if (midAmp > maxBoundary) midAmp = maxBoundary;
         if (highAmp > maxBoundary) highAmp = maxBoundary;
@@ -130,24 +130,28 @@ public class VisualizerView extends View {
         float[] drawXHigh = new float[RENDER_BINS];
 
         for (int i = 0; i < RENDER_BINS; i++) {
-            // Whip factor increases from bottom (i = 0) to top (i = RENDER_BINS - 1)
-            float whipFactor = 0.15f + 1.15f * ((float) i / (RENDER_BINS - 1));
+            float pct = (float) i / (RENDER_BINS - 1);
+            // Whip factor increases from top (pct = 1) to bottom (pct = 0)
+            float whipFactor = 0.15f + 1.15f * (1f - pct);
+            
+            // Baseline shifts from top-left (0) to bottom-right (width * 0.55f)
+            float baselineX = (1f - pct) * (width * 0.55f);
 
             // Bass (low frequency): slower, lower phase
             float bassSine = (float) Math.sin(i * 0.15f - timeSec * 2.5f) * (bassAmp * 0.25f + width * 0.005f);
-            drawXBass[i] = (bassAmp * 0.8f + bassSine) * whipFactor;
+            drawXBass[i] = baselineX + (bassAmp * 0.8f + bassSine) * whipFactor;
             if (drawXBass[i] < 0) drawXBass[i] = 0;
             if (drawXBass[i] > maxBoundary) drawXBass[i] = maxBoundary;
 
             // Mid (vocal frequency): moderate speed, medium phase
             float midSine = (float) Math.sin(i * 0.25f - timeSec * 4.5f) * (midAmp * 0.35f + width * 0.008f);
-            drawXMid[i] = (midAmp * 0.9f + midSine) * whipFactor;
+            drawXMid[i] = baselineX + (midAmp * 0.9f + midSine) * whipFactor;
             if (drawXMid[i] < 0) drawXMid[i] = 0;
             if (drawXMid[i] > maxBoundary) drawXMid[i] = maxBoundary;
 
             // High (treble frequency): fast speed, high phase
             float highSine = (float) Math.sin(i * 0.4f - timeSec * 7.0f) * (highAmp * 0.45f + width * 0.012f);
-            drawXHigh[i] = (highAmp * 1.0f + highSine) * whipFactor;
+            drawXHigh[i] = baselineX + (highAmp * 1.0f + highSine) * whipFactor;
             if (drawXHigh[i] < 0) drawXHigh[i] = 0;
             if (drawXHigh[i] > maxBoundary) drawXHigh[i] = maxBoundary;
         }
