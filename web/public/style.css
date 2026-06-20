@@ -277,6 +277,7 @@ body {
     appearance: none;
     outline: none;
     cursor: pointer;
+    margin: 0 6px; /* Prevent slider thumb overflow */
 }
 
 #seek-bar::-webkit-slider-runnable-track, #volume-bar::-webkit-slider-runnable-track {
@@ -310,11 +311,42 @@ body {
     color: var(--text-muted);
 }
 
+.fingerprint-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.fingerprint-btn:hover {
+    color: var(--vibe-color);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 12px var(--vibe-color-glow);
+}
+
+.fingerprint-btn.scanning {
+    animation: fingerprint-pulse 1.2s infinite ease-in-out;
+    color: var(--vibe-color);
+}
+
+@keyframes fingerprint-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 var(--vibe-color-glow); }
+    50% { transform: scale(1.15); box-shadow: 0 0 18px 6px var(--vibe-color-glow); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 var(--vibe-color-glow); }
+}
+
 /* Responsive Mobile Styles */
 @media (max-width: 768px) {
     .app-container {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto 1fr;
         height: 100vh;
     }
 
@@ -345,6 +377,7 @@ body {
 
     .main-content {
         padding: 16px;
+        padding-bottom: 140px; /* Space for floating player bar */
     }
 
     .content-header {
@@ -390,11 +423,19 @@ body {
     }
 
     .player-bar {
+        position: fixed;
+        bottom: 16px;
+        left: 12px;
+        right: 12px;
+        width: calc(100% - 24px);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 1fr auto auto;
         grid-template-areas:
-            "info controls"
-            "timeline timeline";
+            "info controls fingerprint"
+            "timeline timeline timeline";
         gap: 8px 12px;
         padding: 12px 16px;
         height: auto;
@@ -438,6 +479,11 @@ body {
     #seek-bar::-webkit-slider-thumb {
         width: 14px;
         height: 14px;
+    }
+
+    .fingerprint-btn {
+        grid-area: fingerprint;
+        align-self: center;
     }
 
     .player-right {

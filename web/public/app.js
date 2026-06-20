@@ -197,6 +197,50 @@ function setupAudioListeners() {
             await handleFileUpload(files);
         }
     });
+
+    // Keyboard Shortcuts (Spacebar to toggle play/pause)
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+            e.preventDefault();
+            btnPlayPause.click();
+        }
+    });
+
+    // Fingerprint Scanner visual/color effects
+    const btnFingerprint = document.getElementById('btn-fingerprint');
+    btnFingerprint.addEventListener('click', () => {
+        btnFingerprint.classList.add('scanning');
+        
+        if (analyser) {
+            analyser.fftSize = 512;
+        }
+        
+        const bgGlow = document.getElementById('vibe-bg-glow');
+        if (bgGlow) {
+            bgGlow.style.transform = 'translate(-50%, -50%) scale(1.6)';
+            bgGlow.style.filter = 'blur(40px)';
+        }
+        
+        setTimeout(() => {
+            btnFingerprint.classList.remove('scanning');
+            if (analyser) {
+                analyser.fftSize = 256;
+            }
+            if (bgGlow) {
+                bgGlow.style.transform = 'translate(-50%, -50%) scale(1)';
+                bgGlow.style.filter = 'blur(80px)';
+            }
+            
+            const randomHue = Math.floor(Math.random() * 360);
+            const newColor = `hsl(${randomHue}, 70%, 65%)`;
+            const newColorGlow = `hsla(${randomHue}, 70%, 65%, 0.15)`;
+            document.documentElement.style.setProperty('--vibe-color', newColor);
+            document.documentElement.style.setProperty('--vibe-color-glow', newColorGlow);
+        }, 1200);
+    });
 }
 
 async function handleFileUpload(files) {

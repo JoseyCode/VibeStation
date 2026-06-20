@@ -43,6 +43,12 @@ VibeStation/
 │   │       │       └── themes.xml
 │   │       └── AndroidManifest.xml     (System declarations, permissions, foreground setup)
 │   └── build.gradle.kts                (Module configurations and dependencies)
+├── web/                                (Web Player & Pi Sync Server)
+│   ├── public/                         (Static UI assets)
+│   │   ├── app.js                      (Web player client-side controller and visualizer)
+│   │   ├── index.html                  (HTML structure)
+│   │   └── style.css                   (Glassmorphic, responsive stylesheets)
+│   └── server.js                       (Node.js Express stream & metadata API server)
 └── settings.gradle.kts                 (Project-wide builds configuration)
 ```
 
@@ -51,6 +57,8 @@ VibeStation/
 *   **[`AudioService`](app/src/main/java/com/example/retroclone/AudioService.java)**: The single source of truth for audio playback, integrating background foreground service lifecycles, media notifications, lockscreen playback state (`MediaSessionCompat`), and audio focus handling.
 *   **[`VisualizerView`](app/src/main/java/com/example/retroclone/VisualizerView.java)**: Custom canvas view that plots and paints real-time frequency-domain data (FFT) as a smooth Bezier wave.
 *   **[`Models`](app/src/main/java/com/example/retroclone/Models.java)**: Lightweight, clean data models for `Song`, `Album`, and `Playlist`.
+*   **`web/`**: Node.js Express server (`server.js`) that hosts the streaming hub, handles media uploads via `multer`, extracts metadata via `music-metadata`, and serves a fully responsive, visualizer-equipped player client (`app.js`, `style.css`, `index.html`) optimized for both mobile and desktop views.
+*   **Library Sync Protocol**: An asynchronous, multi-threaded sync connector (`SyncManager` in the Android app) that synchronizes local tracks directly to the Node.js Express server backend.
 
 ---
 
