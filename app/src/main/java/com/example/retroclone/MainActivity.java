@@ -457,25 +457,35 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private void setupVisualizer() {
         if (!isBound || audioService.getAudioSessionId() == 0) return;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
-
-        try {
-            if (audioVisualizer != null) {
+ 
+        if (audioVisualizer != null) {
+            try {
+                if (audioVisualizer.getEnabled()) {
+                    return; // Already initialized and running
+                }
+            } catch (Exception e) {
+                try {
+                    audioVisualizer.setEnabled(false);
+                } catch (Exception ignored) {}
                 audioVisualizer.release();
+                audioVisualizer = null;
             }
-
+        }
+ 
+        try {
             audioVisualizer = new Visualizer(audioService.getAudioSessionId());
             audioVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-
+ 
             audioVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
                 @Override
                 public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes, int samplingRate) {}
-
+ 
                 @Override
                 public void onFftDataCapture(Visualizer visualizer, byte[] fftData, int samplingRate) {
                     audioVisualizerView.updateVisualizer(fftData);
                 }
             }, Visualizer.getMaxCaptureRate() / 2, false, true);
-
+ 
             audioVisualizer.setEnabled(true);
         } catch (Exception ignored) {}
     }
@@ -1032,6 +1042,16 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         long dateAdded = musicCursor.getLong(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED));
                         int trackNumber = musicCursor.getInt(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK));
 
+                        if (title == null || title.trim().isEmpty()) {
+                            title = "Unknown Title";
+                        }
+                        if (artist == null || artist.trim().isEmpty()) {
+                            artist = "Unknown Artist";
+                        }
+                        if (albumName == null || albumName.trim().isEmpty()) {
+                            albumName = "Unknown Album";
+                        }
+
                         if (artist.toLowerCase().contains("unknown")) {
                             try {
                                 String[] pathSegments = path.split("/");
@@ -1401,7 +1421,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             isBound = false;
         }
         if (audioVisualizer != null) {
+            try {
+                audioVisualizer.setEnabled(false);
+            } catch (Exception ignored) {}
             audioVisualizer.release();
+            audioVisualizer = null;
         }
         imageExecutor.shutdown();
         seekHandler.removeCallbacks(updateSeekBarTask);

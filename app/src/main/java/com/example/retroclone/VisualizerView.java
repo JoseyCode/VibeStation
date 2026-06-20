@@ -60,7 +60,7 @@ public class VisualizerView extends View {
             if (i == 0) {
                 magnitude = Math.abs(fftBytes[0]);
             } else {
-                magnitude = (float) Math.hypot(fftBytes[i * 2], fftBytes[i * 2 + 1]);
+                magnitude = (float) Math.sqrt(fftBytes[i * 2] * fftBytes[i * 2] + fftBytes[i * 2 + 1] * fftBytes[i * 2 + 1]);
             }
 
             float amplitude = (magnitude / 128f) * (width * 0.5f);
