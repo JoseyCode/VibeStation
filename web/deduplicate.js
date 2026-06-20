@@ -105,6 +105,18 @@ async function deduplicate() {
     } else {
         console.log('\nNo duplicates found. Database is clean!');
     }
+    return {
+        success: true,
+        scanned: files.length,
+        duplicatesFound: duplicateCount,
+        message: duplicateCount > 0 
+            ? `Deduplication complete. Removed ${duplicateCount} duplicates.`
+            : 'No duplicates found. Database is clean!'
+    };
 }
 
-deduplicate().catch(err => console.error(err));
+module.exports = { deduplicate };
+
+if (require.main === module) {
+    deduplicate().catch(err => console.error(err));
+}

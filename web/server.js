@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 1337;
 // Scan directory: falls back to a subfolder inside this project
 const musicDir = process.env.MUSIC_DIR || path.join(__dirname, 'music');
 const playlistsFile = path.join(musicDir, 'playlists.json');
+const deletedPlaylistsFile = path.join(musicDir, 'deleted_playlists.json');
 
 if (!fs.existsSync(musicDir)) {
     fs.mkdirSync(musicDir, { recursive: true });
@@ -203,30 +204,132 @@ app.get('/api/playlists', (req, res) => {
     }
 });
 
-// Merge and backup local playlists on the server
+function getDeletedState() {
+    try {
+        if (fs.existsSync(deletedPlaylistsFile)) {
+            const state = JSON.parse(fs.readFileSync(deletedPlaylistsFile, 'utf8'));
+            const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+            let updated = false;
+            
+            if (state.playlists) {
+                for (const name in state.playlists) {
+                    if (state.playlists[name] < cutoff) {
+                        delete state.playlists[name];
+                        updated = true;
+                    }
+                }
+            } else {
+                state.playlists = {};
+                updated = true;
+            }
+            
+            if (state.tracks) {
+                for (const plName in state.tracks) {
+                    let plUpdated = false;
+                    for (const songId in state.tracks[plName]) {
+                        if (state.tracks[plName][songId] < cutoff) {
+                            delete state.tracks[plName][songId];
+                            plUpdated = true;
+                            updated = true;
+                        }
+                    }
+                    if (plUpdated && Object.keys(state.tracks[plName]).length === 0) {
+                        delete state.tracks[plName];
+                    }
+                }
+            } else {
+                state.tracks = {};
+                updated = true;
+            }
+            
+            if (updated) {
+                fs.writeFileSync(deletedPlaylistsFile, JSON.stringify(state, null, 2), 'utf8');
+            }
+            return state;
+        }
+    } catch (e) {
+        console.error('Error reading deleted state:', e);
+    }
+    return { playlists: {}, tracks: {} };
+}
+
+function saveDeletedState(state) {
+    try {
+        fs.writeFileSync(deletedPlaylistsFile, JSON.stringify(state, null, 2), 'utf8');
+    } catch (e) {
+        console.error('Error saving deleted state:', e);
+    }
+}
+
+// Sync and merge playlists
 app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
     try {
-        const clientPlaylists = req.body;
-        const playlistsCount = clientPlaylists ? clientPlaylists.length : 0;
-        console.log(`POST /api/playlists - Sync request for ${playlistsCount} playlists`);
+        const clientPlaylists = req.body || [];
+        const isWebClient = req.query.client === 'web';
+        console.log(`POST /api/playlists - Sync request (isWebClient: ${isWebClient})`);
 
         let serverPlaylists = [];
         if (fs.existsSync(playlistsFile)) {
             serverPlaylists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
         }
 
+        const deletedState = getDeletedState();
+
+        if (isWebClient) {
+            // Web Client Update - Autoritative Overwrite
+            const clientMap = new Map(clientPlaylists.map(p => [p.name, p]));
+            const serverMap = new Map(serverPlaylists.map(p => [p.name, p]));
+
+            // Detect deleted playlists
+            serverPlaylists.forEach(serverP => {
+                if (!clientMap.has(serverP.name)) {
+                    deletedState.playlists[serverP.name] = Date.now();
+                    console.log(`Web client deleted playlist: "${serverP.name}"`);
+                }
+            });
+
+            // Detect track removals in existing playlists
+            clientPlaylists.forEach(clientP => {
+                const serverP = serverMap.get(clientP.name);
+                if (serverP) {
+                    const clientSongIds = new Set(clientP.songData.map(s => s.id));
+                    serverP.songData.forEach(song => {
+                        if (!clientSongIds.has(song.id)) {
+                            if (!deletedState.tracks[clientP.name]) {
+                                deletedState.tracks[clientP.name] = {};
+                            }
+                            deletedState.tracks[clientP.name][song.id] = Date.now();
+                            console.log(`Web client removed song "${song.id}" from playlist "${clientP.name}"`);
+                        }
+                    });
+                }
+            });
+
+            saveDeletedState(deletedState);
+            fs.writeFileSync(playlistsFile, JSON.stringify(clientPlaylists, null, 2), 'utf8');
+            return res.json(clientPlaylists);
+        }
+
+        // Android Sync - Merge filtering out tombstones
         const playlistMap = new Map();
         serverPlaylists.forEach(p => playlistMap.set(p.name, p));
 
         clientPlaylists.forEach(clientP => {
+            if (deletedState.playlists[clientP.name]) {
+                console.log(`Ignoring deleted playlist from Android sync: "${clientP.name}"`);
+                return;
+            }
+
             const serverP = playlistMap.get(clientP.name);
             if (!serverP) {
+                const deletedSongs = deletedState.tracks[clientP.name] || {};
+                clientP.songData = clientP.songData.filter(s => !deletedSongs[s.id]);
                 playlistMap.set(clientP.name, clientP);
             } else {
-                // Merge songs list unions
+                const deletedSongs = deletedState.tracks[clientP.name] || {};
                 const songIds = new Set(serverP.songData.map(s => s.id));
                 clientP.songData.forEach(s => {
-                    if (!songIds.has(s.id)) {
+                    if (!songIds.has(s.id) && !deletedSongs[s.id]) {
                         serverP.songData.push(s);
                     }
                 });
@@ -234,11 +337,28 @@ app.post('/api/playlists', express.json({ limit: '50mb' }), (req, res) => {
         });
 
         const mergedPlaylists = Array.from(playlistMap.values());
+        mergedPlaylists.forEach(p => {
+            const deletedSongs = deletedState.tracks[p.name] || {};
+            p.songData = p.songData.filter(s => !deletedSongs[s.id]);
+        });
+
         fs.writeFileSync(playlistsFile, JSON.stringify(mergedPlaylists, null, 2), 'utf8');
         res.json(mergedPlaylists);
     } catch (e) {
         console.error('Error syncing playlists:', e);
         res.status(500).json({ error: 'Failed to sync playlists' });
+    }
+});
+
+app.post('/api/deduplicate', async (req, res) => {
+    console.log('POST /api/deduplicate - Running library deduplication');
+    try {
+        const { deduplicate } = require('./deduplicate');
+        const result = await deduplicate();
+        res.json(result);
+    } catch (err) {
+        console.error('Error running deduplication:', err);
+        res.status(500).json({ error: 'Deduplication failed', details: err.message });
     }
 });
 
