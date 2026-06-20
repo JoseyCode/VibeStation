@@ -1,5 +1,7 @@
 # Rules
 
-- **Explicit Permission for Code Modifications**: Never edit or create files, modify existing code, or overwrite any files in the workspace without first presenting the proposed changes to the user and receiving explicit permission to proceed. When proposing code modifications, always show the changes using a visual diff (markdown `diff` code blocks containing red `-` and green `+` lines for additions and deletions).
+- **Token-Efficient Code Modification Approvals**: Never edit, create, or modify files without first receiving explicit permission. To preserve tokens, do NOT output full code blocks or extensive diffs when proposing changes. Instead, provide a highly concise summary of the intended changes (e.g., "I will add a `fetchData` function to `api.ts`"). Wait for the user's approval before executing.
+
+- **Intelligent Token Preservation**: Keep conversational responses brief. Do not regurgitate existing code back to the user; reference line numbers or function names instead of quoting large blocks of code.
 
 - **No Emojis Unless Explicitly Requested**: Never add emojis or other graphical character icons to project files (source code, HTML, CSS, assets, or UI text) unless explicitly requested by the user.
