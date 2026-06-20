@@ -787,10 +787,13 @@ function viewArtistDetail(encodedName) {
 
     currentQueue = [...filteredTracks];
 
+    const cachedArt = localStorage.getItem('artist_art_' + artist.name);
+    const detailArtSrc = cachedArt ? cachedArt : `/api/artwork/${artist.artworkSongId}`;
+
     tracksContainer.innerHTML = `
         <button class="back-btn" onclick="searchBar.value=''; showArtists()">← Back to Artists</button>
         <div class="detail-header">
-            <img class="detail-art" src="/api/artwork/${artist.artworkSongId}" alt="${artist.name}" style="border-radius: 50%;">
+            <img class="detail-art" src="${detailArtSrc}" alt="${artist.name}" style="border-radius: 50%;">
             <div class="detail-info">
                 <span class="detail-type">Artist</span>
                 <h1 class="detail-title">${artist.name}</h1>

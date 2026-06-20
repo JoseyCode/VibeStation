@@ -1009,6 +1009,9 @@ body {
     justify-content: space-between;
     padding: 60px 24px 40px 24px;
     box-sizing: border-box;
+    max-width: 450px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .fp-header {
@@ -1029,10 +1032,11 @@ body {
 }
 
 .fp-art {
-    width: 280px;
-    height: 280px;
-    max-width: 80vw;
-    max-height: 80vw;
+    max-width: 70vw;
+    max-height: 35vh;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 16px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);

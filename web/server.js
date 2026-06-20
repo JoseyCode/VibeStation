@@ -371,7 +371,7 @@ app.get('/api/metadata/artist', async (req, res) => {
         if (data && data.artists && data.artists.length > 0) {
             const artist = data.artists[0];
             return res.json({
-                biography: artist.strBiographyEN,
+                biography: artist.strBiography || artist.strBiographyEN,
                 image: artist.strArtistThumb,
                 logo: artist.strArtistLogo,
                 banner: artist.strArtistBanner,
@@ -401,7 +401,7 @@ app.get('/api/metadata/album', async (req, res) => {
         if (data && data.album && data.album.length > 0) {
             const albumData = data.album[0];
             return res.json({
-                description: albumData.strDescriptionEN,
+                description: albumData.strDescription || albumData.strDescriptionEN,
                 year: albumData.intYearReleased,
                 genre: albumData.strGenre,
                 artwork: albumData.strAlbumThumb
