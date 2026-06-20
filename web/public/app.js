@@ -1,3 +1,16 @@
+// Mobile device detection
+function checkMobile() {
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isSmallScreen = window.innerWidth <= 768;
+    if (isMobileUA || isSmallScreen) {
+        document.body.classList.add('is-mobile');
+    } else {
+        document.body.classList.remove('is-mobile');
+    }
+}
+checkMobile();
+window.addEventListener('resize', checkMobile);
+
 const audioElement = document.getElementById('audio-element');
 const btnPlayPause = document.getElementById('btn-play-pause');
 const btnPrev = document.getElementById('btn-prev');
