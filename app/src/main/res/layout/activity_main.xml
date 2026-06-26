@@ -11,16 +11,16 @@
         app:layout_constraintTop_toTopOf="parent">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vibe" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginEnd="10dp"/>
         <EditText android:id="@+id/editSearch" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:background="#222222" android:hint="Search..." android:textColorHint="#888" android:textColor="#FFF" android:paddingHorizontal="15dp" android:singleLine="true"/>
-        <ImageButton android:id="@+id/btnSort" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_menu_sort_alphabetically" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF" android:layout_marginStart="5dp"/>
-        <ImageButton android:id="@+id/btnSettings" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_menu_preferences" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+        <ImageButton android:id="@+id/btnSort" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_sort_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF" android:layout_marginStart="5dp"/>
+        <ImageButton android:id="@+id/btnSettings" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_settings_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
     </LinearLayout>
 
     <LinearLayout android:id="@+id/selectionBar" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical" android:background="#1E1E1E" android:visibility="gone" android:elevation="10dp"
         app:layout_constraintTop_toTopOf="parent">
-        <ImageButton android:id="@+id/btnCancelSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_menu_close_clear_cancel" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
-        <TextView android:id="@+id/txtSelectionCount" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="1 Selected" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" android:layout_marginStart="15dp"/>
-        <ImageButton android:id="@+id/btnDeleteSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_menu_delete" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FF5252" android:layout_marginEnd="10dp" android:visibility="gone"/>
-        <ImageButton android:id="@+id/btnAddSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@android:drawable/ic_menu_add" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+        <ImageButton android:id="@+id/btnCancelSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_close_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+        <TextView android:id="@+id/txtSelectionCount" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="0 Selected" android:textColor="#FFF" android:textSize="18sp" android:layout_marginStart="15dp"/>
+        <ImageButton android:id="@+id/btnDeleteSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_delete_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FF5252" android:layout_marginEnd="10dp" android:visibility="gone"/>
+        <ImageButton android:id="@+id/btnAddSelection" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_add_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
     </LinearLayout>
 
     <FrameLayout android:id="@+id/pageContainer" android:layout_width="0dp" android:layout_height="0dp"
@@ -32,7 +32,7 @@
         <ListView android:id="@+id/listLibrary" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
         <LinearLayout android:id="@+id/pagePlaylists" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
             <Button android:id="@+id/btnCreatePlaylist" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="New Playlist" android:textColor="#FFF" android:backgroundTint="#333"/>
-            <GridView android:id="@+id/gridPlaylists" android:layout_width="match_parent" android:layout_height="match_parent" android:numColumns="2"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/gridPlaylists" android:layout_width="match_parent" android:layout_height="match_parent"/>
         </LinearLayout>
     </FrameLayout>
 
@@ -61,7 +61,7 @@
             <TextView android:id="@+id/txtMiniTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Not Playing" android:textColor="#FFFFFF" android:textStyle="bold" android:maxLines="1"/>
             <TextView android:id="@+id/txtMiniArtist" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Artist" android:textColor="#AAAAAA" android:textSize="12sp" android:maxLines="1"/>
         </LinearLayout>
-        <ImageButton android:id="@+id/btnMiniPlay" android:layout_width="48dp" android:layout_height="48dp" android:src="@android:drawable/ic_media_play" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+        <ImageButton android:id="@+id/btnMiniPlay" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_play_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
     </LinearLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -77,7 +77,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <ImageButton android:id="@+id/btnCollapsePlayer" android:layout_width="48dp" android:layout_height="48dp" android:src="@android:drawable/ic_menu_revert" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF" android:layout_margin="10dp"
+        <ImageButton android:id="@+id/btnCollapsePlayer" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_collapse_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF" android:layout_margin="10dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
 
@@ -99,9 +99,9 @@
             </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
-                <ImageButton android:id="@+id/btnPrev" android:layout_width="60dp" android:layout_height="60dp" android:src="@android:drawable/ic_media_previous" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
-                <ImageButton android:id="@+id/btnFullPlay" android:layout_width="85dp" android:layout_height="85dp" android:src="@android:drawable/ic_media_play" android:layout_marginHorizontal="30dp" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
-                <ImageButton android:id="@+id/btnNext" android:layout_width="60dp" android:layout_height="60dp" android:src="@android:drawable/ic_media_next" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+                <ImageButton android:id="@+id/btnPrev" android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/ic_prev_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+                <ImageButton android:id="@+id/btnFullPlay" android:layout_width="85dp" android:layout_height="85dp" android:src="@drawable/ic_play_bubbly" android:layout_marginHorizontal="30dp" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
+                <ImageButton android:id="@+id/btnNext" android:layout_width="60dp" android:layout_height="60dp" android:src="@drawable/ic_next_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
             </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -29,7 +29,7 @@ public class VisualizerView extends View {
     
     private final Paint wavePaint = new Paint();
     private final Path wavePath = new Path();
-    private static final int WAVE_ALPHA = 70;
+    private static final int WAVE_ALPHA = 30;
     
     // Damping factor used for linear interpolation (higher = faster response)
     private static final float DAMPING_FACTOR = 0.25f;
@@ -154,7 +154,7 @@ public class VisualizerView extends View {
         float barHeight = height / (RENDER_BINS - 1);
         float timeSec = (float) (System.currentTimeMillis() % 100000) / 1000f;
 
-        float maxAllowedWidth = width * 0.25f;
+        float maxAllowedWidth = width * 0.18f;
         float bassAmp = smoothedBass * maxAllowedWidth;
         float midAmp = smoothedMid * maxAllowedWidth;
         float highAmp = smoothedHigh * maxAllowedWidth;
@@ -173,10 +173,10 @@ public class VisualizerView extends View {
         for (int i = 0; i < RENDER_BINS; i++) {
             float pct = (float) i / (RENDER_BINS - 1);
             // Whip factor increases from top (pct = 1) to bottom (pct = 0)
-            float whipFactor = 0.15f + 1.15f * (1f - pct);
+            float whipFactor = 1.0f;
             
             // Baseline shifts from top-left (0) to bottom-right (width * 0.55f)
-            float baselineX = (1f - pct) * (width * 0.55f);
+            float baselineX = 0f;
 
             // Bass (low frequency): slower wave speed, lower phase shift
             float bassSine = (float) Math.sin(i * 0.15f - timeSec * 2.5f) * (bassAmp * 0.25f + width * 0.005f);

@@ -13,5 +13,13 @@
 * **Zero UI/Source Emojis:** Never add emojis or graphical icons to any project files (source code, HTML, CSS, assets, or UI text) unless explicitly commanded.
 
 ## 4. High-Density Documentation
-* **Concise Documentation:** Every new or modified method (Java/Kotlin/etc.) must include a brief, high-density Javadoc/comment block. 
+* **Concise Documentation:** Every new or modified method must include a brief, high-density Javadoc block for Java code, or JSDoc block for JS code.
 * **Focus on Intent:** Keep inline comments strictly focused on *why* a complex calculation or logic segment exists, rather than *what* it does. Avoid wordiness to preserve the context window.
+
+## 5. APK Compilation & Versioning
+* **Export Path:** When compiling an APK for this project, it MUST be stored in `~/Desktop/VibeStation Versions/`. Create the directory if it does not exist.
+* **Versioning Schema:** 
+  - `0.0.x`: Very minor changes / bug fixes.
+  - `0.x.x`: Ending of minor upgrades / feature additions.
+  - `x.x.x`: Major upgrades / overhauls.
+* **Agent Context:** All agents must adhere to this file and versioning schema when exporting builds.
