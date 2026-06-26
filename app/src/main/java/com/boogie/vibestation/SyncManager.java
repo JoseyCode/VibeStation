@@ -1,4 +1,4 @@
-package com.example.retroclone;
+package com.boogie.vibestation;
 
 import android.content.ContentValues;
 import android.content.Context;

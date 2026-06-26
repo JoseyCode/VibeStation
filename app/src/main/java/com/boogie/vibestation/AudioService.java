@@ -1,4 +1,4 @@
-package com.example.retroclone;
+package com.boogie.vibestation;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -39,9 +39,9 @@ import java.util.concurrent.Executors;
  */
 public class AudioService extends Service {
 
-    public static final String ACTION_PLAY_PAUSE = "com.example.retroclone.ACTION_PLAY_PAUSE";
-    public static final String ACTION_NEXT = "com.example.retroclone.ACTION_NEXT";
-    public static final String ACTION_PREV = "com.example.retroclone.ACTION_PREV";
+    public static final String ACTION_PLAY_PAUSE = "com.boogie.vibestation.ACTION_PLAY_PAUSE";
+    public static final String ACTION_NEXT = "com.boogie.vibestation.ACTION_NEXT";
+    public static final String ACTION_PREV = "com.boogie.vibestation.ACTION_PREV";
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "vibe_channel";
     private static final String CHANNEL_NAME = "VibeStation Playback";

@@ -1,4 +1,4 @@
-package com.example.retroclone;
+package com.boogie.vibestation;
 
 import android.content.Intent;
 import android.os.Bundle;

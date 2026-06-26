@@ -1,4 +1,4 @@
-package com.example.retroclone;
+package com.boogie.vibestation;
 
 import android.content.Context;
 import android.graphics.Canvas;

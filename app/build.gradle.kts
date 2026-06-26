@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.retroclone"
+    namespace = "com.boogie.vibestation"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.retroclone"
+        applicationId = "com.boogie.vibestation"
         minSdk = 24
         targetSdk = 36
         versionCode = 3
