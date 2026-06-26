@@ -1471,7 +1471,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      */
     private void showSetIpDialog() {
         EditText inputField = new EditText(this);
-        inputField.setText(sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337"));
+        inputField.setText(sharedPreferences.getString("sync_server_url", ""));
         new AlertDialog.Builder(this)
                 .setTitle("Sync Server URL")
                 .setView(inputField)
@@ -1491,7 +1491,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * and handling server network connection results inside dialog elements.
      */
     private void runSync() {
-        String serverUrl = sharedPreferences.getString("sync_server_url", "http://127.0.0.1:1337");
+        String serverUrl = sharedPreferences.getString("sync_server_url", "");
         if (serverUrl.isEmpty()) {
             Toast.makeText(this, "Please set server IP first!", Toast.LENGTH_SHORT).show();
             return;
