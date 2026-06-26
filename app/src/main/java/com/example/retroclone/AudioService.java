@@ -53,6 +53,10 @@ public class AudioService extends Service {
     private AudioManager.OnAudioFocusChangeListener audioFocusChangeListener;
     private final ExecutorService artworkExecutor = Executors.newSingleThreadExecutor();
 
+    // Timeout State
+    private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+    private final Runnable timeoutRunnable = this::stopSelf;
+
     // Playback Queue State
     private ArrayList<Models.Song> currentQueue = new ArrayList<>();
     private int currentIndex = -1;
@@ -157,6 +161,7 @@ public class AudioService extends Service {
             mediaPlayer.setDataSource(this, trackUri);
             mediaPlayer.prepare();
             mediaPlayer.start();
+            cancelTimeout();
 
             loadAlbumArtAndNotify(trackUri);
 
@@ -174,10 +179,27 @@ public class AudioService extends Service {
         }
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
+            startTimeout();
         } else if (requestFocus()) {
             mediaPlayer.start();
+            cancelTimeout();
         }
         updateSystemPlayerAndUI();
+    }
+
+    /**
+     * Starts the 10-minute inactivity timeout.
+     */
+    private void startTimeout() {
+        timeoutHandler.removeCallbacks(timeoutRunnable);
+        timeoutHandler.postDelayed(timeoutRunnable, 10 * 60 * 1000);
+    }
+
+    /**
+     * Cancels the inactivity timeout.
+     */
+    private void cancelTimeout() {
+        timeoutHandler.removeCallbacks(timeoutRunnable);
     }
 
     /**
@@ -391,17 +413,17 @@ public class AudioService extends Service {
                 PendingIntent.FLAG_IMMUTABLE
         );
 
-        int playPauseIcon = isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
+        int playPauseIcon = isPlaying ? R.drawable.ic_pause_bubbly : R.drawable.ic_play_bubbly;
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setSmallIcon(R.drawable.ic_play_bubbly)
                 .setContentTitle(currentSong.title)
                 .setContentText(currentSong.artist)
                 .setLargeIcon(currentAlbumArt)
                 .setContentIntent(appPendingIntent)
-                .addAction(android.R.drawable.ic_media_previous, "Prev", prevPendingIntent)
+                .addAction(R.drawable.ic_prev_bubbly, "Prev", prevPendingIntent)
                 .addAction(playPauseIcon, "Play/Pause", playPausePendingIntent)
-                .addAction(android.R.drawable.ic_media_next, "Next", nextPendingIntent)
+                .addAction(R.drawable.ic_next_bubbly, "Next", nextPendingIntent)
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(mediaSession.getSessionToken())
                         .setShowActionsInCompactView(0, 1, 2))
@@ -499,6 +521,7 @@ public class AudioService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        cancelTimeout();
         if (mediaPlayer != null) {
             mediaPlayer.release();
         }

@@ -46,6 +46,9 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -97,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     // UI Widgets
     private GridView albumsGridView;
-    private GridView playlistsGridView;
+    private RecyclerView playlistsGridView;
     private ListView libraryListView;
     private ListView detailSongsListView;
     
@@ -128,6 +131,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private SeekBar seekBarView;
     private EditText searchEditText;
+    private java.util.Map<Integer, String> tabSearchStates = new java.util.HashMap<>();
+    private int currentTabId = R.id.nav_albums;
     private VisualizerView audioVisualizerView;
 
     // View Adapters
@@ -237,6 +242,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 } else if (expandedDetailsContainer.getVisibility() == View.VISIBLE) {
                     expandedDetailsContainer.setVisibility(View.GONE);
                     currentOpenPlaylist = null;
+                } else if (!searchEditText.getText().toString().isEmpty()) {
+                    searchEditText.setText("");
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
@@ -293,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         albumsGridView = findViewById(R.id.gridAlbums);
         libraryListView = findViewById(R.id.listLibrary);
         playlistsGridView = findViewById(R.id.gridPlaylists);
+        playlistsGridView.setLayoutManager(new GridLayoutManager(this, 2));
         playlistsPageContainer = findViewById(R.id.pagePlaylists);
         expandedDetailsContainer = findViewById(R.id.expandedDetailsView);
         detailSongsListView = findViewById(R.id.listDetailSongs);
@@ -382,7 +390,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             clearSelection();
             currentOpenPlaylist = null;
 
+            tabSearchStates.put(currentTabId, searchEditText.getText().toString());
             int itemId = menuItem.getItemId();
+            currentTabId = itemId;
+
             if (itemId == R.id.nav_albums) {
                 albumsGridView.setVisibility(View.VISIBLE);
             } else if (itemId == R.id.nav_library) {
@@ -390,6 +401,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             } else if (itemId == R.id.nav_playlists) {
                 playlistsPageContainer.setVisibility(View.VISIBLE);
             }
+
+            String savedSearch = tabSearchStates.get(itemId);
+            searchEditText.setText(savedSearch != null ? savedSearch : "");
             return true;
         });
 
@@ -531,8 +545,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             });
         } else {
-            miniArtImageView.setImageResource(android.R.drawable.ic_menu_gallery);
-            fullArtImageView.setImageResource(android.R.drawable.ic_menu_gallery);
+            miniArtImageView.setImageResource(R.drawable.ic_albums_bubbly);
+            fullArtImageView.setImageResource(R.drawable.ic_albums_bubbly);
             seekBarView.getThumb().setTint(0xFFFFFFFF);
             audioVisualizerView.setColor(0xFFFFFFFF);
             fullPlayerScreenContainer.setBackgroundColor(0xFF000000);
@@ -552,8 +566,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      */
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
-        miniPlayButton.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
-        fullPlayButton.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+        miniPlayButton.setImageResource(isPlaying ? R.drawable.ic_pause_bubbly : R.drawable.ic_play_bubbly);
+        fullPlayButton.setImageResource(isPlaying ? R.drawable.ic_pause_bubbly : R.drawable.ic_play_bubbly);
 
         if (isPlaying) {
             seekHandler.removeCallbacks(updateSeekBarTask);
@@ -738,40 +752,35 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         playlistListAdapter = new PlaylistAdapter();
         playlistsGridView.setAdapter(playlistListAdapter);
-        playlistsGridView.setOnItemClickListener((parent, view, position, id) -> {
-            triggerHapticFeedback(view);
-            openDetailView(displayPlaylists.get(position).name, displayPlaylists.get(position).songs, true, displayPlaylists.get(position));
-        });
 
-        playlistsGridView.setOnItemLongClickListener((parent, view, position, id) -> {
-            triggerHapticFeedback(view);
-            Models.Playlist playlist = displayPlaylists.get(position);
-            String[] options = {"Rename", "Change Cover", "Delete"};
-            new AlertDialog.Builder(this)
-                    .setTitle(playlist.name)
-                    .setItems(options, (dialog, which) -> {
-                        if (which == 0) {
-                            EditText inputField = new EditText(this);
-                            inputField.setText(playlist.name);
-                            new AlertDialog.Builder(this)
-                                    .setTitle("Rename")
-                                    .setView(inputField)
-                                    .setPositiveButton("Save", (dialogInner, whichInner) -> {
-                                        playlist.name = inputField.getText().toString();
-                                        savePlaylists();
-                                        filterData(searchEditText.getText().toString());
-                                    }).show();
-                        } else if (which == 1) {
-                            activePlaylistForImage = playlist;
-                            imagePickerLauncher.launch(new String[]{"image/*"});
-                        } else if (which == 2) {
-                            allPlaylists.remove(playlist);
-                            savePlaylists();
-                            filterData(searchEditText.getText().toString());
-                        }
-                    }).show();
-            return true;
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                int from = viewHolder.getAdapterPosition();
+                int to = target.getAdapterPosition();
+                
+                Models.Playlist moved = displayPlaylists.get(from);
+                int allFrom = allPlaylists.indexOf(moved);
+                int allTo = allPlaylists.indexOf(displayPlaylists.get(to));
+                
+                if (allFrom != -1 && allTo != -1) {
+                    java.util.Collections.swap(allPlaylists, allFrom, allTo);
+                }
+                java.util.Collections.swap(displayPlaylists, from, to);
+                playlistListAdapter.notifyItemMoved(from, to);
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {}
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                savePlaylists();
+            }
         });
+        itemTouchHelper.attachToRecyclerView(playlistsGridView);
 
         detailSongListAdapter = new DetailSongAdapter();
         detailSongsListView.setAdapter(detailSongListAdapter);
@@ -790,7 +799,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      */
     private void loadArtAsync(ImageView imageView, String artworkPath, boolean isUri, int qualityMode, Bitmap preloadedFallback) {
         if (artworkPath == null || artworkPath.isEmpty()) {
-            imageView.setImageResource(android.R.drawable.ic_menu_gallery);
+            imageView.setImageResource(R.drawable.ic_albums_bubbly);
             return;
         }
         String cacheKey = artworkPath + "_" + qualityMode;
@@ -805,7 +814,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if (preloadedFallback != null) {
             imageView.setImageBitmap(preloadedFallback);
         } else {
-            imageView.setImageResource(android.R.drawable.ic_menu_gallery);
+            imageView.setImageResource(R.drawable.ic_albums_bubbly);
         }
 
         imageExecutor.execute(() -> {
@@ -1035,45 +1044,90 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     /**
      * Adapter for rendering Playlist grid card layouts.
      */
-    private class PlaylistAdapter extends BaseAdapter {
+    private class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHolder> {
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView titleText;
+            TextView subText;
+            ImageView artImageView;
+
+            ViewHolder(View view) {
+                super(view);
+                titleText = view.findViewById(R.id.txtGridTitle);
+                subText = view.findViewById(R.id.txtGridSub);
+                artImageView = view.findViewById(R.id.imgGridArt);
+
+                view.setOnClickListener(v -> {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        triggerHapticFeedback(view);
+                        openDetailView(displayPlaylists.get(pos).name, displayPlaylists.get(pos).songs, true, displayPlaylists.get(pos));
+                    }
+                });
+
+                view.setOnLongClickListener(v -> {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        triggerHapticFeedback(view);
+                        Models.Playlist playlist = displayPlaylists.get(pos);
+                        String[] options = {"Rename", "Change Cover", "Delete"};
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle(playlist.name)
+                                .setItems(options, (dialog, which) -> {
+                                    if (which == 0) {
+                                        EditText inputField = new EditText(MainActivity.this);
+                                        inputField.setText(playlist.name);
+                                        new AlertDialog.Builder(MainActivity.this)
+                                                .setTitle("Rename")
+                                                .setView(inputField)
+                                                .setPositiveButton("Save", (dialogInner, whichInner) -> {
+                                                    playlist.name = inputField.getText().toString();
+                                                    savePlaylists();
+                                                    filterData(searchEditText.getText().toString());
+                                                }).show();
+                                    } else if (which == 1) {
+                                        activePlaylistForImage = playlist;
+                                        imagePickerLauncher.launch(new String[]{"image/*"});
+                                    } else if (which == 2) {
+                                        allPlaylists.remove(playlist);
+                                        savePlaylists();
+                                        filterData(searchEditText.getText().toString());
+                                    }
+                                }).show();
+                    }
+                    return true;
+                });
+            }
+        }
+
+        @NonNull
         @Override
-        public int getCount() {
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = getLayoutInflater().inflate(R.layout.item_grid, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            Models.Playlist currentPlaylist = displayPlaylists.get(position);
+            holder.titleText.setText(currentPlaylist.name);
+            holder.subText.setText(String.format(Locale.getDefault(), "%d songs", currentPlaylist.songs.size()));
+
+            if (currentPlaylist.imageUri != null && !currentPlaylist.imageUri.isEmpty()) {
+                loadArtAsync(holder.artImageView, currentPlaylist.imageUri, true, QUALITY_MED, null);
+            } else if (!currentPlaylist.songs.isEmpty()) {
+                loadArtAsync(holder.artImageView, currentPlaylist.songs.get(0).path, false, QUALITY_MED, null);
+            } else {
+                holder.artImageView.setBackgroundColor(0xFF333333);
+                holder.artImageView.setImageResource(R.drawable.ic_albums_bubbly);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
             return displayPlaylists.size();
         }
-
-        @Override
-        public Object getItem(int position) {
-            return displayPlaylists.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.item_grid, parent, false);
-            }
-            Models.Playlist currentPlaylist = displayPlaylists.get(position);
-            ((TextView) convertView.findViewById(R.id.txtGridTitle)).setText(currentPlaylist.name);
-            ((TextView) convertView.findViewById(R.id.txtGridSub)).setText(
-                    String.format(Locale.getDefault(), "%d songs", currentPlaylist.songs.size())
-            );
-
-            ImageView gridArtImageView = convertView.findViewById(R.id.imgGridArt);
-            if (currentPlaylist.imageUri != null && !currentPlaylist.imageUri.isEmpty()) {
-                loadArtAsync(gridArtImageView, currentPlaylist.imageUri, true, QUALITY_MED, null);
-            } else if (!currentPlaylist.songs.isEmpty()) {
-                loadArtAsync(gridArtImageView, currentPlaylist.songs.get(0).path, false, QUALITY_MED, null);
-            } else {
-                gridArtImageView.setBackgroundColor(0xFF333333);
-                gridArtImageView.setImageResource(android.R.drawable.ic_menu_gallery);
-            }
-            return convertView;
-        }
     }
+
 
     /**
      * Filters lists for songs, albums, and playlists based on text search queries.
@@ -1264,7 +1318,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playlistJsonObject.put("songData", songsJsonArray);
                 playlistsJsonArray.put(playlistJsonObject);
             }
-            sharedPreferences.edit().putString("playlists", playlistsJsonArray.toString()).apply();
+            sharedPreferences.edit().putString("playlists", playlistsJsonArray.toString()).commit();
         } catch (Exception ignored) {}
     }
 
@@ -1306,7 +1360,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         } else if (!songsList.isEmpty()) {
             loadArtAsync(detailCoverImageView, songsList.get(0).path, false, QUALITY_HIGH, null);
         } else {
-            detailCoverImageView.setImageResource(android.R.drawable.ic_menu_gallery);
+            detailCoverImageView.setImageResource(R.drawable.ic_albums_bubbly);
         }
 
         displayDetailSongs.clear();
@@ -1626,7 +1680,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private void showSyncSettingsDialog() {
         String[] syncOptions = {
                 "Sync Now (Raspberry Pi)",
-                "Set Sync Server IP Address"
+                "Set Sync Server IP Address",
+                "Copy Web URL"
         };
 
         new AlertDialog.Builder(this)
@@ -1636,6 +1691,18 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         runSync();
                     } else if (which == 1) {
                         showSetIpDialog();
+                    } else if (which == 2) {
+                        String serverUrl = sharedPreferences.getString("sync_server_url", "");
+                        if (!serverUrl.isEmpty()) {
+                            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                            android.content.ClipData clip = android.content.ClipData.newPlainText("Web URL", serverUrl);
+                            if (clipboard != null) {
+                                clipboard.setPrimaryClip(clip);
+                                Toast.makeText(this, "Copied URL: " + serverUrl, Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(this, "Please set server IP first!", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .setNegativeButton("Back", (dialog, which) -> showMainSettingsDialog())
