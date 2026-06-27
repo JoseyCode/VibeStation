@@ -2,9 +2,11 @@
 
 # Default version if not specified (e.g. 0.0.1 for minor debug builds)
 VERSION=${1:-"0.0.1"}
-OUTPUT_DIR="/Users/joseyjackovitch/Desktop/vibestation versions"
+OUTPUT_DIR="/Users/joseyjackovitch/Desktop/VibeStation Versions"
 APK_SOURCE="app/build/outputs/apk/debug/app-debug.apk"
 APK_DEST="$OUTPUT_DIR/vs-$VERSION.apk"
+
+mkdir -p "$OUTPUT_DIR"
 
 echo "Building VibeStation Debug APK..."
 ./gradlew assembleDebug
