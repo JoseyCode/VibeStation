@@ -12,8 +12,10 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.media.audiofx.Equalizer;
 import android.media.audiofx.Visualizer;
 import android.net.Uri;
+import androidx.appcompat.widget.SwitchCompat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -1656,7 +1658,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         String[] mainOptions = {
                 "Sync & Server Settings",
                 "Visualizer & Display Options",
-                "Backup & Portability Profiles"
+                "Backup & Portability Profiles",
+                "Audio & Equalizer Options"
         };
 
         new AlertDialog.Builder(this)
@@ -1668,6 +1671,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         showVisualSettingsDialog();
                     } else if (which == 2) {
                         showBackupSettingsDialog();
+                    } else if (which == 3) {
+                        showEqualizerSettingsDialog();
                     }
                 })
                 .setNegativeButton("Close", null)
@@ -1769,5 +1774,111 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 })
                 .setNegativeButton("Back", (dialog, which) -> showMainSettingsDialog())
                 .show();
+    }
+
+    /**
+     * Displays the equalizer settings dialog, allowing users to adjust frequency bands.
+     */
+    private void showEqualizerSettingsDialog() {
+        if (audioService == null || audioService.getEqualizer() == null) {
+            Toast.makeText(this, "Equalizer not supported or audio not ready.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Equalizer equalizer = audioService.getEqualizer();
+        View view = getLayoutInflater().inflate(R.layout.dialog_equalizer, null);
+        
+        SwitchCompat switchEqualizer = view.findViewById(R.id.switchEqualizer);
+        LinearLayout bandsContainer = view.findViewById(R.id.equalizerBandsContainer);
+        Button btnReset = view.findViewById(R.id.btnResetEqualizer);
+        Button btnClose = view.findViewById(R.id.btnCloseEqualizer);
+        
+        boolean isEnabled = sharedPreferences.getBoolean("eq_enabled", false);
+        try {
+            equalizer.setEnabled(isEnabled);
+        } catch (Exception e) {
+            // Ignore if setting enable fails
+        }
+        switchEqualizer.setChecked(isEnabled);
+        
+        switchEqualizer.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            try {
+                equalizer.setEnabled(isChecked);
+                sharedPreferences.edit().putBoolean("eq_enabled", isChecked).apply();
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to toggle equalizer.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        short bands = equalizer.getNumberOfBands();
+        final short minEQLevel = equalizer.getBandLevelRange()[0];
+        final short maxEQLevel = equalizer.getBandLevelRange()[1];
+        
+        for (short i = 0; i < bands; i++) {
+            final short band = i;
+            
+            TextView freqTextView = new TextView(this);
+            freqTextView.setText((equalizer.getCenterFreq(band) / 1000) + " Hz");
+            freqTextView.setTextColor(android.graphics.Color.WHITE);
+            freqTextView.setPadding(0, 16, 0, 0);
+            
+            SeekBar seekBar = new SeekBar(this);
+            seekBar.setMax(maxEQLevel - minEQLevel);
+            
+            int savedLevel = sharedPreferences.getInt("eq_band_" + band, equalizer.getBandLevel(band));
+            try {
+                equalizer.setBandLevel(band, (short) savedLevel);
+            } catch (Exception e) {
+                savedLevel = equalizer.getBandLevel(band);
+            }
+            seekBar.setProgress(savedLevel - minEQLevel);
+            
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        short newLevel = (short) (progress + minEQLevel);
+                        try {
+                            equalizer.setBandLevel(band, newLevel);
+                            sharedPreferences.edit().putInt("eq_band_" + band, newLevel).apply();
+                        } catch (Exception e) {
+                            // Ignored
+                        }
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+            
+            bandsContainer.addView(freqTextView);
+            bandsContainer.addView(seekBar);
+        }
+        
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+                
+        btnReset.setOnClickListener(v -> {
+            for (short i = 0; i < bands; i++) {
+                try {
+                    equalizer.setBandLevel(i, (short) 0);
+                    sharedPreferences.edit().putInt("eq_band_" + i, 0).apply();
+                } catch (Exception e) {
+                    // Ignored
+                }
+            }
+            dialog.dismiss();
+            showEqualizerSettingsDialog();
+        });
+        
+        btnClose.setOnClickListener(v -> {
+            dialog.dismiss();
+            showMainSettingsDialog();
+        });
+        
+        dialog.show();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
     }
 }

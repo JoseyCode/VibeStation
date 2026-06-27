@@ -24,6 +24,8 @@ import android.provider.MediaStore;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.media.audiofx.Equalizer;
+import android.media.AudioAttributes;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
@@ -62,6 +64,7 @@ public class AudioService extends Service {
     private int currentIndex = -1;
     private Models.Song currentSong;
     private Bitmap currentAlbumArt;
+    private Equalizer equalizer;
 
     /**
      * Interface callback triggered when playback state changes or the active track changes.
@@ -116,6 +119,16 @@ public class AudioService extends Service {
     public void onCreate() {
         super.onCreate();
         mediaPlayer = new MediaPlayer();
+        
+        // Configure for best audio quality (DAC routing preparation)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build();
+            mediaPlayer.setAudioAttributes(audioAttributes);
+        }
+        
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         createNotificationChannel();
@@ -278,6 +291,24 @@ public class AudioService extends Service {
      */
     public Bitmap getCurrentArt() {
         return currentAlbumArt;
+    }
+
+    /**
+     * Gets the Equalizer instance attached to this audio session.
+     * Initializes it if not already present.
+     *
+     * @return The Equalizer instance, or null if unsupported.
+     */
+    public Equalizer getEqualizer() {
+        if (equalizer == null && mediaPlayer != null) {
+            try {
+                equalizer = new Equalizer(0, mediaPlayer.getAudioSessionId());
+            } catch (Exception e) {
+                // Device may not support equalizer
+                equalizer = null;
+            }
+        }
+        return equalizer;
     }
 
     /**
@@ -522,6 +553,9 @@ public class AudioService extends Service {
     public void onDestroy() {
         super.onDestroy();
         cancelTimeout();
+        if (equalizer != null) {
+            equalizer.release();
+        }
         if (mediaPlayer != null) {
             mediaPlayer.release();
         }
