@@ -72,6 +72,7 @@ public class Models {
     public static class Playlist {
         public String name;
         public String imageUri;
+        public String description;
         public final ArrayList<Song> songs = new ArrayList<>();
 
         /**
@@ -80,6 +81,7 @@ public class Models {
         public Playlist(String name, String imageUri) {
             this.name = name;
             this.imageUri = imageUri;
+            this.description = "";
         }
     }
 }

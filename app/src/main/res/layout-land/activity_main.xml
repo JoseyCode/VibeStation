@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fitsSystemWindows="true">
+
+    <!-- Stub views to prevent NullPointerException in MainActivity -->
+    <LinearLayout android:id="@+id/topBar" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+        <EditText android:id="@+id/editSearch" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ImageButton android:id="@+id/btnSort" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ImageButton android:id="@+id/btnSettings" android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/selectionBar" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+        <ImageButton android:id="@+id/btnCancelSelection" android:layout_width="0dp" android:layout_height="0dp"/>
+        <TextView android:id="@+id/txtSelectionCount" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ImageButton android:id="@+id/btnDeleteSelection" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ImageButton android:id="@+id/btnAddSelection" android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <FrameLayout android:id="@+id/pageContainer" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+        <GridView android:id="@+id/gridAlbums" android:layout_width="0dp" android:layout_height="0dp" />
+        <ListView android:id="@+id/listLibrary" android:layout_width="0dp" android:layout_height="0dp"/>
+        <LinearLayout android:id="@+id/pagePlaylists" android:layout_width="0dp" android:layout_height="0dp">
+            <Button android:id="@+id/btnCreatePlaylist" android:layout_width="0dp" android:layout_height="0dp"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/gridPlaylists" android:layout_width="0dp" android:layout_height="0dp"/>
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout android:id="@+id/expandedDetailsView" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+        <ImageView android:id="@+id/imgDetailCover" android:layout_width="0dp" android:layout_height="0dp"/>
+        <TextView android:id="@+id/txtDetailTitle" android:layout_width="0dp" android:layout_height="0dp"/>
+        <Button android:id="@+id/btnDetailPlayAll" android:layout_width="0dp" android:layout_height="0dp"/>
+        <Button android:id="@+id/btnDetailShuffle" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ListView android:id="@+id/listDetailSongs" android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/bottomPlayer" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+        <ImageView android:id="@+id/imgMiniArt" android:layout_width="0dp" android:layout_height="0dp"/>
+        <TextView android:id="@+id/txtMiniTitle" android:layout_width="0dp" android:layout_height="0dp"/>
+        <TextView android:id="@+id/txtMiniArtist" android:layout_width="0dp" android:layout_height="0dp"/>
+        <ImageButton android:id="@+id/btnMiniPlay" android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+
+    <!-- Fullscreen Player specifically designed for landscape -->
+    <androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/fullPlayerScreen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:visibility="visible" android:clickable="true">
+
+        <com.boogie.vibestation.ParticleView
+            android:id="@+id/particleView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.boogie.vibestation.VisualizerView
+            android:id="@+id/visualizerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Hidden collapse button so it doesn't get pressed -->
+        <ImageButton android:id="@+id/btnCollapsePlayer" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <androidx.cardview.widget.CardView android:id="@+id/cardFullArt" android:layout_width="250dp" android:layout_height="250dp" app:cardCornerRadius="125dp" app:cardElevation="10dp" app:cardBackgroundColor="#111"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+            <ImageView android:id="@+id/imgFullArt" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+        </androidx.cardview.widget.CardView>
+
+        <com.boogie.vibestation.CircularProgressView
+            android:id="@+id/circularProgress"
+            android:layout_width="270dp"
+            android:layout_height="270dp"
+            app:layout_constraintTop_toTopOf="@id/cardFullArt"
+            app:layout_constraintBottom_toBottomOf="@id/cardFullArt"
+            app:layout_constraintStart_toStartOf="@id/cardFullArt"
+            app:layout_constraintEnd_toEndOf="@id/cardFullArt"/>
+
+        <!-- Restored Title and Artist overlays -->
+        <TextView android:id="@+id/txtFullTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFF" android:textSize="24sp" android:textStyle="bold" android:shadowColor="#000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="8" android:layout_marginStart="24dp" android:layout_marginTop="24dp" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent" android:maxWidth="300dp" android:maxLines="1" android:ellipsize="end"/>
+        <TextView android:id="@+id/txtFullArtist" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#DDD" android:textSize="16sp" android:shadowColor="#000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="8" android:layout_marginStart="24dp" android:layout_marginTop="4dp" app:layout_constraintTop_toBottomOf="@id/txtFullTitle" app:layout_constraintStart_toStartOf="parent" android:maxWidth="300dp" android:maxLines="1" android:ellipsize="end"/>
+        <TextView android:id="@+id/txtCurrentTime" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <SeekBar android:id="@+id/seekBar" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <TextView android:id="@+id/txtTotalTime" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <ImageButton android:id="@+id/btnPrev" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <ImageButton android:id="@+id/btnFullPlay" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <ImageButton android:id="@+id/btnNext" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <Button android:id="@+id/btnSpeed" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "2.1.0"
+        versionCode = 12
+        versionName = "2.4.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,4 +47,5 @@ dependencies {
     implementation("androidx.media:media:1.6.0")
     implementation("androidx.palette:palette:1.0.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("net.jthink:jaudiotagger:3.0.1")
 }

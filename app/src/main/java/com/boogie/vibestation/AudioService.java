@@ -139,6 +139,23 @@ public class AudioService extends Service {
         mediaPlayer.setOnCompletionListener(player -> playNext());
     }
 
+    private float currentSpeed = 1.0f;
+
+    public void setPlaybackSpeed(float speed) {
+        this.currentSpeed = speed;
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(speed));
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public float getPlaybackSpeed() {
+        return currentSpeed;
+    }
+
     /**
      * Sets the active queue and starts playing a specific track within it.
      *
@@ -173,8 +190,16 @@ public class AudioService extends Service {
             );
             mediaPlayer.setDataSource(this, trackUri);
             mediaPlayer.prepare();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
+                } catch (Exception ignored) {}
+            }
             mediaPlayer.start();
             cancelTimeout();
+
+            currentAlbumArt = null;
+            updateSystemPlayerAndUI();
 
             loadAlbumArtAndNotify(trackUri);
 
@@ -231,6 +256,10 @@ public class AudioService extends Service {
      */
     public void playPrev() {
         if (currentQueue.isEmpty()) {
+            return;
+        }
+        if (mediaPlayer != null && mediaPlayer.getCurrentPosition() > 3000) {
+            playTrack();
             return;
         }
         currentIndex = (currentIndex - 1 + currentQueue.size()) % currentQueue.size();
