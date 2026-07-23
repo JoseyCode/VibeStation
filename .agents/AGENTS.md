@@ -23,3 +23,9 @@
   - `0.x.x`: Ending of minor upgrades / feature additions.
   - `x.x.x`: Major upgrades / overhauls.
 * **Agent Context:** All agents must adhere to this file and versioning schema when exporting builds.
+
+## 6. GitHub Commit & PR Explanations
+* **Meaningful Context:** Whenever writing to GitHub (e.g., commits, PRs, issue descriptions), make sure to expand on the issue usefully. Provide a concise but comprehensive explanation for all changes without being unnecessarily wordy.
+
+## 7. Code Reviews
+* **Review Standard:** When a code review is requested, you MUST read and use `~/Desktop/compReview.md` as the strict guideline and evaluation criteria for the review.

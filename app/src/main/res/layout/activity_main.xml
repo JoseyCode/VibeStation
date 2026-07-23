@@ -9,8 +9,8 @@
 
     <LinearLayout android:id="@+id/topBar" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical"
         app:layout_constraintTop_toTopOf="parent">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vibe" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginEnd="10dp"/>
-        <EditText android:id="@+id/editSearch" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:background="#222222" android:hint="Search..." android:textColorHint="#888" android:textColor="#FFF" android:paddingHorizontal="15dp" android:singleLine="true"/>
+        <TextView android:id="@+id/txtAppVersion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Vibe" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:layout_marginEnd="10dp"/>
+        <EditText android:id="@+id/editSearch" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:background="@drawable/bg_search_bubbly" android:hint="Search..." android:textColorHint="#888" android:textColor="#FFF" android:paddingHorizontal="15dp" android:singleLine="true"/>
         <ImageButton android:id="@+id/btnSort" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_sort_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF" android:layout_marginStart="5dp"/>
         <ImageButton android:id="@+id/btnSettings" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_settings_bubbly" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#FFF"/>
     </LinearLayout>
@@ -41,10 +41,14 @@
         app:layout_constraintBottom_toTopOf="@id/bottomPlayer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-        <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" android:layout_gravity="center" android:layout_marginTop="20dp" app:cardCornerRadius="12dp" app:cardElevation="8dp" app:cardBackgroundColor="#333">
-            <ImageView android:id="@+id/imgDetailCover" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-        </androidx.cardview.widget.CardView>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
+            <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" android:layout_gravity="center" app:cardCornerRadius="12dp" app:cardElevation="8dp" app:cardBackgroundColor="#333">
+                <ImageView android:id="@+id/imgDetailCover" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+            </androidx.cardview.widget.CardView>
+            <ImageView android:id="@+id/btnDetailOptions" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_more_vert" android:layout_gravity="top|end" android:layout_marginEnd="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:padding="12dp" android:visibility="gone"/>
+        </FrameLayout>
         <TextView android:id="@+id/txtDetailTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFF" android:textSize="22sp" android:gravity="center" android:textStyle="bold" android:layout_marginTop="10dp"/>
+        <TextView android:id="@+id/txtDetailDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#AAA" android:textSize="14sp" android:gravity="center" android:layout_marginTop="4dp" android:visibility="gone"/>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10dp">
             <Button android:id="@+id/btnDetailPlayAll" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Play All" android:backgroundTint="#333" android:textColor="#FFF" android:layout_marginEnd="5dp"/>
             <Button android:id="@+id/btnDetailShuffle" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Shuffle All" android:backgroundTint="#333" android:textColor="#FFF" android:layout_marginStart="5dp"/>
@@ -81,6 +85,10 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
 
+        <Button android:id="@+id/btnSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.00x" android:textColor="#FFF" android:backgroundTint="#333" android:layout_margin="10dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
@@ -93,9 +101,9 @@
             <TextView android:id="@+id/txtFullArtist" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#888" android:textSize="16sp" android:layout_marginTop="4dp" android:gravity="center"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingHorizontal="25dp" android:layout_marginTop="30dp">
-                <TextView android:id="@+id/txtCurrentTime" android:layout_width="45dp" android:layout_height="wrap_content" android:text="0:00" android:textColor="#FFF" android:textSize="12sp" android:gravity="center"/>
+                <TextView android:id="@+id/txtCurrentTime" android:layout_width="wrap_content" android:minWidth="45dp" android:layout_height="wrap_content" android:text="0:00" android:textColor="#FFF" android:textSize="12sp" android:gravity="center"/>
                 <SeekBar android:id="@+id/seekBar" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:progressTint="#FFF" android:thumbTint="#FFF"/>
-                <TextView android:id="@+id/txtTotalTime" android:layout_width="45dp" android:layout_height="wrap_content" android:text="0:00" android:textColor="#FFF" android:textSize="12sp" android:gravity="center"/>
+                <TextView android:id="@+id/txtTotalTime" android:layout_width="wrap_content" android:minWidth="45dp" android:layout_height="wrap_content" android:text="0:00" android:textColor="#FFF" android:textSize="12sp" android:gravity="center"/>
             </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
