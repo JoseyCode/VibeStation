@@ -49,9 +49,10 @@
         </FrameLayout>
         <TextView android:id="@+id/txtDetailTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFF" android:textSize="22sp" android:gravity="center" android:textStyle="bold" android:layout_marginTop="10dp"/>
         <TextView android:id="@+id/txtDetailDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#AAA" android:textSize="14sp" android:gravity="center" android:layout_marginTop="4dp" android:visibility="gone"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical">
             <Button android:id="@+id/btnDetailPlayAll" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Play All" android:backgroundTint="#333" android:textColor="#FFF" android:layout_marginEnd="5dp"/>
-            <Button android:id="@+id/btnDetailShuffle" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Shuffle All" android:backgroundTint="#333" android:textColor="#FFF" android:layout_marginStart="5dp"/>
+            <Button android:id="@+id/btnDetailShuffle" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Shuffle All" android:backgroundTint="#333" android:textColor="#FFF" android:layout_marginStart="5dp" android:layout_marginEnd="5dp"/>
+            <ImageButton android:id="@+id/btnDetailFireToggle" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_fire" android:background="?attr/selectableItemBackgroundBorderless" android:padding="12dp" app:tint="#FFF"/>
         </LinearLayout>
         <ListView android:id="@+id/listDetailSongs" android:layout_width="match_parent" android:layout_height="match_parent"/>
     </LinearLayout>
