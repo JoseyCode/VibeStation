@@ -64,7 +64,19 @@ public class AudioService extends Service {
     private int currentIndex = -1;
     private Models.Song currentSong;
     private Bitmap currentAlbumArt;
+    private boolean isForeGroundService = false;
     private Equalizer equalizer;
+
+    private final android.content.BroadcastReceiver noisyReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context context, android.content.Intent intent) {
+            if (android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                if (isPlaying()) {
+                    togglePlayPause();
+                }
+            }
+        }
+    };
 
     /**
      * Interface callback triggered when playback state changes or the active track changes.
@@ -238,6 +250,18 @@ public class AudioService extends Service {
      */
     private void cancelTimeout() {
         timeoutHandler.removeCallbacks(timeoutRunnable);
+    }
+
+    /**
+     * Retrieves the upcoming songs in the queue to be used for cache preloading.
+     */
+    public ArrayList<Models.Song> getUpcomingSongs(int count) {
+        ArrayList<Models.Song> upcoming = new ArrayList<>();
+        if (currentQueue == null || currentQueue.isEmpty()) return upcoming;
+        for (int i = 1; i <= count; i++) {
+            upcoming.add(currentQueue.get((currentIndex + i) % currentQueue.size()));
+        }
+        return upcoming;
     }
 
     /**
@@ -556,6 +580,7 @@ public class AudioService extends Service {
                 seekTo((int) positionMs);
             }
         });
+        registerReceiver(noisyReceiver, new android.content.IntentFilter(android.media.AudioManager.ACTION_AUDIO_BECOMING_NOISY));
         mediaSession.setActive(true);
     }
 
@@ -580,6 +605,7 @@ public class AudioService extends Service {
      */
     @Override
     public void onDestroy() {
+        unregisterReceiver(noisyReceiver);
         super.onDestroy();
         cancelTimeout();
         if (equalizer != null) {

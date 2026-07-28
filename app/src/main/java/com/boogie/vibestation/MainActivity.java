@@ -154,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private VisualizerView audioVisualizerView;
     private ParticleView particleView;
     private CircularProgressView circularProgress;
+    private java.util.HashSet<String> fireAlbums = new java.util.HashSet<>();
 
     // View Adapters
     private SongAdapter librarySongAdapter;
@@ -249,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
 
         sharedPreferences = getSharedPreferences("RetroPrefs", MODE_PRIVATE);
+        fireAlbums = new java.util.HashSet<>(sharedPreferences.getStringSet("fireAlbums", new java.util.HashSet<>()));
         applyRefreshRate(sharedPreferences.getBoolean("120hz", true));
 
         setupViews();
@@ -734,8 +736,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             });
         } else {
-            miniArtImageView.setImageResource(R.drawable.ic_albums_bubbly);
-            fullArtImageView.setImageResource(R.drawable.ic_albums_bubbly);
+            loadArtAsync(miniArtImageView, song.path, false, QUALITY_LOW, null);
             seekBarView.getThumb().setTint(0xFFFFFFFF);
             audioVisualizerView.setColor(0xFFFFFFFF);
             if (particleView != null) particleView.setParticleColor(0xFFFFFFFF);
@@ -935,7 +936,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     savePlaylists();
                     filterData("");
                     clearSelection();
-                    openDetailView(currentOpenPlaylist.name, currentOpenPlaylist.songs, true, currentOpenPlaylist);
+                    openDetailView(currentOpenPlaylist.name, currentOpenPlaylist.songs, true, currentOpenPlaylist, null);
                 }).setNegativeButton("No", null).show();
     }
 
@@ -951,7 +952,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         albumsGridView.setAdapter(albumListAdapter);
         albumsGridView.setOnItemClickListener((parent, view, position, id) -> {
             triggerHapticFeedback(view);
-            openDetailView(displayAlbums.get(position).name, displayAlbums.get(position).songs, false, null);
+            openDetailView(displayAlbums.get(position).name, displayAlbums.get(position).songs, false, null, displayAlbums.get(position));
         });
         albumsGridView.setOnItemLongClickListener((parent, view, position, id) -> {
             triggerHapticFeedback(view);
@@ -1052,7 +1053,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         if (preloadedFallback != null) {
             imageView.setImageBitmap(preloadedFallback);
-        } else {
+        } else if (imageView != fullArtImageView && imageView != miniArtImageView) {
             imageView.setImageResource(R.drawable.ic_albums_bubbly);
         }
 
@@ -1103,6 +1104,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 mainHandler.post(() -> {
                     if (artworkPath.equals(imageView.getTag())) {
                         imageView.setImageBitmap(finalBitmap);
+                    }
+                });
+            } else {
+                mainHandler.post(() -> {
+                    if (artworkPath.equals(imageView.getTag())) {
+                        imageView.setImageResource(R.drawable.ic_albums_bubbly);
                     }
                 });
             }
@@ -1295,6 +1302,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             Models.Album currentAlbum = displayAlbums.get(position);
             ((TextView) convertView.findViewById(R.id.txtGridTitle)).setText(currentAlbum.name);
             ((TextView) convertView.findViewById(R.id.txtGridSub)).setText(currentAlbum.artist);
+            
+            ImageView fireIndicator = convertView.findViewById(R.id.imgFireIndicator);
+            if (fireIndicator != null) {
+                fireIndicator.setVisibility(currentAlbum.isFire ? View.VISIBLE : View.GONE);
+            }
+
             loadArtAsync(
                     convertView.findViewById(R.id.imgGridArt),
                     currentAlbum.songs.isEmpty() ? null : currentAlbum.songs.get(0).path,
@@ -1314,18 +1327,20 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             TextView titleText;
             TextView subText;
             ImageView artImageView;
+            ImageView fireIndicator;
 
             ViewHolder(View view) {
                 super(view);
                 titleText = view.findViewById(R.id.txtGridTitle);
                 subText = view.findViewById(R.id.txtGridSub);
                 artImageView = view.findViewById(R.id.imgGridArt);
+                fireIndicator = view.findViewById(R.id.imgFireIndicator);
 
                 view.setOnClickListener(v -> {
                     int pos = getAdapterPosition();
                     if (pos != RecyclerView.NO_POSITION) {
                         triggerHapticFeedback(view);
-                        openDetailView(displayPlaylists.get(pos).name, displayPlaylists.get(pos).songs, true, displayPlaylists.get(pos));
+                        openDetailView(displayPlaylists.get(pos).name, displayPlaylists.get(pos).songs, true, displayPlaylists.get(pos), null);
                     }
                 });
             }
@@ -1343,6 +1358,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             Models.Playlist currentPlaylist = displayPlaylists.get(position);
             holder.titleText.setText(currentPlaylist.name);
             holder.subText.setText(String.format(Locale.getDefault(), "%d songs", currentPlaylist.songs.size()));
+
+            if (holder.fireIndicator != null) {
+                holder.fireIndicator.setVisibility(currentPlaylist.isFire ? View.VISIBLE : View.GONE);
+            }
 
             if (currentPlaylist.imageUri != null && !currentPlaylist.imageUri.isEmpty()) {
                 loadArtAsync(holder.artImageView, currentPlaylist.imageUri, true, QUALITY_MED, null);
@@ -1393,6 +1412,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             }
         }
+        
+        Collections.sort(displayAlbums, (a, b) -> Boolean.compare(b.isFire, a.isFire));
+        Collections.sort(displayPlaylists, (a, b) -> Boolean.compare(b.isFire, a.isFire));
+
         refreshAllAdapters();
     }
 
@@ -1460,7 +1483,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         tempSongs.add(song);
 
                         if (!albumMap.containsKey(albumId)) {
-                            albumMap.put(albumId, new Models.Album(albumId, albumName, artist, dateAdded));
+                            Models.Album newAlbum = new Models.Album(albumId, albumName, artist, dateAdded);
+                            newAlbum.isFire = fireAlbums.contains(albumId);
+                            albumMap.put(albumId, newAlbum);
                         }
                         albumMap.get(albumId).songs.add(song);
 
@@ -1491,6 +1516,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                             playlistJsonObject.optString("imageUri", null)
                     );
                     playlist.description = playlistJsonObject.optString("description", "");
+                    playlist.isFire = playlistJsonObject.optBoolean("isFire", false);
                     JSONArray songsJsonArray = playlistJsonObject.getJSONArray("songData");
                     for (int j = 0; j < songsJsonArray.length(); j++) {
                         JSONObject songJsonObject = songsJsonArray.getJSONObject(j);
@@ -1540,6 +1566,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playlistJsonObject.put("name", playlist.name);
                 playlistJsonObject.put("imageUri", playlist.imageUri != null ? playlist.imageUri : "");
                 playlistJsonObject.put("description", playlist.description != null ? playlist.description : "");
+                playlistJsonObject.put("isFire", playlist.isFire);
 
                 JSONArray songsJsonArray = new JSONArray();
                 for (Models.Song song : playlist.songs) {
@@ -1583,8 +1610,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param songsList      List of contained track Song objects.
      * @param isPlaylist     Boolean specifying if this is a playlist or album details view.
      * @param playlistObject Associated playlist metadata wrapper if applicable.
+     * @param albumObject    Associated album metadata wrapper if applicable.
      */
-    private void openDetailView(String viewTitle, ArrayList<Models.Song> songsList, boolean isPlaylist, Models.Playlist playlistObject) {
+    private void openDetailView(String viewTitle, ArrayList<Models.Song> songsList, boolean isPlaylist, Models.Playlist playlistObject, Models.Album albumObject) {
         expandedDetailsContainer.setVisibility(View.VISIBLE);
         detailTitleTextView.setText(viewTitle);
         currentOpenPlaylist = isPlaylist ? playlistObject : null;
@@ -1682,6 +1710,37 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 Collections.shuffle(shuffledQueue);
                 playAudio(shuffledQueue, 0);
             }
+        });
+        
+        ImageButton fireToggle = findViewById(R.id.btnDetailFireToggle);
+        boolean isFire = false;
+        if (isPlaylist && playlistObject != null) {
+            isFire = playlistObject.isFire;
+        } else if (!isPlaylist && albumObject != null) {
+            isFire = albumObject.isFire;
+        }
+        fireToggle.setColorFilter(isFire ? android.graphics.Color.parseColor("#FF9800") : android.graphics.Color.WHITE);
+        
+        fireToggle.setOnClickListener(v -> {
+            triggerHapticFeedback(v);
+            boolean newFire = false;
+            if (isPlaylist && playlistObject != null) {
+                playlistObject.isFire = !playlistObject.isFire;
+                newFire = playlistObject.isFire;
+            } else if (!isPlaylist && albumObject != null) {
+                albumObject.isFire = !albumObject.isFire;
+                newFire = albumObject.isFire;
+                if (newFire) fireAlbums.add(albumObject.albumId);
+                else fireAlbums.remove(albumObject.albumId);
+                sharedPreferences.edit().putStringSet("fireAlbums", fireAlbums).apply();
+            }
+            savePlaylists();
+            fireToggle.setColorFilter(newFire ? android.graphics.Color.parseColor("#FF9800") : android.graphics.Color.WHITE);
+            v.animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).withEndAction(() -> {
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
+                sortData(sharedPreferences.getInt("sort_type", 0));
+                filterData(searchEditText.getText().toString());
+            }).start();
         });
         if (isSelectionMode) {
             deleteSelectionButton.setVisibility(currentOpenPlaylist != null ? View.VISIBLE : View.GONE);

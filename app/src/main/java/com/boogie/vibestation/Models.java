@@ -53,6 +53,7 @@ public class Models {
         public final String name;
         public final String artist;
         public final long dateAdded;
+        public boolean isFire = false;
         public final ArrayList<Song> songs = new ArrayList<>();
 
         /**
@@ -73,6 +74,7 @@ public class Models {
         public String name;
         public String imageUri;
         public String description;
+        public boolean isFire = false;
         public final ArrayList<Song> songs = new ArrayList<>();
 
         /**

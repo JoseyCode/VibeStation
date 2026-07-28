@@ -8,7 +8,10 @@
         android:layout_width="match_parent" android:layout_height="wrap_content"
         app:cardCornerRadius="12dp" app:cardElevation="4dp" app:cardBackgroundColor="#333">
         <!-- Made height 160dp for much bigger album squares -->
-        <ImageView android:id="@+id/imgGridArt" android:layout_width="match_parent" android:layout_height="160dp" android:scaleType="centerCrop"/>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="160dp">
+            <ImageView android:id="@+id/imgGridArt" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+            <ImageView android:id="@+id/imgFireIndicator" android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="top|end" android:layout_margin="8dp" android:src="@drawable/ic_fire" android:visibility="gone" app:tint="#FF9800" />
+        </FrameLayout>
     </androidx.cardview.widget.CardView>
 
     <TextView android:id="@+id/txtGridTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:gravity="center" android:maxLines="1" android:layout_marginTop="8dp"/>
