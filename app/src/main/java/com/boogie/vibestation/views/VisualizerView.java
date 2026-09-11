@@ -32,6 +32,7 @@ public class VisualizerView extends View {
     private final Paint wavePaint = new Paint();
     private final Path wavePath = new Path();
     private int waveColor = Color.WHITE;
+    private final float[][] drawXLayers = new float[6][RENDER_BINS];
 
     /**
      * Initializes VisualizerView with context.
@@ -257,12 +258,12 @@ public class VisualizerView extends View {
         float midAmp = smoothedMid * maxAllowedWidth;
         float highAmp = smoothedHigh * maxAllowedWidth;
 
-        float[] drawXLayer1 = new float[RENDER_BINS];
-        float[] drawXLayer2 = new float[RENDER_BINS];
-        float[] drawXLayer3 = new float[RENDER_BINS];
-        float[] drawXLayer4 = new float[RENDER_BINS];
-        float[] drawXLayer5 = new float[RENDER_BINS];
-        float[] drawXLayer6 = new float[RENDER_BINS];
+        float[] drawXLayer1 = drawXLayers[0];
+        float[] drawXLayer2 = drawXLayers[1];
+        float[] drawXLayer3 = drawXLayers[2];
+        float[] drawXLayer4 = drawXLayers[3];
+        float[] drawXLayer5 = drawXLayers[4];
+        float[] drawXLayer6 = drawXLayers[5];
 
         for (int i = 0; i < RENDER_BINS; i++) {
             float whipFactor = 1.0f;

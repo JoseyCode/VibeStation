@@ -21,6 +21,8 @@ import org.jaudiotagger.tag.reference.PictureTypes;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class MediaMetadataUtil {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 
     private MediaMetadataUtil() {
         // Prevent instantiation
@@ -45,7 +48,7 @@ public final class MediaMetadataUtil {
      * @param onComplete Callback invoked on UI thread after successful media rescan.
      */
     public static void updateSongMetadata(Context context, Song song, String newTitle, String newArtist, String newAlbum, Runnable onComplete) {
-        new Thread(() -> {
+        ioExecutor.execute(() -> {
             try {
                 File file = new File(song.path);
                 AudioFile audioFile = AudioFileIO.read(file);
@@ -60,7 +63,7 @@ public final class MediaMetadataUtil {
             } catch (Exception e) {
                 handleMetadataError(context, "Failed to update metadata", e);
             }
-        }).start();
+        });
     }
 
     /**
@@ -73,12 +76,12 @@ public final class MediaMetadataUtil {
      * @param onComplete Callback invoked on UI thread after scan completion.
      */
     public static void updateAlbumMetadata(Context context, Album album, String newAlbum, String newArtist, Runnable onComplete) {
-        new Thread(() -> {
+        ioExecutor.execute(() -> {
             try {
                 for (Song song : album.songs) {
                     File file = new File(song.path);
                     AudioFile audioFile = AudioFileIO.read(file);
-                    Tag tag = audioFile.getTag();
+                    Tag tag = audioFile.getTagOrCreateAndSetDefault();
                     if (tag != null) {
                         tag.setField(FieldKey.ALBUM, newAlbum);
                         tag.setField(FieldKey.ARTIST, newArtist);
@@ -90,7 +93,7 @@ public final class MediaMetadataUtil {
             } catch (Exception e) {
                 handleMetadataError(context, "Failed to update metadata", e);
             }
-        }).start();
+        });
     }
 
     /**
@@ -102,7 +105,7 @@ public final class MediaMetadataUtil {
      * @param onComplete Callback invoked on UI thread after scan completion.
      */
     public static void updateAlbumArt(Context context, Album album, Uri imageUri, Runnable onComplete) {
-        new Thread(() -> {
+        ioExecutor.execute(() -> {
             try {
                 byte[] imageData = readUriBytes(context, imageUri);
                 if (imageData == null) return;
@@ -115,7 +118,7 @@ public final class MediaMetadataUtil {
                 for (Song song : album.songs) {
                     File file = new File(song.path);
                     AudioFile audioFile = AudioFileIO.read(file);
-                    Tag tag = audioFile.getTag();
+                    Tag tag = audioFile.getTagOrCreateAndSetDefault();
                     if (tag != null) {
                         tag.deleteArtworkField();
                         tag.setField(artwork);
@@ -128,7 +131,7 @@ public final class MediaMetadataUtil {
             } catch (Exception e) {
                 handleMetadataError(context, "Failed to update cover", e);
             }
-        }).start();
+        });
     }
 
     /**
@@ -139,7 +142,7 @@ public final class MediaMetadataUtil {
      * @param onComplete Callback invoked after rescan.
      */
     public static void deleteAlbum(Context context, Album album, Runnable onComplete) {
-        new Thread(() -> {
+        ioExecutor.execute(() -> {
             String[] paths = extractPaths(album);
             for (Song song : album.songs) {
                 File file = new File(song.path);
@@ -148,7 +151,7 @@ public final class MediaMetadataUtil {
                 }
             }
             scanFilesAndNotify(context, paths, "Album deleted", onComplete);
-        }).start();
+        });
     }
 
     /**
@@ -160,6 +163,15 @@ public final class MediaMetadataUtil {
      * @param onComplete Post-scan runnable callback.
      */
     public static void scanFilesAndNotify(Context context, String[] paths, String successMessage, Runnable onComplete) {
+        if (paths == null || paths.length == 0) {
+            mainHandler.post(() -> {
+                Toast.makeText(context, successMessage, Toast.LENGTH_SHORT).show();
+                if (onComplete != null) {
+                    onComplete.run();
+                }
+            });
+            return;
+        }
         AtomicInteger count = new AtomicInteger(paths.length);
         MediaScannerConnection.scanFile(context, paths, null, (path, uri) -> {
             if (count.decrementAndGet() == 0) {

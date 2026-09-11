@@ -17,15 +17,20 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Handles serialization, persistence, backup export, and restoration for playlists.
  */
 public final class PlaylistUtil {
+
+    private static final ExecutorService backupExecutor = Executors.newSingleThreadExecutor();
 
     private PlaylistUtil() {
         // Prevent instantiation
@@ -76,9 +81,13 @@ public final class PlaylistUtil {
             JSONArray playlistsJsonArray = new JSONArray(prefs.getString("playlists", "[]"));
             for (int i = 0; i < playlistsJsonArray.length(); i++) {
                 JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
+                String rawImageUri = playlistJsonObject.optString("imageUri", null);
+                if (rawImageUri != null && rawImageUri.trim().isEmpty()) {
+                    rawImageUri = null;
+                }
                 Playlist playlist = new Playlist(
                         playlistJsonObject.getString("name"),
-                        playlistJsonObject.optString("imageUri", null)
+                        rawImageUri
                 );
                 playlist.description = playlistJsonObject.optString("description", "");
                 playlist.isFire = playlistJsonObject.optBoolean("isFire", false);
@@ -112,7 +121,7 @@ public final class PlaylistUtil {
      */
     public static void exportBackup(Context context, SharedPreferences prefs, Uri documentUri) {
         if (documentUri == null) return;
-        new Thread(() -> {
+        backupExecutor.execute(() -> {
             try (OutputStream outputStream = context.getContentResolver().openOutputStream(documentUri)) {
                 JSONArray playlistsJsonArray = new JSONArray(prefs.getString("playlists", "[]"));
                 for (int i = 0; i < playlistsJsonArray.length(); i++) {
@@ -123,12 +132,12 @@ public final class PlaylistUtil {
                     }
                 }
                 if (outputStream != null) {
-                    outputStream.write(playlistsJsonArray.toString().getBytes());
+                    outputStream.write(playlistsJsonArray.toString().getBytes(StandardCharsets.UTF_8));
                 }
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(() -> Toast.makeText(context, "Export Ready!", Toast.LENGTH_SHORT).show());
             } catch (Exception ignored) {}
-        }).start();
+        });
     }
 
     /**
@@ -141,15 +150,18 @@ public final class PlaylistUtil {
      */
     public static void restoreBackup(Context context, SharedPreferences prefs, Uri documentUri, Runnable onRestoreComplete) {
         if (documentUri == null) return;
-        new Thread(() -> {
+        backupExecutor.execute(() -> {
             try (InputStream inputStream = context.getContentResolver().openInputStream(documentUri);
-                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
+                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     stringBuilder.append(line);
                 }
-                prefs.edit().putString("playlists", stringBuilder.toString()).apply();
+                String backupContent = stringBuilder.toString();
+                // Validate that the restored file contains a valid JSON array before updating preferences
+                new JSONArray(backupContent);
+                prefs.edit().putString("playlists", backupContent).apply();
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(() -> {
                     if (onRestoreComplete != null) {
@@ -157,7 +169,10 @@ public final class PlaylistUtil {
                     }
                     Toast.makeText(context, "Restore Successful!", Toast.LENGTH_SHORT).show();
                 });
-            } catch (Exception ignored) {}
-        }).start();
+            } catch (Exception e) {
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(() -> Toast.makeText(context, "Failed to restore backup: Invalid file", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 }

@@ -186,4 +186,27 @@ public class ParticleView extends View {
             canvas.drawCircle(p.x, p.y, p.radius, paint);
         }
     }
+
+    /**
+     * Resumes animation loop if view is re-attached to the active window hierarchy.
+     */
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (animator != null && !animator.isStarted()) {
+            animator.start();
+        }
+    }
+
+    /**
+     * Terminates infinite ValueAnimator upon window detachment to prevent Choreographer leaks.
+     */
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (animator != null) {
+            animator.cancel();
+            animator = null;
+        }
+    }
 }
