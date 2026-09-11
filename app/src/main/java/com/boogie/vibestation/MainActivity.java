@@ -93,6 +93,9 @@ import java.util.concurrent.Executors;
 import com.boogie.vibestation.models.Album;
 import com.boogie.vibestation.models.Playlist;
 import com.boogie.vibestation.models.Song;
+import com.boogie.vibestation.views.CircularProgressView;
+import com.boogie.vibestation.views.ParticleView;
+import com.boogie.vibestation.views.VisualizerView;
 
 /**
  * Main Activity for VibeStation. Coordinates UI, media lists (songs, albums, playlists),
