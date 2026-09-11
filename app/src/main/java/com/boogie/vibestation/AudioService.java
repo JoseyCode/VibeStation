@@ -30,6 +30,8 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.boogie.vibestation.models.Song;
+
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,9 +62,9 @@ public class AudioService extends Service {
     private final Runnable timeoutRunnable = this::stopSelf;
 
     // Playback Queue State
-    private ArrayList<Models.Song> currentQueue = new ArrayList<>();
+    private ArrayList<Song> currentQueue = new ArrayList<>();
     private int currentIndex = -1;
-    private Models.Song currentSong;
+    private Song currentSong;
     private Bitmap currentAlbumArt;
     private boolean isForeGroundService = false;
     private Equalizer equalizer;
@@ -83,7 +85,7 @@ public class AudioService extends Service {
      */
     public interface ServiceCallback {
         /** Triggered when the service changes active track, passing metadata and art. */
-        void onTrackChanged(Models.Song song, Bitmap albumArt);
+        void onTrackChanged(Song song, Bitmap albumArt);
         /** Triggered when active playback starts or pauses. */
         void onPlaybackStateChanged(boolean isPlaying);
     }
@@ -174,7 +176,7 @@ public class AudioService extends Service {
      * @param newQueue        ArrayList of songs mapping the new queue list.
      * @param initialPosition Index position in list to begin playback at.
      */
-    public void setQueueAndPlay(ArrayList<Models.Song> newQueue, int initialPosition) {
+    public void setQueueAndPlay(ArrayList<Song> newQueue, int initialPosition) {
         this.currentQueue = newQueue;
         this.currentIndex = initialPosition;
         playTrack();
@@ -255,8 +257,8 @@ public class AudioService extends Service {
     /**
      * Retrieves the upcoming songs in the queue to be used for cache preloading.
      */
-    public ArrayList<Models.Song> getUpcomingSongs(int count) {
-        ArrayList<Models.Song> upcoming = new ArrayList<>();
+    public ArrayList<Song> getUpcomingSongs(int count) {
+        ArrayList<Song> upcoming = new ArrayList<>();
         if (currentQueue == null || currentQueue.isEmpty()) return upcoming;
         for (int i = 1; i <= count; i++) {
             upcoming.add(currentQueue.get((currentIndex + i) % currentQueue.size()));
@@ -333,7 +335,7 @@ public class AudioService extends Service {
      *
      * @return Currently loaded Song container.
      */
-    public Models.Song getCurrentSong() {
+    public Song getCurrentSong() {
         return currentSong;
     }
 
