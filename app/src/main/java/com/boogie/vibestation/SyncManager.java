@@ -71,47 +71,22 @@ public class SyncManager {
                 callback.onProgress(0, 0, "Querying server library...");
                 Log.d("VibeSync", "Connecting to server: " + serverUrl);
 
-                // Fetch remote song library JSON array representation
-                Request listRequest = new Request.Builder().url(serverUrl + "/api/songs").build();
-
-                String remoteSongsJson;
-                try (Response response = client.newCall(listRequest).execute()) {
-                    if (!response.isSuccessful()) throw new IOException("Server error: " + response.code());
-                    if (response.body() == null) throw new IOException("Empty server response");
-                    remoteSongsJson = response.body().string();
-                }
-
-                JSONArray remoteSongsArray = new JSONArray(remoteSongsJson);
+                ArrayList<RemoteSong> remoteSongsList = fetchRemoteSongs(client, serverUrl);
                 HashSet<String> remoteKeys = new HashSet<>();
-                ArrayList<RemoteSong> remoteSongsList = new ArrayList<>();
-
-                // Parse and map remote tracks to lookup hash keys
-                for (int i = 0; i < remoteSongsArray.length(); i++) {
-                    JSONObject sObj = remoteSongsArray.getJSONObject(i);
-                    String id = sObj.optString("id", "");
-                    String title = sObj.optString("title", "Unknown Title");
-                    String artist = sObj.optString("artist", "Unknown Artist");
-                    String album = sObj.optString("album", "Unknown Album");
-                    String key = makeMatchKey(title, artist);
-                    remoteKeys.add(key);
-                    remoteSongsList.add(new RemoteSong(id, title, artist, album));
+                for (RemoteSong remoteSong : remoteSongsList) {
+                    remoteKeys.add(makeMatchKey(remoteSong.title, remoteSong.artist));
                 }
 
-                // Compute upload list: Local songs that do not exist on the remote server
                 ArrayList<Song> uploadList = new ArrayList<>();
+                HashSet<String> localKeys = new HashSet<>();
                 for (Song localSong : localSongs) {
                     String localKey = makeMatchKey(localSong.title, localSong.artist);
+                    localKeys.add(localKey);
                     if (!remoteKeys.contains(localKey)) {
                         uploadList.add(localSong);
                     }
                 }
 
-                HashSet<String> localKeys = new HashSet<>();
-                for (Song localSong : localSongs) {
-                    localKeys.add(makeMatchKey(localSong.title, localSong.artist));
-                }
-
-                // Compute download list: Remote songs that do not exist in local MediaStore
                 ArrayList<RemoteSong> downloadList = new ArrayList<>();
                 for (RemoteSong remoteSong : remoteSongsList) {
                     String remoteKey = makeMatchKey(remoteSong.title, remoteSong.artist);
@@ -121,33 +96,8 @@ public class SyncManager {
                 }
 
                 int totalSongsToSync = uploadList.size() + downloadList.size();
-                int currentProgress = 0;
-
-                // Process uploads sequentially
-                int uploadedCount = 0;
-                for (Song localSong : uploadList) {
-                    callback.onProgress(currentProgress, totalSongsToSync, "Uploading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + localSong.title);
-                    try {
-                        uploadSong(client, serverUrl, localSong);
-                        uploadedCount++;
-                    } catch (Exception e) {
-                        Log.e("VibeSync", "Failed to upload: " + localSong.title, e);
-                    }
-                    currentProgress++;
-                }
-
-                // Process downloads sequentially
-                int downloadedCount = 0;
-                for (RemoteSong remoteSong : downloadList) {
-                    callback.onProgress(currentProgress, totalSongsToSync, "Downloading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + remoteSong.title);
-                    try {
-                        downloadSong(context, client, serverUrl, remoteSong);
-                        downloadedCount++;
-                    } catch (Exception e) {
-                        Log.e("VibeSync", "Failed to download: " + remoteSong.title, e);
-                    }
-                    currentProgress++;
-                }
+                int uploadedCount = processUploads(client, serverUrl, uploadList, callback, 0, totalSongsToSync);
+                int downloadedCount = processDownloads(context, client, serverUrl, downloadList, callback, uploadList.size(), totalSongsToSync);
 
                 callback.onProgress(totalSongsToSync, totalSongsToSync, "Syncing playlists database...");
                 syncPlaylists(context, client, serverUrl);
@@ -159,6 +109,92 @@ public class SyncManager {
                 callback.onError(e.toString());
             }
         });
+    }
+
+    /**
+     * Fetches remote song catalog metadata from the sync server.
+     *
+     * @param client Configured HTTP client.
+     * @param serverUrl Base URL of the sync server.
+     * @return List of parsed remote songs.
+     * @throws IOException If server network communication fails.
+     * @throws org.json.JSONException If server response JSON parsing fails.
+     */
+    private static ArrayList<RemoteSong> fetchRemoteSongs(OkHttpClient client, String serverUrl) throws IOException, org.json.JSONException {
+        Request listRequest = new Request.Builder().url(serverUrl + "/api/songs").build();
+        String remoteSongsJson;
+        try (Response response = client.newCall(listRequest).execute()) {
+            if (!response.isSuccessful()) throw new IOException("Server error: " + response.code());
+            if (response.body() == null) throw new IOException("Empty server response");
+            remoteSongsJson = response.body().string();
+        }
+
+        JSONArray remoteSongsArray = new JSONArray(remoteSongsJson);
+        ArrayList<RemoteSong> remoteSongsList = new ArrayList<>();
+        for (int i = 0; i < remoteSongsArray.length(); i++) {
+            JSONObject sObj = remoteSongsArray.getJSONObject(i);
+            String id = sObj.optString("id", "");
+            String title = sObj.optString("title", "Unknown Title");
+            String artist = sObj.optString("artist", "Unknown Artist");
+            String album = sObj.optString("album", "Unknown Album");
+            remoteSongsList.add(new RemoteSong(id, title, artist, album));
+        }
+        return remoteSongsList;
+    }
+
+    /**
+     * Uploads pending local songs to the remote server.
+     *
+     * @param client Configured HTTP client.
+     * @param serverUrl Base URL of the sync server.
+     * @param uploadList Songs to upload.
+     * @param callback Progress callback.
+     * @param progressOffset Current progress offset count.
+     * @param totalSongs Total operations to sync.
+     * @return Number of successfully uploaded songs.
+     */
+    private static int processUploads(OkHttpClient client, String serverUrl, ArrayList<Song> uploadList, SyncCallback callback, int progressOffset, int totalSongs) {
+        int uploadedCount = 0;
+        int currentProgress = progressOffset;
+        for (Song localSong : uploadList) {
+            callback.onProgress(currentProgress, totalSongs, "Uploading (" + (currentProgress + 1) + "/" + totalSongs + "):\n" + localSong.title);
+            try {
+                uploadSong(client, serverUrl, localSong);
+                uploadedCount++;
+            } catch (Exception e) {
+                Log.e("VibeSync", "Failed to upload: " + localSong.title, e);
+            }
+            currentProgress++;
+        }
+        return uploadedCount;
+    }
+
+    /**
+     * Downloads missing remote songs from the server to local storage.
+     *
+     * @param context Application context.
+     * @param client Configured HTTP client.
+     * @param serverUrl Base URL of the sync server.
+     * @param downloadList Remote songs to download.
+     * @param callback Progress callback.
+     * @param progressOffset Current progress offset count.
+     * @param totalSongs Total operations to sync.
+     * @return Number of successfully downloaded songs.
+     */
+    private static int processDownloads(Context context, OkHttpClient client, String serverUrl, ArrayList<RemoteSong> downloadList, SyncCallback callback, int progressOffset, int totalSongs) {
+        int downloadedCount = 0;
+        int currentProgress = progressOffset;
+        for (RemoteSong remoteSong : downloadList) {
+            callback.onProgress(currentProgress, totalSongs, "Downloading (" + (currentProgress + 1) + "/" + totalSongs + "):\n" + remoteSong.title);
+            try {
+                downloadSong(context, client, serverUrl, remoteSong);
+                downloadedCount++;
+            } catch (Exception e) {
+                Log.e("VibeSync", "Failed to download: " + remoteSong.title, e);
+            }
+            currentProgress++;
+        }
+        return downloadedCount;
     }
 
     /**
