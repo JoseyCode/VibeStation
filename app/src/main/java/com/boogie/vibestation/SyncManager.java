@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
+import com.boogie.vibestation.models.Song;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +59,7 @@ public class SyncManager {
      * @param localSongs List of all local songs found in the MediaStore database.
      * @param callback   Callback for reporting sync status updates to the UI.
      */
-    public static void startSync(Context context, String serverUrl, ArrayList<Models.Song> localSongs, SyncCallback callback) {
+    public static void startSync(Context context, String serverUrl, ArrayList<Song> localSongs, SyncCallback callback) {
         syncExecutor.execute(() -> {
             OkHttpClient client = new OkHttpClient.Builder()
                     .connectTimeout(30, TimeUnit.SECONDS)
@@ -97,8 +98,8 @@ public class SyncManager {
                 }
 
                 // Compute upload list: Local songs that do not exist on the remote server
-                ArrayList<Models.Song> uploadList = new ArrayList<>();
-                for (Models.Song localSong : localSongs) {
+                ArrayList<Song> uploadList = new ArrayList<>();
+                for (Song localSong : localSongs) {
                     String localKey = makeMatchKey(localSong.title, localSong.artist);
                     if (!remoteKeys.contains(localKey)) {
                         uploadList.add(localSong);
@@ -106,7 +107,7 @@ public class SyncManager {
                 }
 
                 HashSet<String> localKeys = new HashSet<>();
-                for (Models.Song localSong : localSongs) {
+                for (Song localSong : localSongs) {
                     localKeys.add(makeMatchKey(localSong.title, localSong.artist));
                 }
 
@@ -124,7 +125,7 @@ public class SyncManager {
 
                 // Process uploads sequentially
                 int uploadedCount = 0;
-                for (Models.Song localSong : uploadList) {
+                for (Song localSong : uploadList) {
                     callback.onProgress(currentProgress, totalSongsToSync, "Uploading (" + (currentProgress + 1) + "/" + totalSongsToSync + "):\n" + localSong.title);
                     try {
                         uploadSong(client, serverUrl, localSong);
@@ -197,7 +198,7 @@ public class SyncManager {
      * @param serverUrl Server destination base URL.
      * @param song      The local Song object to upload.
      */
-    private static void uploadSong(OkHttpClient client, String serverUrl, Models.Song song) throws IOException {
+    private static void uploadSong(OkHttpClient client, String serverUrl, Song song) throws IOException {
         File file = new File(song.path);
         if (!file.exists()) return;
 

@@ -90,6 +90,10 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.boogie.vibestation.models.Album;
+import com.boogie.vibestation.models.Playlist;
+import com.boogie.vibestation.models.Song;
+
 /**
  * Main Activity for VibeStation. Coordinates UI, media lists (songs, albums, playlists),
  * binds to the background AudioService, manages the visualizer view, handles search querying,
@@ -98,22 +102,22 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity implements AudioService.ServiceCallback {
 
     // Audio Playback Content Lists
-    private final ArrayList<Models.Song> allSongs = new ArrayList<>();
-    private final ArrayList<Models.Album> allAlbums = new ArrayList<>();
-    private final ArrayList<Models.Playlist> allPlaylists = new ArrayList<>();
-    private final ArrayList<Models.Song> displaySongs = new ArrayList<>();
-    private final ArrayList<Models.Album> displayAlbums = new ArrayList<>();
-    private final ArrayList<Models.Playlist> displayPlaylists = new ArrayList<>();
-    private final ArrayList<Models.Song> displayDetailSongs = new ArrayList<>();
+    private final ArrayList<Song> allSongs = new ArrayList<>();
+    private final ArrayList<Album> allAlbums = new ArrayList<>();
+    private final ArrayList<Playlist> allPlaylists = new ArrayList<>();
+    private final ArrayList<Song> displaySongs = new ArrayList<>();
+    private final ArrayList<Album> displayAlbums = new ArrayList<>();
+    private final ArrayList<Playlist> displayPlaylists = new ArrayList<>();
+    private final ArrayList<Song> displayDetailSongs = new ArrayList<>();
 
     // Playlist Target References
-    private Models.Playlist activePlaylistForImage;
-    private Models.Album activeAlbumForImage;
-    private Models.Playlist currentOpenPlaylist;
+    private Playlist activePlaylistForImage;
+    private Album activeAlbumForImage;
+    private Playlist currentOpenPlaylist;
 
     // Selection Queue
     private boolean isSelectionMode = false;
-    private final HashSet<Models.Song> selectedSongs = new HashSet<>();
+    private final HashSet<Song> selectedSongs = new HashSet<>();
 
     // UI Widgets
     private GridView albumsGridView;
@@ -352,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         btnLibShuffle.setOnClickListener(v -> {
             triggerHapticFeedback(v);
             if (!displaySongs.isEmpty()) {
-                java.util.ArrayList<Models.Song> shuffledQueue = new java.util.ArrayList<>(displaySongs);
+                java.util.ArrayList<Song> shuffledQueue = new java.util.ArrayList<>(displaySongs);
                 java.util.Collections.shuffle(shuffledQueue);
                 playAudio(shuffledQueue, 0);
             }
@@ -623,7 +627,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     .setTitle("New Playlist")
                     .setView(layout)
                     .setPositiveButton("Create", (dialog, which) -> {
-                        Models.Playlist newPlaylist = new Models.Playlist(nameField.getText().toString(), null);
+                        Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
                         newPlaylist.description = descField.getText().toString();
                         allPlaylists.add(newPlaylist);
                         savePlaylists();
@@ -697,7 +701,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param albumArt Bitmap art retrieved from metadata.
      */
     @Override
-    public void onTrackChanged(Models.Song song, Bitmap albumArt) {
+    public void onTrackChanged(Song song, Bitmap albumArt) {
         miniTitleTextView.setText(song.title);
         miniArtistTextView.setText(song.artist);
         fullTitleTextView.setText(song.title);
@@ -794,7 +798,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param queue    List of Songs representing the queue.
      * @param position Starting index position.
      */
-    private void playAudio(ArrayList<Models.Song> queue, int position) {
+    private void playAudio(ArrayList<Song> queue, int position) {
         if (isBound) {
             audioService.setQueueAndPlay(queue, position);
         } else {
@@ -808,7 +812,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      *
      * @param song Song target toggled.
      */
-    private void toggleSelectionMode(Models.Song song) {
+    private void toggleSelectionMode(Song song) {
         if (!isSelectionMode) {
             isSelectionMode = true;
             topBarContainer.setVisibility(View.GONE);
@@ -881,7 +885,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                                 .setTitle("New Playlist")
                                 .setView(layout)
                                 .setPositiveButton("Create", (dialog2, which2) -> {
-                                    Models.Playlist newPlaylist = new Models.Playlist(nameField.getText().toString(), null);
+                                    Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
                                     newPlaylist.description = descField.getText().toString();
                                     newPlaylist.songs.addAll(selectedSongs);
                                     allPlaylists.add(newPlaylist);
@@ -891,12 +895,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                                     clearSelection();
                                 }).show();
                     } else {
-                        Models.Playlist targetPlaylist = allPlaylists.get(which - 1);
+                        Playlist targetPlaylist = allPlaylists.get(which - 1);
                         int addedCount = 0;
                         int duplicateCount = 0;
-                        for (Models.Song selectedSong : selectedSongs) {
+                        for (Song selectedSong : selectedSongs) {
                             boolean songExists = false;
-                            for (Models.Song existingSong : targetPlaylist.songs) {
+                            for (Song existingSong : targetPlaylist.songs) {
                                 if (existingSong.id.equals(selectedSong.id)) {
                                     songExists = true;
                                     break;
@@ -930,7 +934,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         new AlertDialog.Builder(this)
                 .setTitle("Remove " + selectedSongs.size() + " songs?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    for (Models.Song selected : selectedSongs) {
+                    for (Song selected : selectedSongs) {
                         currentOpenPlaylist.songs.removeIf(song -> song.id.equals(selected.id));
                     }
                     savePlaylists();
@@ -956,13 +960,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
         albumsGridView.setOnItemLongClickListener((parent, view, position, id) -> {
             triggerHapticFeedback(view);
-            Models.Album currentAlbum = displayAlbums.get(position);
+            Album currentAlbum = displayAlbums.get(position);
             String[] options = {"Convert to Playlist", "Edit Metadata", "Change Cover Art", "Download Image", "Delete Album"};
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle(currentAlbum.name)
                     .setItems(options, (dialog, which) -> {
                         if (which == 0) {
-                            Models.Playlist newPlaylist = new Models.Playlist(currentAlbum.name, null);
+                            Playlist newPlaylist = new Playlist(currentAlbum.name, null);
                             newPlaylist.songs.addAll(currentAlbum.songs);
                             allPlaylists.add(newPlaylist);
                             savePlaylists();
@@ -997,15 +1001,15 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 int from = viewHolder.getAdapterPosition();
                 int to = target.getAdapterPosition();
                 
-                Models.Playlist moved = displayPlaylists.get(from);
+                Playlist moved = displayPlaylists.get(from);
                 int allFrom = allPlaylists.indexOf(moved);
                 int allTo = allPlaylists.indexOf(displayPlaylists.get(to));
                 
                 if (allFrom != -1 && allTo != -1) {
-                    Models.Playlist allMoved = allPlaylists.remove(allFrom);
+                    Playlist allMoved = allPlaylists.remove(allFrom);
                     allPlaylists.add(allTo, allMoved);
                 }
-                Models.Playlist displayMoved = displayPlaylists.remove(from);
+                Playlist displayMoved = displayPlaylists.remove(from);
                 displayPlaylists.add(to, displayMoved);
                 playlistListAdapter.notifyItemMoved(from, to);
                 return true;
@@ -1129,10 +1133,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     /**
      * Adapter for displaying songs in the primary library list view.
      */
-    private class SongAdapter extends android.widget.ArrayAdapter<Models.Song> {
-        final ArrayList<Models.Song> songsList;
+    private class SongAdapter extends android.widget.ArrayAdapter<Song> {
+        final ArrayList<Song> songsList;
 
-        public SongAdapter(ArrayList<Models.Song> list) {
+        public SongAdapter(ArrayList<Song> list) {
             super(MainActivity.this, R.layout.item_song, list);
             this.songsList = list;
         }
@@ -1153,7 +1157,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 viewHolder = (SongViewHolder) convertView.getTag();
             }
 
-            Models.Song currentSong = songsList.get(position);
+            Song currentSong = songsList.get(position);
             viewHolder.titleTextView.setText(currentSong.title);
             viewHolder.artistTextView.setText(currentSong.artist);
             loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null);
@@ -1231,7 +1235,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 viewHolder = (SongViewHolder) convertView.getTag();
             }
 
-            Models.Song currentSong = displayDetailSongs.get(position);
+            Song currentSong = displayDetailSongs.get(position);
             viewHolder.titleTextView.setText(currentSong.title);
             viewHolder.artistTextView.setText(currentSong.artist);
             loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null);
@@ -1299,7 +1303,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             if (convertView == null) {
                 convertView = getLayoutInflater().inflate(R.layout.item_grid, parent, false);
             }
-            Models.Album currentAlbum = displayAlbums.get(position);
+            Album currentAlbum = displayAlbums.get(position);
             ((TextView) convertView.findViewById(R.id.txtGridTitle)).setText(currentAlbum.name);
             ((TextView) convertView.findViewById(R.id.txtGridSub)).setText(currentAlbum.artist);
             
@@ -1355,7 +1359,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Models.Playlist currentPlaylist = displayPlaylists.get(position);
+            Playlist currentPlaylist = displayPlaylists.get(position);
             holder.titleText.setText(currentPlaylist.name);
             holder.subText.setText(String.format(Locale.getDefault(), "%d songs", currentPlaylist.songs.size()));
 
@@ -1396,17 +1400,17 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             displayAlbums.addAll(allAlbums);
             displayPlaylists.addAll(allPlaylists);
         } else {
-            for (Models.Song song : allSongs) {
+            for (Song song : allSongs) {
                 if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {
                     displaySongs.add(song);
                 }
             }
-            for (Models.Album album : allAlbums) {
+            for (Album album : allAlbums) {
                 if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {
                     displayAlbums.add(album);
                 }
             }
-            for (Models.Playlist playlist : allPlaylists) {
+            for (Playlist playlist : allPlaylists) {
                 if (playlist.name.toLowerCase().contains(trimmedQuery)) {
                     displayPlaylists.add(playlist);
                 }
@@ -1426,8 +1430,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      */
     private void loadMusic() {
         new Thread(() -> {
-            ArrayList<Models.Song> tempSongs = new ArrayList<>();
-            HashMap<String, Models.Album> albumMap = new HashMap<>();
+            ArrayList<Song> tempSongs = new ArrayList<>();
+            HashMap<String, Album> albumMap = new HashMap<>();
             try {
                 Cursor musicCursor;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -1479,11 +1483,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                             } catch (Exception ignored) {}
                         }
 
-                        Models.Song song = new Models.Song(id, title, artist, path, albumId, albumName, trackNumber, dateAdded);
+                        Song song = new Song(id, title, artist, path, albumId, albumName, trackNumber, dateAdded);
                         tempSongs.add(song);
 
                         if (!albumMap.containsKey(albumId)) {
-                            Models.Album newAlbum = new Models.Album(albumId, albumName, artist, dateAdded);
+                            Album newAlbum = new Album(albumId, albumName, artist, dateAdded);
                             newAlbum.isFire = fireAlbums.contains(albumId);
                             albumMap.put(albumId, newAlbum);
                         }
@@ -1494,24 +1498,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             } catch (Exception ignored) {}
 
-            ArrayList<Models.Album> tempAlbums = new ArrayList<>(albumMap.values());
-            for (Models.Album album : tempAlbums) {
+            ArrayList<Album> tempAlbums = new ArrayList<>(albumMap.values());
+            for (Album album : tempAlbums) {
                 Collections.sort(album.songs, Comparator.comparingInt(song -> song.trackNumber));
             }
 
-            HashMap<String, Models.Song> songIdMap = new HashMap<>();
-            HashMap<String, Models.Song> songNameMap = new HashMap<>();
-            for (Models.Song s : tempSongs) {
+            HashMap<String, Song> songIdMap = new HashMap<>();
+            HashMap<String, Song> songNameMap = new HashMap<>();
+            for (Song s : tempSongs) {
                 songIdMap.put(s.id, s);
                 songNameMap.put((s.title + "_" + s.artist).toLowerCase(Locale.getDefault()), s);
             }
 
-            ArrayList<Models.Playlist> tempPlaylists = new ArrayList<>();
+            ArrayList<Playlist> tempPlaylists = new ArrayList<>();
             try {
                 JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
                 for (int i = 0; i < playlistsJsonArray.length(); i++) {
                     JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                    Models.Playlist playlist = new Models.Playlist(
+                    Playlist playlist = new Playlist(
                             playlistJsonObject.getString("name"),
                             playlistJsonObject.optString("imageUri", null)
                     );
@@ -1524,7 +1528,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         String songTitle = songJsonObject.getString("t");
                         String songArtist = songJsonObject.getString("a");
 
-                        Models.Song matchedSong = songIdMap.get(songId);
+                        Song matchedSong = songIdMap.get(songId);
                         if (matchedSong == null) {
                             matchedSong = songNameMap.get((songTitle + "_" + songArtist).toLowerCase(Locale.getDefault()));
                         }
@@ -1536,8 +1540,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             } catch (Exception ignored) {}
 
-            Comparator<Models.Song> songComparator = (a, b) -> a.title.compareToIgnoreCase(b.title);
-            Comparator<Models.Album> albumComparator = (a, b) -> a.name.compareToIgnoreCase(b.name);
+            Comparator<Song> songComparator = (a, b) -> a.title.compareToIgnoreCase(b.title);
+            Comparator<Album> albumComparator = (a, b) -> a.name.compareToIgnoreCase(b.name);
             Collections.sort(tempSongs, songComparator);
             Collections.sort(tempAlbums, albumComparator);
 
@@ -1561,7 +1565,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private void savePlaylists() {
         try {
             JSONArray playlistsJsonArray = new JSONArray();
-            for (Models.Playlist playlist : allPlaylists) {
+            for (Playlist playlist : allPlaylists) {
                 JSONObject playlistJsonObject = new JSONObject();
                 playlistJsonObject.put("name", playlist.name);
                 playlistJsonObject.put("imageUri", playlist.imageUri != null ? playlist.imageUri : "");
@@ -1569,7 +1573,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playlistJsonObject.put("isFire", playlist.isFire);
 
                 JSONArray songsJsonArray = new JSONArray();
-                for (Models.Song song : playlist.songs) {
+                for (Song song : playlist.songs) {
                     JSONObject songJsonObject = new JSONObject();
                     songJsonObject.put("id", song.id);
                     songJsonObject.put("t", song.title);
@@ -1589,12 +1593,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param sortType Sort selector key index (0: A-Z, 1: Z-A, 2: Newest).
      */
     private void sortData(int sortType) {
-        Comparator<Models.Song> songComparator = sortType == 0 
+        Comparator<Song> songComparator = sortType == 0 
                 ? (a, b) -> a.title.compareToIgnoreCase(b.title) 
                 : sortType == 1 ? (a, b) -> b.title.compareToIgnoreCase(a.title) 
                 : (a, b) -> Long.compare(b.dateAdded, a.dateAdded);
 
-        Comparator<Models.Album> albumComparator = sortType == 0 
+        Comparator<Album> albumComparator = sortType == 0 
                 ? (a, b) -> a.name.compareToIgnoreCase(b.name) 
                 : sortType == 1 ? (a, b) -> b.name.compareToIgnoreCase(a.name) 
                 : (a, b) -> Long.compare(b.dateAdded, a.dateAdded);
@@ -1612,7 +1616,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param playlistObject Associated playlist metadata wrapper if applicable.
      * @param albumObject    Associated album metadata wrapper if applicable.
      */
-    private void openDetailView(String viewTitle, ArrayList<Models.Song> songsList, boolean isPlaylist, Models.Playlist playlistObject, Models.Album albumObject) {
+    private void openDetailView(String viewTitle, ArrayList<Song> songsList, boolean isPlaylist, Playlist playlistObject, Album albumObject) {
         expandedDetailsContainer.setVisibility(View.VISIBLE);
         detailTitleTextView.setText(viewTitle);
         currentOpenPlaylist = isPlaylist ? playlistObject : null;
@@ -1706,7 +1710,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         findViewById(R.id.btnDetailShuffle).setOnClickListener(view -> {
             triggerHapticFeedback(view);
             if (!songsList.isEmpty()) {
-                ArrayList<Models.Song> shuffledQueue = new ArrayList<>(songsList);
+                ArrayList<Song> shuffledQueue = new ArrayList<>(songsList);
                 Collections.shuffle(shuffledQueue);
                 playAudio(shuffledQueue, 0);
             }
@@ -2355,7 +2359,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      *
      * @param song The song to edit.
      */
-    private void showEditSongMetadataDialog(Models.Song song) {
+    private void showEditSongMetadataDialog(Song song) {
         if (!checkManageStoragePermission()) return;
         
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -2403,7 +2407,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      *
      * @param album The album to edit.
      */
-    private void showEditAlbumMetadataDialog(Models.Album album) {
+    private void showEditAlbumMetadataDialog(Album album) {
         if (!checkManageStoragePermission()) return;
         
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -2448,7 +2452,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param newArtist The new artist name.
      * @param newAlbum The new album name.
      */
-    private void updateSongMetadata(Models.Song song, String newTitle, String newArtist, String newAlbum) {
+    private void updateSongMetadata(Song song, String newTitle, String newArtist, String newAlbum) {
         new Thread(() -> {
             try {
                 File file = new File(song.path);
@@ -2481,10 +2485,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param newAlbum The new album name.
      * @param newArtist The new artist name.
      */
-    private void updateAlbumMetadata(Models.Album album, String newAlbum, String newArtist) {
+    private void updateAlbumMetadata(Album album, String newAlbum, String newArtist) {
         new Thread(() -> {
             try {
-                for (Models.Song song : album.songs) {
+                for (Song song : album.songs) {
                     File file = new File(song.path);
                     AudioFile audioFile = AudioFileIO.read(file);
                     Tag tag = audioFile.getTag();
@@ -2521,7 +2525,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param album The album model to update.
      * @param imageUri The new image URI.
      */
-    private void updateAlbumArt(Models.Album album, Uri imageUri) {
+    private void updateAlbumArt(Album album, Uri imageUri) {
         new Thread(() -> {
             try {
                 InputStream is = getContentResolver().openInputStream(imageUri);
@@ -2541,7 +2545,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 artwork.setMimeType("image/jpeg");
                 artwork.setPictureType(org.jaudiotagger.tag.reference.PictureTypes.DEFAULT_ID);
 
-                for (Models.Song song : album.songs) {
+                for (Song song : album.songs) {
                     File file = new File(song.path);
                     AudioFile audioFile = AudioFileIO.read(file);
                     Tag tag = audioFile.getTag();
@@ -2579,11 +2583,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      *
      * @param album The album model to delete.
      */
-    private void deleteAlbum(Models.Album album) {
+    private void deleteAlbum(Album album) {
         new Thread(() -> {
             String[] paths = new String[album.songs.size()];
             for (int i = 0; i < album.songs.size(); i++) {
-                Models.Song song = album.songs.get(i);
+                Song song = album.songs.get(i);
                 paths[i] = song.path;
                 new File(song.path).delete();
             }
