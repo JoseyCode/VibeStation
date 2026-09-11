@@ -176,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private final Handler seekHandler = new Handler(Looper.getMainLooper());
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService imageExecutor = Executors.newFixedThreadPool(4);
+    private final ExecutorService libraryExecutor = Executors.newSingleThreadExecutor();
     private SharedPreferences sharedPreferences;
     private static LruCache<String, Bitmap> artworkCache;
     private Visualizer audioVisualizer;
@@ -1367,7 +1368,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * sorts tracks, and updates lists on the UI thread.
      */
     private void loadMusic() {
-        new Thread(() -> {
+        libraryExecutor.execute(() -> {
             HashMap<String, Album> albumMap = new HashMap<>();
             ArrayList<Song> tempSongs = MusicLibraryUtil.queryMediaStoreSongs(getContentResolver(), fireAlbums, albumMap);
 
@@ -1400,7 +1401,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
                 filterData(searchEditText.getText().toString());
             });
-        }).start();
+        });
     }
 
     /**
@@ -1837,6 +1838,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             audioVisualizer = null;
         }
         imageExecutor.shutdown();
+        libraryExecutor.shutdown();
         seekHandler.removeCallbacks(updateSeekBarTask);
     }
 

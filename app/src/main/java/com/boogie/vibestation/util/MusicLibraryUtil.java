@@ -22,6 +22,17 @@ import java.util.Set;
  */
 public final class MusicLibraryUtil {
 
+    public static final String[] SONG_PROJECTION = {
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.DATE_ADDED,
+            MediaStore.Audio.Media.TRACK
+    };
+
     private MusicLibraryUtil() {
         // Prevent instantiation
     }
@@ -42,7 +53,7 @@ public final class MusicLibraryUtil {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 rawCursor = contentResolver.query(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        null,
+                        SONG_PROJECTION,
                         MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
                         new String[]{"%Music/%"},
                         null
@@ -50,7 +61,7 @@ public final class MusicLibraryUtil {
             } else {
                 rawCursor = contentResolver.query(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        null,
+                        SONG_PROJECTION,
                         MediaStore.Audio.Media.DATA + " LIKE ?",
                         new String[]{"%/Music/%"},
                         null
@@ -132,7 +143,7 @@ public final class MusicLibraryUtil {
      */
     public static void filterData(String query, List<Song> allSongs, List<Album> allAlbums, List<Playlist> allPlaylists,
                                   List<Song> displaySongs, List<Album> displayAlbums, List<Playlist> displayPlaylists) {
-        String trimmedQuery = query.toLowerCase(Locale.getDefault()).trim();
+        String trimmedQuery = (query != null ? query : "").toLowerCase(Locale.getDefault()).trim();
         displaySongs.clear();
         displayAlbums.clear();
         displayPlaylists.clear();

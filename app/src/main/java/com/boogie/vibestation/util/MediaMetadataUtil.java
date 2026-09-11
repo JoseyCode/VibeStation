@@ -143,14 +143,22 @@ public final class MediaMetadataUtil {
      */
     public static void deleteAlbum(Context context, Album album, Runnable onComplete) {
         ioExecutor.execute(() -> {
-            String[] paths = extractPaths(album);
-            for (Song song : album.songs) {
-                File file = new File(song.path);
-                if (file.exists()) {
-                    file.delete();
+            try {
+                String[] paths = extractPaths(album);
+                if (album != null) {
+                    for (Song song : album.songs) {
+                        if (song.path != null) {
+                            File file = new File(song.path);
+                            if (file.exists()) {
+                                file.delete();
+                            }
+                        }
+                    }
                 }
+                scanFilesAndNotify(context, paths, "Album deleted", onComplete);
+            } catch (Exception e) {
+                handleMetadataError(context, "Failed to delete album", e);
             }
-            scanFilesAndNotify(context, paths, "Album deleted", onComplete);
         });
     }
 
@@ -203,6 +211,9 @@ public final class MediaMetadataUtil {
      * @return Array of absolute path strings.
      */
     private static String[] extractPaths(Album album) {
+        if (album == null || album.songs == null) {
+            return new String[0];
+        }
         String[] paths = new String[album.songs.size()];
         for (int i = 0; i < album.songs.size(); i++) {
             paths[i] = album.songs.get(i).path;
