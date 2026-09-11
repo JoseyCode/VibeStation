@@ -59,4 +59,19 @@ public class PlaylistTest {
         assertEquals(1, playlist.songs.size());
         assertEquals("s1", playlist.songs.get(0).id);
     }
+
+    /**
+     * Verifies equality and hash code contracts across identical and differing playlist instances.
+     */
+    @Test
+    public void testEqualsAndHashCode() {
+        Playlist playlist1 = new Playlist("Vibes", null);
+        Playlist playlist2 = new Playlist("Vibes", "content://art/1");
+        Playlist playlist3 = new Playlist("Other", null);
+
+        assertEquals(playlist1, playlist2);
+        assertEquals(playlist1.hashCode(), playlist2.hashCode());
+        org.junit.Assert.assertNotEquals(playlist1, playlist3);
+        org.junit.Assert.assertNotEquals(playlist1, null);
+    }
 }

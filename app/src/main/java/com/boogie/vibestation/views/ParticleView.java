@@ -160,6 +160,13 @@ public class ParticleView extends View {
             particles.add(createRandomParticle(w, h, random));
         }
 
+        startAnimator();
+    }
+
+    /**
+     * Initializes and starts the infinite particle animation loop.
+     */
+    private void startAnimator() {
         if (animator == null) {
             animator = ValueAnimator.ofFloat(0, 1);
             animator.setDuration(ANIMATION_DURATION_MS);
@@ -173,6 +180,8 @@ public class ParticleView extends View {
                 }
                 invalidate();
             });
+            animator.start();
+        } else if (!animator.isStarted()) {
             animator.start();
         }
     }
@@ -193,8 +202,8 @@ public class ParticleView extends View {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (animator != null && !animator.isStarted()) {
-            animator.start();
+        if (getWidth() > 0 && getHeight() > 0) {
+            startAnimator();
         }
     }
 
@@ -206,7 +215,6 @@ public class ParticleView extends View {
         super.onDetachedFromWindow();
         if (animator != null) {
             animator.cancel();
-            animator = null;
         }
     }
 }

@@ -113,9 +113,9 @@ public final class PlaylistUtil {
     }
 
     /**
-     * Serializes playlist collection and embedded base64 artwork into a backup file on a background thread.
+     * Serializes playlist collection into a backup file on a background thread.
      *
-     * @param context Application context for Toast and content resolution.
+     * @param context Application context for Toast.
      * @param prefs Source SharedPreferences instance.
      * @param documentUri Target file URI for writing backup data.
      */
@@ -124,13 +124,6 @@ public final class PlaylistUtil {
         backupExecutor.execute(() -> {
             try (OutputStream outputStream = context.getContentResolver().openOutputStream(documentUri)) {
                 JSONArray playlistsJsonArray = new JSONArray(prefs.getString("playlists", "[]"));
-                for (int i = 0; i < playlistsJsonArray.length(); i++) {
-                    JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                    String imageUri = playlistJsonObject.optString("imageUri", "");
-                    if (!imageUri.isEmpty()) {
-                        playlistJsonObject.put("b64", ArtUtil.getBase64Image(context.getContentResolver(), Uri.parse(imageUri)));
-                    }
-                }
                 if (outputStream != null) {
                     outputStream.write(playlistsJsonArray.toString().getBytes(StandardCharsets.UTF_8));
                 }
@@ -159,9 +152,15 @@ public final class PlaylistUtil {
                     stringBuilder.append(line);
                 }
                 String backupContent = stringBuilder.toString();
-                // Validate that the restored file contains a valid JSON array before updating preferences
-                new JSONArray(backupContent);
-                prefs.edit().putString("playlists", backupContent).apply();
+                // Validate that the restored file contains a valid JSON array and strip redundant b64 payloads
+                JSONArray validatedArray = new JSONArray(backupContent);
+                for (int i = 0; i < validatedArray.length(); i++) {
+                    JSONObject playlistObj = validatedArray.optJSONObject(i);
+                    if (playlistObj != null) {
+                        playlistObj.remove("b64");
+                    }
+                }
+                prefs.edit().putString("playlists", validatedArray.toString()).apply();
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(() -> {
                     if (onRestoreComplete != null) {
