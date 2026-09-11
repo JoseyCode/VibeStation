@@ -29,3 +29,12 @@
 
 ## 7. Code Reviews
 * **Review Standard:** When a code review is requested, you MUST read and use `~/Desktop/compReview.md` as the strict guideline and evaluation criteria for the review.
+
+## 8. Mandatory Testing & Code Quality Verification
+* **Pre-Completion Requirement:** Before marking any task complete or staging code changes, agents MUST execute the automated quality verification suite:
+  ```bash
+  ./gradlew checkQuality
+  ```
+* **Zero Regressions:** All JUnit unit tests and ArchUnit architectural constraints (`./gradlew testDebugUnitTest`) must pass. No new Android Lint errors (`./gradlew lintDebug`) beyond the baseline in `app/lint-baseline.xml` are permitted.
+* **Complexity & Duplication Audits:** Review output from PMD (`./gradlew pmd`) and CPD (`./gradlew cpd`). Never introduce copy-paste duplicated logic; extract reusable helper functions or classes instead. Adhere to method cyclomatic complexity limits and keep classes focused and modular.
+
