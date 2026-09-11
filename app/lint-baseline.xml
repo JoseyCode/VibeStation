@@ -13,14 +13,14 @@
     </issue>
 
     <issue
-        id="ApplySharedPref"
-        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
-        errorLine1="            sharedPreferences.edit().putString(&quot;playlists&quot;, playlistsJsonArray.toString()).commit();"
-        errorLine2="                                                                                           ~~~~~~~~">
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        if (artist.toLowerCase().contains(&quot;unknown&quot;)) {"
+        errorLine2="                   ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1589"
-            column="92"/>
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="103"
+            column="20"/>
     </issue>
 
     <issue
@@ -29,8 +29,8 @@
         errorLine1="        String trimmedQuery = query.toLowerCase().trim();"
         errorLine2="                                    ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1396"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="129"
             column="37"/>
     </issue>
 
@@ -40,8 +40,8 @@
         errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
         errorLine2="                               ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1407"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="140"
             column="32"/>
     </issue>
 
@@ -51,8 +51,8 @@
         errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
         errorLine2="                                                                                   ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1407"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="140"
             column="84"/>
     </issue>
 
@@ -62,8 +62,8 @@
         errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
         errorLine2="                               ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1412"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="145"
             column="32"/>
     </issue>
 
@@ -73,8 +73,8 @@
         errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
         errorLine2="                                                                                    ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1412"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="145"
             column="85"/>
     </issue>
 
@@ -84,20 +84,9 @@
         errorLine1="                if (playlist.name.toLowerCase().contains(trimmedQuery)) {"
         errorLine2="                                  ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1417"
+            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
+            line="150"
             column="35"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                        if (artist.toLowerCase().contains(&quot;unknown&quot;)) {"
-        errorLine2="                                   ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1479"
-            column="36"/>
     </issue>
 
     <issue
@@ -155,7 +144,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="55"
+            line="67"
             column="13"
             message="Occurrence in layout-land"/>
     </issue>
@@ -167,152 +156,9 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="79"
+            line="91"
             column="13"
             message="Occurrence in layout-land"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/topBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
-        errorLine2="     ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="11"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/selectionBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
-        errorLine2="     ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="17"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;FrameLayout android:id=&quot;@+id/pageContainer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
-        errorLine2="     ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="24"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/expandedDetailsView&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
-        errorLine2="     ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="33"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/bottomPlayer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
-        errorLine2="     ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="41"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="    &lt;com.google.android.material.bottomnavigation.BottomNavigationView"
-        errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="48"
-            column="6"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;TextView android:id=&quot;@+id/txtCurrentTime&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="90"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;SeekBar android:id=&quot;@+id/seekBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="91"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;TextView android:id=&quot;@+id/txtTotalTime&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="92"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="93"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="94"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="95"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="MissingConstraints"
-        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
-        errorLine1="        &lt;Button android:id=&quot;@+id/btnSpeed&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="96"
-            column="10"/>
     </issue>
 
     <issue
@@ -597,7 +443,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="859"
+            line="883"
             column="42"/>
     </issue>
 
@@ -608,7 +454,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="138"
+            line="137"
             column="13"/>
     </issue>
 
@@ -619,7 +465,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="161"
+            line="160"
             column="17"/>
     </issue>
 
@@ -630,7 +476,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="207"
+            line="206"
             column="17"/>
     </issue>
 
@@ -641,7 +487,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="311"
+            line="310"
             column="13"/>
     </issue>
 
@@ -813,17 +659,28 @@
     <issue
         id="TextFields"
         message="This text field does not specify an `inputType`"
-        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
         errorLine2="         ~~~~~~~~">
         <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="12"
+            file="src/main/res/layout/activity_main.xml"
+            line="13"
             column="10"/>
     </issue>
 
     <issue
         id="TextFields"
         message="This text field does not specify an `inputType`"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="14"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="Autofill"
+        message="Missing `autofillHints` attribute"
         errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
         errorLine2="         ~~~~~~~~">
         <location
@@ -839,18 +696,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="12"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="Autofill"
-        message="Missing `autofillHints` attribute"
-        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_main.xml"
-            line="13"
+            line="14"
             column="10"/>
     </issue>
 
@@ -971,30 +817,8 @@
         errorLine2="                                                     ^">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="553"
+            line="598"
             column="54"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSort&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="13"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSettings&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="14"
-            column="10"/>
     </issue>
 
     <issue
@@ -1005,6 +829,17 @@
         <location
             file="src/main/res/layout/activity_main.xml"
             line="14"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSort&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="15"
             column="10"/>
     </issue>
 
@@ -1022,22 +857,11 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCancelSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSettings&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
         errorLine2="         ~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="18"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnDeleteSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="20"
+            line="16"
             column="10"/>
     </issue>
 
@@ -1055,11 +879,11 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnAddSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCancelSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
         errorLine2="         ~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="21"
+            line="22"
             column="10"/>
     </issue>
 
@@ -1088,33 +912,33 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnDeleteSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="24"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnAddSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="25"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
         errorLine1="        &lt;ImageView android:id=&quot;@+id/imgDetailCover&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
         errorLine2="         ~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="34"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageView android:id=&quot;@+id/imgMiniArt&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
-        errorLine2="         ~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
             line="42"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnMiniPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="45"
             column="10"/>
     </issue>
 
@@ -1143,6 +967,28 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView android:id=&quot;@+id/imgMiniArt&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="52"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnMiniPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="55"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
         errorLine1="            &lt;ImageButton android:id=&quot;@+id/btnDetailFireToggle&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_fire&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:padding=&quot;12dp&quot; app:tint=&quot;#FFF&quot;/>"
         errorLine2="             ~~~~~~~~~~~">
         <location
@@ -1165,17 +1011,6 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCollapsePlayer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="66"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
         errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnMiniPlay&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_play_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
         errorLine2="         ~~~~~~~~~~~">
         <location
@@ -1187,12 +1022,12 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgFullArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
-        errorLine2="             ~~~~~~~~~">
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCollapsePlayer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
+        errorLine2="         ~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="75"
-            column="14"/>
+            line="78"
+            column="10"/>
     </issue>
 
     <issue
@@ -1209,34 +1044,12 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgFullArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="             ~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="93"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="94"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout-land/activity_main.xml"
-            line="95"
-            column="10"/>
+            line="87"
+            column="14"/>
     </issue>
 
     <issue
@@ -1248,6 +1061,17 @@
             file="src/main/res/layout/activity_main.xml"
             line="98"
             column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="111"
+            column="10"/>
     </issue>
 
     <issue
@@ -1281,6 +1105,28 @@
             file="src/main/res/layout/activity_main.xml"
             line="113"
             column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="114"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="117"
+            column="10"/>
     </issue>
 
     <issue
@@ -1334,7 +1180,7 @@
         errorLine2="                                                                                                                                                                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="52"
+            line="64"
             column="222"/>
     </issue>
 
@@ -1356,7 +1202,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout-land/activity_main.xml"
-            line="12"
+            line="14"
             column="9"/>
     </issue>
 
@@ -1367,7 +1213,7 @@
         errorLine2="                                      ~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="346"
+            line="411"
             column="39"/>
     </issue>
 
@@ -1378,19 +1224,19 @@
         errorLine2="                              ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="354"
+            line="424"
             column="31"/>
     </issue>
 
     <issue
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="            btnReset.setText(&quot;Reset&quot;);"
-        errorLine2="                             ~~~~~~~">
+        errorLine1="        btnReset.setText(&quot;Reset&quot;);"
+        errorLine2="                         ~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="433"
-            column="30"/>
+            line="487"
+            column="26"/>
     </issue>
 
     <issue
@@ -1400,7 +1246,7 @@
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2006"
+            line="1735"
             column="36"/>
     </issue>
 
@@ -1411,7 +1257,7 @@
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2279"
+            line="2008"
             column="34"/>
     </issue>
 
@@ -1422,7 +1268,7 @@
         errorLine2="                                                                          ~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2279"
+            line="2008"
             column="75"/>
     </issue>
 
