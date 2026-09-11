@@ -77,7 +77,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.boogie.vibestation.VisualizerView
+        <com.boogie.vibestation.views.VisualizerView
             android:id="@+id/visualizerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
