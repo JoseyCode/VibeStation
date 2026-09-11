@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,10 +36,11 @@ public final class MusicLibraryUtil {
      */
     public static ArrayList<Song> queryMediaStoreSongs(ContentResolver contentResolver, Set<String> fireAlbums, Map<String, Album> albumMap) {
         ArrayList<Song> tempSongs = new ArrayList<>();
+        if (contentResolver == null) return tempSongs;
         try {
-            Cursor musicCursor;
+            Cursor rawCursor;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                musicCursor = contentResolver.query(
+                rawCursor = contentResolver.query(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                         null,
                         MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
@@ -46,7 +48,7 @@ public final class MusicLibraryUtil {
                         null
                 );
             } else {
-                musicCursor = contentResolver.query(
+                rawCursor = contentResolver.query(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                         null,
                         MediaStore.Audio.Media.DATA + " LIKE ?",
@@ -55,20 +57,24 @@ public final class MusicLibraryUtil {
                 );
             }
 
-            if (musicCursor != null && musicCursor.moveToFirst()) {
-                do {
-                    Song song = buildSongFromCursor(musicCursor);
-                    tempSongs.add(song);
+            if (rawCursor != null) {
+                try (Cursor musicCursor = rawCursor) {
+                    if (musicCursor.moveToFirst()) {
+                        do {
+                            Song song = buildSongFromCursor(musicCursor);
+                            tempSongs.add(song);
 
-                    if (!albumMap.containsKey(song.albumId)) {
-                        Album newAlbum = new Album(song.albumId, song.album, song.artist, song.dateAdded);
-                        newAlbum.isFire = fireAlbums.contains(song.albumId);
-                        albumMap.put(song.albumId, newAlbum);
+                            if (albumMap != null) {
+                                if (!albumMap.containsKey(song.albumId)) {
+                                    Album newAlbum = new Album(song.albumId, song.album, song.artist, song.dateAdded);
+                                    newAlbum.isFire = fireAlbums != null && fireAlbums.contains(song.albumId);
+                                    albumMap.put(song.albumId, newAlbum);
+                                }
+                                albumMap.get(song.albumId).songs.add(song);
+                            }
+                        } while (musicCursor.moveToNext());
                     }
-                    albumMap.get(song.albumId).songs.add(song);
-
-                } while (musicCursor.moveToNext());
-                musicCursor.close();
+                }
             }
         } catch (Exception ignored) {}
         return tempSongs;
@@ -100,7 +106,7 @@ public final class MusicLibraryUtil {
             albumName = "Unknown Album";
         }
 
-        if (artist.toLowerCase().contains("unknown")) {
+        if (artist.toLowerCase(Locale.getDefault()).contains("unknown") && path != null) {
             try {
                 String[] pathSegments = path.split("/");
                 if (pathSegments.length >= 3) {
@@ -126,7 +132,7 @@ public final class MusicLibraryUtil {
      */
     public static void filterData(String query, List<Song> allSongs, List<Album> allAlbums, List<Playlist> allPlaylists,
                                   List<Song> displaySongs, List<Album> displayAlbums, List<Playlist> displayPlaylists) {
-        String trimmedQuery = query.toLowerCase().trim();
+        String trimmedQuery = query.toLowerCase(Locale.getDefault()).trim();
         displaySongs.clear();
         displayAlbums.clear();
         displayPlaylists.clear();
@@ -137,17 +143,17 @@ public final class MusicLibraryUtil {
             displayPlaylists.addAll(allPlaylists);
         } else {
             for (Song song : allSongs) {
-                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {
+                if (song.title.toLowerCase(Locale.getDefault()).contains(trimmedQuery) || song.artist.toLowerCase(Locale.getDefault()).contains(trimmedQuery)) {
                     displaySongs.add(song);
                 }
             }
             for (Album album : allAlbums) {
-                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {
+                if (album.name.toLowerCase(Locale.getDefault()).contains(trimmedQuery) || album.artist.toLowerCase(Locale.getDefault()).contains(trimmedQuery)) {
                     displayAlbums.add(album);
                 }
             }
             for (Playlist playlist : allPlaylists) {
-                if (playlist.name.toLowerCase().contains(trimmedQuery)) {
+                if (playlist.name.toLowerCase(Locale.getDefault()).contains(trimmedQuery)) {
                     displayPlaylists.add(playlist);
                 }
             }

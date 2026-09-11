@@ -13,83 +13,6 @@
     </issue>
 
     <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        if (artist.toLowerCase().contains(&quot;unknown&quot;)) {"
-        errorLine2="                   ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="103"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        String trimmedQuery = query.toLowerCase().trim();"
-        errorLine2="                                    ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="129"
-            column="37"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
-        errorLine2="                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="140"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
-        errorLine2="                                                                                   ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="140"
-            column="84"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
-        errorLine2="                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="145"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
-        errorLine2="                                                                                    ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="145"
-            column="85"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                if (playlist.name.toLowerCase().contains(trimmedQuery)) {"
-        errorLine2="                                  ~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/util/MusicLibraryUtil.java"
-            line="150"
-            column="35"/>
-    </issue>
-
-    <issue
         id="InconsistentLayout"
         message="The id &quot;txtAppVersion&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout-land (present in layout)"
         errorLine1="        &lt;TextView android:id=&quot;@+id/txtAppVersion&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Vibe&quot; android:textColor=&quot;#FFFFFF&quot; android:textSize=&quot;20sp&quot; android:textStyle=&quot;bold&quot; android:layout_marginEnd=&quot;10dp&quot;/>"
@@ -368,72 +291,6 @@
             file="build.gradle.kts"
             line="65"
             column="15"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer1 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="260"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer2 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="261"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer3 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="262"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer4 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="263"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer5 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="264"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="DrawAllocation"
-        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
-        errorLine1="        float[] drawXLayer6 = new float[RENDER_BINS];"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
-            line="265"
-            column="31"/>
     </issue>
 
     <issue
@@ -1246,7 +1103,7 @@
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1735"
+            line="1737"
             column="36"/>
     </issue>
 
@@ -1257,7 +1114,7 @@
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2008"
+            line="2010"
             column="34"/>
     </issue>
 
@@ -1268,7 +1125,7 @@
         errorLine2="                                                                          ~~~~~">
         <location
             file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2008"
+            line="2010"
             column="75"/>
     </issue>
 

@@ -119,11 +119,15 @@ public final class ArtUtil {
      * @return Base64 encoded string, or empty string on failure.
      */
     public static String getBase64Image(ContentResolver resolver, Uri uri) {
-        try {
-            InputStream inputStream = resolver.openInputStream(uri);
+        if (resolver == null || uri == null) return "";
+        try (InputStream inputStream = resolver.openInputStream(uri)) {
+            if (inputStream == null) return "";
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             if (bitmap == null) return "";
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 400, 400, true);
+            if (scaledBitmap != bitmap) {
+                bitmap.recycle();
+            }
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
             return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT);

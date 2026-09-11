@@ -35,7 +35,9 @@ public class ArchitectureTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("..vibestation.views..")
                 .should().dependOnClassesThat()
-                .resideInAnyPackage("..vibestation.AudioService..", "..vibestation.MainActivity..", "..vibestation.SplashActivity..");
+                .haveSimpleNameEndingWith("Activity")
+                .orShould().dependOnClassesThat()
+                .haveSimpleName("AudioService");
         rule.check(importedClasses);
     }
 

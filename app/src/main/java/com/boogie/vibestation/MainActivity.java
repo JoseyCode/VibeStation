@@ -902,8 +902,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 .setTitle("New Playlist")
                 .setView(layout)
                 .setPositiveButton("Create", (dialog, which) -> {
-                    Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
-                    newPlaylist.description = descField.getText().toString();
+                    String enteredName = nameField.getText().toString().trim();
+                    String playlistName = enteredName.isEmpty() ? "New Playlist" : enteredName;
+                    Playlist newPlaylist = new Playlist(playlistName, null);
+                    newPlaylist.description = descField.getText().toString().trim();
                     allPlaylists.add(newPlaylist);
                     savePlaylists();
                     if (onCreated != null) {
@@ -1450,7 +1452,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             txtDetailDescription.setVisibility(View.GONE);
         }
 
-        if (isPlaylist && playlistObject != null && playlistObject.imageUri != null) {
+        if (isPlaylist && playlistObject != null && playlistObject.imageUri != null && !playlistObject.imageUri.trim().isEmpty()) {
             loadArtAsync(detailCoverImageView, playlistObject.imageUri, true, QUALITY_HIGH, null);
         } else if (!songsList.isEmpty()) {
             loadArtAsync(detailCoverImageView, songsList.get(0).path, false, QUALITY_HIGH, null);

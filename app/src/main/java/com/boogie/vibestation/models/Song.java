@@ -2,6 +2,8 @@ package com.boogie.vibestation.models;
 
 import android.net.Uri;
 
+import java.util.Objects;
+
 /**
  * Represents a single audio track retrieved from the MediaStore database.
  */
@@ -47,5 +49,29 @@ public class Song {
      */
     public Uri getAlbumArtUri() {
         return Uri.parse(getAlbumArtUriString());
+    }
+
+    /**
+     * Checks equality based on unique track ID and storage path.
+     *
+     * @param o Comparison object.
+     * @return True if objects represent the same physical track record.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Song song = (Song) o;
+        return Objects.equals(id, song.id) && Objects.equals(path, song.path);
+    }
+
+    /**
+     * Computes hash code from unique track ID and storage path.
+     *
+     * @return Integer hash code.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, path);
     }
 }
