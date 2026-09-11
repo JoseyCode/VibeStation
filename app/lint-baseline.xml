@@ -1,0 +1,1638 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 9.1.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.0)" variant="all" version="9.1.0">
+
+    <issue
+        id="ScopedStorage"
+        message="The Google Play store has a policy that limits usage of MANAGE_EXTERNAL_STORAGE"
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.MANAGE_EXTERNAL_STORAGE&quot; />"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="8"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            sharedPreferences.edit().putString(&quot;playlists&quot;, playlistsJsonArray.toString()).commit();"
+        errorLine2="                                                                                           ~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1589"
+            column="92"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        String trimmedQuery = query.toLowerCase().trim();"
+        errorLine2="                                    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1396"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
+        errorLine2="                               ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1407"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {"
+        errorLine2="                                                                                   ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1407"
+            column="84"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
+        errorLine2="                               ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1412"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {"
+        errorLine2="                                                                                    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1412"
+            column="85"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                if (playlist.name.toLowerCase().contains(trimmedQuery)) {"
+        errorLine2="                                  ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1417"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                        if (artist.toLowerCase().contains(&quot;unknown&quot;)) {"
+        errorLine2="                                   ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="1479"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;txtAppVersion&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout-land (present in layout)"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtAppVersion&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Vibe&quot; android:textColor=&quot;#FFFFFF&quot; android:textSize=&quot;20sp&quot; android:textStyle=&quot;bold&quot; android:layout_marginEnd=&quot;10dp&quot;/>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="12"
+            column="19"
+            message="Occurrence in layout"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;btnDetailOptions&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout-land (present in layout)"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/btnDetailOptions&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_more_vert&quot; android:layout_gravity=&quot;top|end&quot; android:layout_marginEnd=&quot;8dp&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:padding=&quot;12dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="48"
+            column="24"
+            message="Occurrence in layout"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;txtDetailDescription&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout-land (present in layout)"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtDetailDescription&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:textColor=&quot;#AAA&quot; android:textSize=&quot;14sp&quot; android:gravity=&quot;center&quot; android:layout_marginTop=&quot;4dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="51"
+            column="19"
+            message="Occurrence in layout"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;btnDetailFireToggle&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout-land (present in layout)"
+        errorLine1="            &lt;ImageButton android:id=&quot;@+id/btnDetailFireToggle&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_fire&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:padding=&quot;12dp&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="55"
+            column="26"
+            message="Occurrence in layout"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;particleView&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout (present in layout-land)"
+        errorLine1="            android:id=&quot;@+id/particleView&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="55"
+            column="13"
+            message="Occurrence in layout-land"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;circularProgress&quot; in layout &quot;activity_main&quot; is missing from the following layout configurations: layout (present in layout-land)"
+        errorLine1="            android:id=&quot;@+id/circularProgress&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="79"
+            column="13"
+            message="Occurrence in layout-land"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/topBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="11"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/selectionBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="17"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;FrameLayout android:id=&quot;@+id/pageContainer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
+        errorLine2="     ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="24"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/expandedDetailsView&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="33"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/bottomPlayer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;>"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="41"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="    &lt;com.google.android.material.bottomnavigation.BottomNavigationView"
+        errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="48"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtCurrentTime&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="90"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;SeekBar android:id=&quot;@+id/seekBar&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="91"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtTotalTime&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="92"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="93"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="94"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="95"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained. It only has designtime positions, so it will jump to (0,0) at runtime unless you add the constraints"
+        errorLine1="        &lt;Button android:id=&quot;@+id/btnSpeed&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="96"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        targetSdk = 36"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="17"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="CustomSplashScreen"
+        message="The application should not provide its own launch screen"
+        errorLine1="public class SplashActivity extends AppCompatActivity {"
+        errorLine2="             ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/SplashActivity.java"
+            line="15"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="SelectedPhotoAccess"
+        message="Your app is currently not handling Selected Photos Access introduced in Android 14+"
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.READ_MEDIA_IMAGES&quot; />"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="10"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of Gradle than 9.3.1 is available: 9.7.1"
+        errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/wrapper/gradle-wrapper.properties"
+            line="5"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.application than 9.1.0 is available: 9.4.0. (There is also a newer version of 9.1.𝑥 available, if upgrading to 9.4.0 is difficult: 9.1.1)"
+        errorLine1="agp = &quot;9.1.0&quot;"
+        errorLine2="      ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="2"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.material:material than 1.9.0 is available: 1.14.0"
+        errorLine1="    implementation(&quot;com.google.android.material:material:1.9.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="52"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.media:media than 1.6.0 is available: 1.8.0"
+        errorLine1="    implementation(&quot;androidx.media:media:1.6.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="53"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.ext:junit than 1.1.5 is available: 1.3.0"
+        errorLine1="junitVersion = &quot;1.1.5&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="4"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.espresso:espresso-core than 3.5.1 is available: 3.7.0"
+        errorLine1="espressoCore = &quot;3.5.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="5"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.appcompat:appcompat than 1.6.1 is available: 1.8.0"
+        errorLine1="appcompat = &quot;1.6.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.material:material than 1.10.0 is available: 1.14.0"
+        errorLine1="material = &quot;1.10.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.activity:activity than 1.8.0 is available: 1.13.0"
+        errorLine1="activity = &quot;1.8.0&quot;"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.constraintlayout:constraintlayout than 2.1.4 is available: 2.2.2"
+        errorLine1="constraintlayout = &quot;2.1.4&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            line="9"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.tngtech.archunit:archunit-junit4 than 1.3.0 is available: 1.5.0"
+        errorLine1="    testImplementation(&quot;com.tngtech.archunit:archunit-junit4:1.3.0&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="51"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.5.0"
+        errorLine1="    implementation(&quot;com.squareup.okhttp3:okhttp:4.12.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="55"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of net.sourceforge.pmd:pmd-cli than 7.10.0 is available: 7.27.0"
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-cli:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="62"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of net.sourceforge.pmd:pmd-java than 7.10.0 is available: 7.27.0"
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-java:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="63"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.slf4j:slf4j-api than 2.0.12 is available: 2.0.19"
+        errorLine1="    cpdConfig(&quot;org.slf4j:slf4j-api:2.0.12&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="64"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.slf4j:slf4j-simple than 2.0.12 is available: 2.0.19"
+        errorLine1="    cpdConfig(&quot;org.slf4j:slf4j-simple:2.0.12&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="65"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer1 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="260"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer2 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="261"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer3 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="262"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer4 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="263"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer5 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="264"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="DrawAllocation"
+        message="Avoid object allocations during draw/layout operations (preallocate and reuse instead)"
+        errorLine1="        float[] drawXLayer6 = new float[RENDER_BINS];"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/views/VisualizerView.java"
+            line="265"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="        if (playlistListAdapter != null) playlistListAdapter.notifyDataSetChanged();"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="859"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/AudioService.java"
+            line="138"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/AudioService.java"
+            line="161"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/AudioService.java"
+            line="207"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="311"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#000000` with a theme that also paints a background (inferred theme is `@style/Theme.RetroClone`)"
+        errorLine1="    android:background=&quot;#000000&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#000000` with a theme that also paints a background (inferred theme is `@style/Theme.RetroClone`)"
+        errorLine1="    android:background=&quot;#000000&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#000000` with a theme that also paints a background (inferred theme is `@style/Theme_AppCompat_NoActionBar`)"
+        errorLine1="    android:background=&quot;#000000&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_splash.xml"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#2E2E2E` with a theme that also paints a background (inferred theme is `@style/Theme.RetroClone`)"
+        errorLine1="    android:background=&quot;#2E2E2E&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_equalizer.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/Theme.RetroClone`)"
+        errorLine1="    android:background=&quot;?attr/selectableItemBackground&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_song.xml"
+            line="9"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.black` appears to be unused"
+        errorLine1="    &lt;color name=&quot;black&quot;>#121212&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="3"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.white` appears to be unused"
+        errorLine1="    &lt;color name=&quot;white&quot;>#FFFFFF&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.pastel_pink` appears to be unused"
+        errorLine1="    &lt;color name=&quot;pastel_pink&quot;>#FFD1DC&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.pastel_blue` appears to be unused"
+        errorLine1="    &lt;color name=&quot;pastel_blue&quot;>#AEC6CF&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="6"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.pastel_green` appears to be unused"
+        errorLine1="    &lt;color name=&quot;pastel_green&quot;>#77DD77&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.pastel_purple` appears to be unused"
+        errorLine1="    &lt;color name=&quot;pastel_purple&quot;>#B39EB5&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.gray_bg` appears to be unused"
+        errorLine1="    &lt;color name=&quot;gray_bg&quot;>#1E1E1E&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="9"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_launcher_background` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_launcher_background.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_launcher_foreground` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_launcher_foreground.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_search_bubbly` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot; android:width=&quot;24dp&quot; android:height=&quot;24dp&quot; android:viewportWidth=&quot;24&quot; android:viewportHeight=&quot;24&quot;>&lt;path android:fillColor=&quot;#FFFFFF&quot; android:pathData=&quot;M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z&quot;/>&lt;/vector>"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_search_bubbly.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="TextFields"
+        message="This text field does not specify an `inputType`"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="12"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="TextFields"
+        message="This text field does not specify an `inputType`"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="13"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="Autofill"
+        message="Missing `autofillHints` attribute"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="12"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="Autofill"
+        message="Missing `autofillHints` attribute"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="13"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    testImplementation(&quot;com.tngtech.archunit:archunit-junit4:1.3.0&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="51"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead (com.google.android.material:material is already available as `material`, but using version 1.10.0 instead)"
+        errorLine1="    implementation(&quot;com.google.android.material:material:1.9.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="52"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;androidx.media:media:1.6.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="53"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;androidx.palette:palette:1.0.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="54"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;com.squareup.okhttp3:okhttp:4.12.0&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="55"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;net.jthink:jaudiotagger:3.0.1&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="56"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-cli:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="62"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-java:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="63"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    cpdConfig(&quot;org.slf4j:slf4j-api:2.0.12&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="64"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    cpdConfig(&quot;org.slf4j:slf4j-simple:2.0.12&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="65"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="`onTouch` lambda should call `View#performClick` when a click is detected"
+        errorLine1="        fullPlayerScreenContainer.setOnTouchListener((v, event) -> {"
+        errorLine2="                                                     ^">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="553"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSort&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="13"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSettings&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="14"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSort&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:src=&quot;@drawable/ic_sort_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot; android:layout_marginStart=&quot;5dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="14"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnSettings&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:src=&quot;@drawable/ic_settings_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="15"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCancelSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="18"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnDeleteSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="20"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCancelSelection&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:src=&quot;@drawable/ic_close_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="20"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnAddSelection&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="21"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnDeleteSelection&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:src=&quot;@drawable/ic_delete_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FF5252&quot; android:layout_marginEnd=&quot;10dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="22"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnAddSelection&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:src=&quot;@drawable/ic_add_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="23"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView android:id=&quot;@+id/imgDetailCover&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="34"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView android:id=&quot;@+id/imgMiniArt&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="42"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnMiniPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="45"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageView android:id=&quot;@+id/imgDetailCover&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="46"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/btnDetailOptions&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_more_vert&quot; android:layout_gravity=&quot;top|end&quot; android:layout_marginEnd=&quot;8dp&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:padding=&quot;12dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="48"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageButton android:id=&quot;@+id/btnDetailFireToggle&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_fire&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:padding=&quot;12dp&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="             ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="55"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgMiniArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="63"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCollapsePlayer&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="66"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnMiniPlay&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_play_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="69"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgFullArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="75"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnCollapsePlayer&quot; android:layout_width=&quot;48dp&quot; android:layout_height=&quot;48dp&quot; android:src=&quot;@drawable/ic_collapse_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot; android:layout_margin=&quot;10dp&quot;"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="85"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="93"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="94"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:visibility=&quot;gone&quot;/>"
+        errorLine2="         ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="95"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageView android:id=&quot;@+id/imgFullArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="98"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageButton android:id=&quot;@+id/btnPrev&quot; android:layout_width=&quot;60dp&quot; android:layout_height=&quot;60dp&quot; android:src=&quot;@drawable/ic_prev_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="                 ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="111"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageButton android:id=&quot;@+id/btnFullPlay&quot; android:layout_width=&quot;85dp&quot; android:layout_height=&quot;85dp&quot; android:src=&quot;@drawable/ic_play_bubbly&quot; android:layout_marginHorizontal=&quot;30dp&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="                 ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="112"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageButton android:id=&quot;@+id/btnNext&quot; android:layout_width=&quot;60dp&quot; android:layout_height=&quot;60dp&quot; android:src=&quot;@drawable/ic_next_bubbly&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; app:tint=&quot;#FFF&quot;/>"
+        errorLine2="                 ~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="113"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgGridArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_grid.xml"
+            line="12"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView android:id=&quot;@+id/imgFireIndicator&quot; android:layout_width=&quot;24dp&quot; android:layout_height=&quot;24dp&quot; android:layout_gravity=&quot;top|end&quot; android:layout_margin=&quot;8dp&quot; android:src=&quot;@drawable/ic_fire&quot; android:visibility=&quot;gone&quot; app:tint=&quot;#FF9800&quot; />"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_grid.xml"
+            line="13"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView android:id=&quot;@+id/imgArt&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:scaleType=&quot;centerCrop&quot;/>"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_song.xml"
+            line="26"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="KeyboardInaccessibleWidget"
+        message="&apos;clickable&apos; attribute found, please also add &apos;focusable&apos;"
+        errorLine1="    &lt;LinearLayout android:id=&quot;@+id/expandedDetailsView&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot; android:orientation=&quot;vertical&quot; android:background=&quot;#000000&quot; android:visibility=&quot;gone&quot; android:clickable=&quot;true&quot;"
+        errorLine2="                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="39"
+            column="198"/>
+    </issue>
+
+    <issue
+        id="KeyboardInaccessibleWidget"
+        message="&apos;clickable&apos; attribute found, please also add &apos;focusable&apos;"
+        errorLine1="    &lt;androidx.constraintlayout.widget.ConstraintLayout android:id=&quot;@+id/fullPlayerScreen&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:background=&quot;#000000&quot; android:visibility=&quot;visible&quot; android:clickable=&quot;true&quot;>"
+        errorLine2="                                                                                                                                                                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="52"
+            column="222"/>
+    </issue>
+
+    <issue
+        id="KeyboardInaccessibleWidget"
+        message="&apos;clickable&apos; attribute found, please also add &apos;focusable&apos;"
+        errorLine1="    &lt;androidx.constraintlayout.widget.ConstraintLayout android:id=&quot;@+id/fullPlayerScreen&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:background=&quot;#000000&quot; android:visibility=&quot;gone&quot; android:clickable=&quot;true&quot;"
+        errorLine2="                                                                                                                                                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="76"
+            column="219"/>
+    </issue>
+
+    <issue
+        id="LabelFor"
+        message="Missing accessibility label: provide either a view with an `android:labelFor` that references this view or provide an `android:hint`"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;0dp&quot;/>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_main.xml"
+            line="12"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                txtAppVersion.setText(&quot;Vibe&quot;);"
+        errorLine2="                                      ~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="346"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="        btnLibShuffle.setText(&quot;Shuffle All&quot;);"
+        errorLine2="                              ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="354"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            btnReset.setText(&quot;Reset&quot;);"
+        errorLine2="                             ~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="433"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="        syncStatusTextView.setText(&quot;Preparing synchronization...&quot;);"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="2006"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            freqTextView.setText((equalizer.getCenterFreq(band) / 1000) + &quot; Hz&quot;);"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="2279"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            freqTextView.setText((equalizer.getCenterFreq(band) / 1000) + &quot; Hz&quot;);"
+        errorLine2="                                                                          ~~~~~">
+        <location
+            file="src/main/java/com/boogie/vibestation/MainActivity.java"
+            line="2279"
+            column="75"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Vibe&quot;, should use `@string` resource"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtAppVersion&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Vibe&quot; android:textColor=&quot;#FFFFFF&quot; android:textSize=&quot;20sp&quot; android:textStyle=&quot;bold&quot; android:layout_marginEnd=&quot;10dp&quot;/>"
+        errorLine2="                                                                                                                           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="12"
+            column="124"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Search...&quot;, should use `@string` resource"
+        errorLine1="        &lt;EditText android:id=&quot;@+id/editSearch&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;@drawable/bg_search_bubbly&quot; android:hint=&quot;Search...&quot; android:textColorHint=&quot;#888&quot; android:textColor=&quot;#FFF&quot; android:paddingHorizontal=&quot;15dp&quot; android:singleLine=&quot;true&quot;/>"
+        errorLine2="                                                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="13"
+            column="178"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0 Selected&quot;, should use `@string` resource"
+        errorLine1="        &lt;TextView android:id=&quot;@+id/txtSelectionCount&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;0 Selected&quot; android:textColor=&quot;#FFF&quot; android:textSize=&quot;18sp&quot; android:layout_marginStart=&quot;15dp&quot;/>"
+        errorLine2="                                                                                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="21"
+            column="145"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;New Playlist&quot;, should use `@string` resource"
+        errorLine1="            &lt;Button android:id=&quot;@+id/btnCreatePlaylist&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;New Playlist&quot; android:textColor=&quot;#FFF&quot; android:backgroundTint=&quot;#333&quot;/>"
+        errorLine2="                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="34"
+            column="130"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Play All&quot;, should use `@string` resource"
+        errorLine1="            &lt;Button android:id=&quot;@+id/btnDetailPlayAll&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Play All&quot; android:backgroundTint=&quot;#333&quot; android:textColor=&quot;#FFF&quot; android:layout_marginEnd=&quot;5dp&quot;/>"
+        errorLine2="                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="53"
+            column="146"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Shuffle All&quot;, should use `@string` resource"
+        errorLine1="            &lt;Button android:id=&quot;@+id/btnDetailShuffle&quot; android:layout_width=&quot;0dp&quot; android:layout_weight=&quot;1&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Shuffle All&quot; android:backgroundTint=&quot;#333&quot; android:textColor=&quot;#FFF&quot; android:layout_marginStart=&quot;5dp&quot; android:layout_marginEnd=&quot;5dp&quot;/>"
+        errorLine2="                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="54"
+            column="146"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Not Playing&quot;, should use `@string` resource"
+        errorLine1="            &lt;TextView android:id=&quot;@+id/txtMiniTitle&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Not Playing&quot; android:textColor=&quot;#FFFFFF&quot; android:textStyle=&quot;bold&quot; android:maxLines=&quot;1&quot;/>"
+        errorLine2="                                                                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="66"
+            column="127"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Artist&quot;, should use `@string` resource"
+        errorLine1="            &lt;TextView android:id=&quot;@+id/txtMiniArtist&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Artist&quot; android:textColor=&quot;#AAAAAA&quot; android:textSize=&quot;12sp&quot; android:maxLines=&quot;1&quot;/>"
+        errorLine2="                                                                                                                               ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="67"
+            column="128"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;1.00x&quot;, should use `@string` resource"
+        errorLine1="        &lt;Button android:id=&quot;@+id/btnSpeed&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;1.00x&quot; android:textColor=&quot;#FFF&quot; android:backgroundTint=&quot;#333&quot; android:layout_margin=&quot;10dp&quot;"
+        errorLine2="                                                                                                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="89"
+            column="117"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0:00&quot;, should use `@string` resource"
+        errorLine1="                &lt;TextView android:id=&quot;@+id/txtCurrentTime&quot; android:layout_width=&quot;wrap_content&quot; android:minWidth=&quot;45dp&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;0:00&quot; android:textColor=&quot;#FFF&quot; android:textSize=&quot;12sp&quot; android:gravity=&quot;center&quot;/>"
+        errorLine2="                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="105"
+            column="157"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0:00&quot;, should use `@string` resource"
+        errorLine1="                &lt;TextView android:id=&quot;@+id/txtTotalTime&quot; android:layout_width=&quot;wrap_content&quot; android:minWidth=&quot;45dp&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;0:00&quot; android:textColor=&quot;#FFF&quot; android:textSize=&quot;12sp&quot; android:gravity=&quot;center&quot;/>"
+        errorLine2="                                                                                                                                                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="107"
+            column="155"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;What&apos;s the vibe?&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;What&apos;s the vibe?&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_splash.xml"
+            line="15"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Albums&quot;, should use `@string` resource"
+        errorLine1="    &lt;item android:id=&quot;@+id/nav_albums&quot; android:title=&quot;Albums&quot; android:icon=&quot;@drawable/ic_albums_bubbly&quot; />"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/bottom_nav_menu.xml"
+            line="3"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Library&quot;, should use `@string` resource"
+        errorLine1="    &lt;item android:id=&quot;@+id/nav_library&quot; android:title=&quot;Library&quot; android:icon=&quot;@drawable/ic_library_bubbly&quot; />"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/bottom_nav_menu.xml"
+            line="4"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Playlists&quot;, should use `@string` resource"
+        errorLine1="    &lt;item android:id=&quot;@+id/nav_playlists&quot; android:title=&quot;Playlists&quot; android:icon=&quot;@drawable/ic_playlists_bubbly&quot; />"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/bottom_nav_menu.xml"
+            line="5"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Audio Equalizer&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Audio Equalizer&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_equalizer.xml"
+            line="12"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Enable Equalizer&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Enable Equalizer&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_equalizer.xml"
+            line="22"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Reset to Defaults&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Reset to Defaults&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_equalizer.xml"
+            line="44"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Close&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Close&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_equalizer.xml"
+            line="53"
+            column="9"/>
+    </issue>
+
+</issues>
