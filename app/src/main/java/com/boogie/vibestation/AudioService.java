@@ -66,7 +66,6 @@ public class AudioService extends Service {
     private int currentIndex = -1;
     private Song currentSong;
     private Bitmap currentAlbumArt;
-    private boolean isForeGroundService = false;
     private Equalizer equalizer;
 
     private final android.content.BroadcastReceiver noisyReceiver = new android.content.BroadcastReceiver() {

@@ -321,55 +321,80 @@ public class VisualizerView extends View {
 
         wavePath.reset();
         if (isLandscape) {
-            wavePath.moveTo(0, height);
-            for (int i = 0; i < RENDER_BINS; i++) {
-                float currentX = i * barSize;
-                float currentY = height - drawX[i];
-                if (i == 0) {
-                    wavePath.lineTo(currentX, currentY);
-                } else {
-                    float x1 = (i - 1) * barSize;
-                    float y1 = height - drawX[i - 1];
-                    float x2 = i * barSize;
-                    float y2 = height - drawX[i];
-                    float y0 = (i < 2) ? y1 : height - drawX[i - 2];
-                    float y3 = (i >= RENDER_BINS - 1) ? y2 : height - drawX[i + 1];
-
-                    wavePath.cubicTo(
-                            x1 + barSize / 3f, y1 + (y2 - y0) / 6f,
-                            x2 - barSize / 3f, y2 - (y3 - y1) / 6f,
-                            x2, y2
-                    );
-                }
-            }
-            wavePath.lineTo(width, height);
-            wavePath.lineTo(0, height);
+            buildLandscapeWavePath(wavePath, drawX, barSize, height, width);
         } else {
-            wavePath.moveTo(0, height);
-            for (int i = 0; i < RENDER_BINS; i++) {
-                float currentY = height - (i * barSize);
-                float currentX = drawX[i];
-                if (i == 0) {
-                    wavePath.lineTo(currentX, currentY);
-                } else {
-                    float x1 = drawX[i - 1];
-                    float y1 = height - (i - 1) * barSize;
-                    float x2 = drawX[i];
-                    float y2 = height - i * barSize;
-                    float x0 = (i < 2) ? x1 : drawX[i - 2];
-                    float x3 = (i >= RENDER_BINS - 1) ? x2 : drawX[i + 1];
-
-                    wavePath.cubicTo(
-                            x1 + (x2 - x0) / 6f, y1 - barSize / 3f,
-                            x2 - (x3 - x1) / 6f, y2 + barSize / 3f,
-                            x2, y2
-                    );
-                }
-            }
-            wavePath.lineTo(0, 0);
+            buildPortraitWavePath(wavePath, drawX, barSize, height);
         }
         wavePath.close();
         wavePaint.setAlpha(alpha);
         canvas.drawPath(wavePath, wavePaint);
+    }
+
+    /**
+     * Constructs cubic Bezier spline wave path across horizontal width for landscape display.
+     *
+     * @param path Target path object.
+     * @param drawX Amplitude data points.
+     * @param barSize Horizontal spacing between bins.
+     * @param height Canvas height.
+     * @param width Canvas width.
+     */
+    private void buildLandscapeWavePath(Path path, float[] drawX, float barSize, float height, float width) {
+        path.moveTo(0, height);
+        for (int i = 0; i < RENDER_BINS; i++) {
+            float currentX = i * barSize;
+            float currentY = height - drawX[i];
+            if (i == 0) {
+                path.lineTo(currentX, currentY);
+            } else {
+                float x1 = (i - 1) * barSize;
+                float y1 = height - drawX[i - 1];
+                float x2 = i * barSize;
+                float y2 = height - drawX[i];
+                float y0 = (i < 2) ? y1 : height - drawX[i - 2];
+                float y3 = (i >= RENDER_BINS - 1) ? y2 : height - drawX[i + 1];
+
+                path.cubicTo(
+                        x1 + barSize / 3f, y1 + (y2 - y0) / 6f,
+                        x2 - barSize / 3f, y2 - (y3 - y1) / 6f,
+                        x2, y2
+                );
+            }
+        }
+        path.lineTo(width, height);
+        path.lineTo(0, height);
+    }
+
+    /**
+     * Constructs cubic Bezier spline wave path across vertical height for portrait display.
+     *
+     * @param path Target path object.
+     * @param drawX Amplitude data points.
+     * @param barSize Vertical spacing between bins.
+     * @param height Canvas height.
+     */
+    private void buildPortraitWavePath(Path path, float[] drawX, float barSize, float height) {
+        path.moveTo(0, height);
+        for (int i = 0; i < RENDER_BINS; i++) {
+            float currentY = height - (i * barSize);
+            float currentX = drawX[i];
+            if (i == 0) {
+                path.lineTo(currentX, currentY);
+            } else {
+                float x1 = drawX[i - 1];
+                float y1 = height - (i - 1) * barSize;
+                float x2 = drawX[i];
+                float y2 = height - i * barSize;
+                float x0 = (i < 2) ? x1 : drawX[i - 2];
+                float x3 = (i >= RENDER_BINS - 1) ? x2 : drawX[i + 1];
+
+                path.cubicTo(
+                        x1 + (x2 - x0) / 6f, y1 - barSize / 3f,
+                        x2 - (x3 - x1) / 6f, y2 + barSize / 3f,
+                        x2, y2
+                );
+            }
+        }
+        path.lineTo(0, 0);
     }
 }

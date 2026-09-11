@@ -62,11 +62,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.collection.LruCache;
 import androidx.palette.graphics.Palette;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
 import android.provider.Settings;
 import android.os.Environment;
 import java.io.File;
@@ -93,6 +88,10 @@ import java.util.concurrent.Executors;
 import com.boogie.vibestation.models.Album;
 import com.boogie.vibestation.models.Playlist;
 import com.boogie.vibestation.models.Song;
+import com.boogie.vibestation.util.ArtUtil;
+import com.boogie.vibestation.util.MediaMetadataUtil;
+import com.boogie.vibestation.util.MusicLibraryUtil;
+import com.boogie.vibestation.util.PlaylistUtil;
 import com.boogie.vibestation.views.CircularProgressView;
 import com.boogie.vibestation.views.ParticleView;
 import com.boogie.vibestation.views.VisualizerView;
@@ -132,7 +131,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private View bottomPlayerContainer;
     private View fullPlayerScreenContainer;
     private View expandedDetailsContainer;
-    private View rootRelativeLayout;
     private View topBarContainer;
     private View selectionBarContainer;
 
@@ -334,38 +332,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * and seek bar changes.
      */
     private void setupViews() {
-        rootRelativeLayout = findViewById(R.id.rootLayout);
         albumsGridView = findViewById(R.id.gridAlbums);
         libraryListView = findViewById(R.id.listLibrary);
-        TextView txtAppVersion = findViewById(R.id.txtAppVersion);
-        if (txtAppVersion != null) {
-            try {
-                android.content.pm.PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                txtAppVersion.setText(pInfo.versionName);
-            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-                txtAppVersion.setText("Vibe");
-            }
-        }
-        
-        android.widget.LinearLayout libraryHeader = new android.widget.LinearLayout(this);
-        libraryHeader.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        libraryHeader.setPadding(30, 30, 30, 30);
-        com.google.android.material.button.MaterialButton btnLibShuffle = new com.google.android.material.button.MaterialButton(this);
-        btnLibShuffle.setText("Shuffle All");
-        btnLibShuffle.setTextColor(android.graphics.Color.WHITE);
-        btnLibShuffle.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF333333));
-        btnLibShuffle.setCornerRadius(100);
-        btnLibShuffle.setLayoutParams(new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
-        btnLibShuffle.setOnClickListener(v -> {
-            triggerHapticFeedback(v);
-            if (!displaySongs.isEmpty()) {
-                java.util.ArrayList<Song> shuffledQueue = new java.util.ArrayList<>(displaySongs);
-                java.util.Collections.shuffle(shuffledQueue);
-                playAudio(shuffledQueue, 0);
-            }
-        });
-        libraryHeader.addView(btnLibShuffle);
-        libraryListView.addHeaderView(libraryHeader);
+        setupAppVersionDisplay();
+        setupLibraryHeader();
 
         playlistsGridView = findViewById(R.id.gridPlaylists);
         playlistsGridView.setLayoutManager(new GridLayoutManager(this, 2));
@@ -396,70 +366,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         fullPlayButton = findViewById(R.id.btnFullPlay);
         seekBarView = findViewById(R.id.seekBar);
         speedButton = findViewById(R.id.btnSpeed);
-        speedButton.setOnClickListener(v -> {
-            triggerHapticFeedback(v);
-            if (!isBound || audioService == null) return;
-            float currentSpeed = audioService.getPlaybackSpeed();
-            float nextSpeed = (float) (Math.floor(currentSpeed * 4.0) / 4.0) + 0.25f;
-            if (nextSpeed > 2.51f) nextSpeed = 0.25f;
-            audioService.setPlaybackSpeed(nextSpeed);
-            speedButton.setText(String.format(java.util.Locale.getDefault(), "%.2fx", nextSpeed));
-        });
-        speedButton.setOnLongClickListener(v -> {
-            triggerHapticFeedback(v);
-            if (!isBound || audioService == null) return true;
-            android.widget.LinearLayout rootLayout = new android.widget.LinearLayout(MainActivity.this);
-            rootLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
-            rootLayout.setPadding(50, 50, 50, 50);
+        setupSpeedControls();
 
-            android.widget.TextView txtSpeedInd = new android.widget.TextView(MainActivity.this);
-            txtSpeedInd.setTextSize(18);
-            txtSpeedInd.setGravity(android.view.Gravity.CENTER);
-            txtSpeedInd.setText(String.format(java.util.Locale.getDefault(), "Speed: %.2fx", audioService.getPlaybackSpeed()));
-            rootLayout.addView(txtSpeedInd, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
-
-            android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(MainActivity.this);
-            rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            rowLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            rowLayout.setPadding(0, 30, 0, 0);
-
-            android.widget.SeekBar speedBar = new android.widget.SeekBar(MainActivity.this);
-            speedBar.setMax(225); // 0.25 to 2.50 = 225 steps
-            speedBar.setProgress((int) ((audioService.getPlaybackSpeed() - 0.25f) * 100));
-            android.widget.LinearLayout.LayoutParams barParams = new android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            rowLayout.addView(speedBar, barParams);
-
-            android.widget.Button btnReset = new android.widget.Button(MainActivity.this);
-            btnReset.setText("Reset");
-            btnReset.setTextColor(android.graphics.Color.WHITE);
-            btnReset.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF333333));
-            rowLayout.addView(btnReset);
-
-            rootLayout.addView(rowLayout, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
-
-            speedBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
-                    float newSpeed = 0.25f + (progress / 100f);
-                    speedButton.setText(String.format(java.util.Locale.getDefault(), "%.2fx", newSpeed));
-                    txtSpeedInd.setText(String.format(java.util.Locale.getDefault(), "Speed: %.2fx", newSpeed));
-                    audioService.setPlaybackSpeed(newSpeed);
-                }
-                @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
-            });
-
-            btnReset.setOnClickListener(v2 -> {
-                speedBar.setProgress(75); // (1.0 - 0.25) * 100 = 75
-            });
-
-            new android.app.AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Fine-tune Speed")
-                    .setView(rootLayout)
-                    .setPositiveButton("Close", null)
-                    .show();
-            return true;
-        });
         currentTimeTextView = findViewById(R.id.txtCurrentTime);
         totalTimeTextView = findViewById(R.id.txtTotalTime);
         searchEditText = findViewById(R.id.editSearch);
@@ -472,6 +380,157 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         selectionCountTextView = findViewById(R.id.txtSelectionCount);
         deleteSelectionButton = findViewById(R.id.btnDeleteSelection);
 
+        setupSelectionControls();
+        setupPlaybackControls();
+        setupFullPlayerGestures();
+        setupNavigationAndSearch();
+
+        findViewById(R.id.btnCreatePlaylist).setOnClickListener(view -> {
+            triggerHapticFeedback(view);
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            EditText nameField = new EditText(this);
+            nameField.setHint("Playlist Name");
+            EditText descField = new EditText(this);
+            descField.setHint("Playlist Description");
+            layout.addView(nameField);
+            layout.addView(descField);
+
+            new AlertDialog.Builder(this)
+                    .setTitle("New Playlist")
+                    .setView(layout)
+                    .setPositiveButton("Create", (dialog, which) -> {
+                        Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
+                        newPlaylist.description = descField.getText().toString();
+                        allPlaylists.add(newPlaylist);
+                        savePlaylists();
+                        filterData(searchEditText.getText().toString());
+                        activePlaylistForImage = newPlaylist;
+                        imagePickerLauncher.launch(new String[]{"image/*"});
+                    }).show();
+        });
+
+        setupSeekBarListener();
+    }
+
+    /**
+     * Reads package metadata and initializes version text display if the view is present.
+     */
+    private void setupAppVersionDisplay() {
+        TextView txtAppVersion = findViewById(R.id.txtAppVersion);
+        if (txtAppVersion != null) {
+            try {
+                android.content.pm.PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                txtAppVersion.setText(pInfo.versionName);
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                txtAppVersion.setText("Vibe");
+            }
+        }
+    }
+
+    /**
+     * Adds the shuffle-all header control button to the primary library list view.
+     */
+    private void setupLibraryHeader() {
+        android.widget.LinearLayout libraryHeader = new android.widget.LinearLayout(this);
+        libraryHeader.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        libraryHeader.setPadding(30, 30, 30, 30);
+        com.google.android.material.button.MaterialButton btnLibShuffle = new com.google.android.material.button.MaterialButton(this);
+        btnLibShuffle.setText("Shuffle All");
+        btnLibShuffle.setTextColor(android.graphics.Color.WHITE);
+        btnLibShuffle.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF333333));
+        btnLibShuffle.setCornerRadius(100);
+        btnLibShuffle.setLayoutParams(new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+        btnLibShuffle.setOnClickListener(v -> {
+            triggerHapticFeedback(v);
+            if (!displaySongs.isEmpty()) {
+                java.util.ArrayList<Song> shuffledQueue = new java.util.ArrayList<>(displaySongs);
+                java.util.Collections.shuffle(shuffledQueue);
+                playAudio(shuffledQueue, 0);
+            }
+        });
+        libraryHeader.addView(btnLibShuffle);
+        libraryListView.addHeaderView(libraryHeader);
+    }
+
+    /**
+     * Configures quick cycle click listener and long-click fine-tuning dialog for playback speed.
+     */
+    private void setupSpeedControls() {
+        speedButton.setOnClickListener(v -> {
+            triggerHapticFeedback(v);
+            if (!isBound || audioService == null) return;
+            float currentSpeed = audioService.getPlaybackSpeed();
+            float nextSpeed = (float) (Math.floor(currentSpeed * 4.0) / 4.0) + 0.25f;
+            if (nextSpeed > 2.51f) nextSpeed = 0.25f;
+            audioService.setPlaybackSpeed(nextSpeed);
+            speedButton.setText(String.format(java.util.Locale.getDefault(), "%.2fx", nextSpeed));
+        });
+        speedButton.setOnLongClickListener(v -> {
+            triggerHapticFeedback(v);
+            if (!isBound || audioService == null) return true;
+            showFineTuneSpeedDialog();
+            return true;
+        });
+    }
+
+    /**
+     * Displays a dialog containing a continuous slider to adjust playback speed precisely.
+     */
+    private void showFineTuneSpeedDialog() {
+        android.widget.LinearLayout rootLayout = new android.widget.LinearLayout(this);
+        rootLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        rootLayout.setPadding(50, 50, 50, 50);
+
+        android.widget.TextView txtSpeedInd = new android.widget.TextView(this);
+        txtSpeedInd.setTextSize(18);
+        txtSpeedInd.setGravity(android.view.Gravity.CENTER);
+        txtSpeedInd.setText(String.format(java.util.Locale.getDefault(), "Speed: %.2fx", audioService.getPlaybackSpeed()));
+        rootLayout.addView(txtSpeedInd, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        android.widget.LinearLayout rowLayout = new android.widget.LinearLayout(this);
+        rowLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        rowLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        rowLayout.setPadding(0, 30, 0, 0);
+
+        android.widget.SeekBar speedBar = new android.widget.SeekBar(this);
+        speedBar.setMax(225);
+        speedBar.setProgress((int) ((audioService.getPlaybackSpeed() - 0.25f) * 100));
+        rowLayout.addView(speedBar, new android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        android.widget.Button btnReset = new android.widget.Button(this);
+        btnReset.setText("Reset");
+        btnReset.setTextColor(android.graphics.Color.WHITE);
+        btnReset.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF333333));
+        rowLayout.addView(btnReset);
+
+        rootLayout.addView(rowLayout, new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        speedBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                float newSpeed = 0.25f + (progress / 100f);
+                speedButton.setText(String.format(java.util.Locale.getDefault(), "%.2fx", newSpeed));
+                txtSpeedInd.setText(String.format(java.util.Locale.getDefault(), "Speed: %.2fx", newSpeed));
+                audioService.setPlaybackSpeed(newSpeed);
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+        });
+
+        btnReset.setOnClickListener(v2 -> speedBar.setProgress(75));
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Fine-tune Speed")
+                .setView(rootLayout)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    /**
+     * Binds action listeners to multi-selection mode toolbar buttons.
+     */
+    private void setupSelectionControls() {
         findViewById(R.id.btnCancelSelection).setOnClickListener(view -> {
             triggerHapticFeedback(view);
             clearSelection();
@@ -484,32 +543,28 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             triggerHapticFeedback(view);
             batchDeleteFromPlaylist();
         });
+    }
 
+    /**
+     * Binds transport controls and full player sheet expand/collapse listeners.
+     */
+    private void setupPlaybackControls() {
         findViewById(R.id.btnNext).setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            if (isBound) {
-                audioService.playNext();
-            }
+            if (isBound) audioService.playNext();
         });
         findViewById(R.id.btnPrev).setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            if (isBound) {
-                audioService.playPrev();
-            }
+            if (isBound) audioService.playPrev();
         });
         miniPlayButton.setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            if (isBound) {
-                audioService.togglePlayPause();
-            }
+            if (isBound) audioService.togglePlayPause();
         });
         fullPlayButton.setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            if (isBound) {
-                audioService.togglePlayPause();
-            }
+            if (isBound) audioService.togglePlayPause();
         });
-
         bottomPlayerContainer.setOnClickListener(view -> {
             triggerHapticFeedback(view);
             fullPlayerScreenContainer.setVisibility(View.VISIBLE);
@@ -518,7 +573,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             triggerHapticFeedback(view);
             fullPlayerScreenContainer.setVisibility(View.GONE);
         });
+    }
 
+    /**
+     * Registers double-tap and tap gestures on full player container in landscape orientation.
+     */
+    private void setupFullPlayerGestures() {
         GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
@@ -543,7 +603,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
                 return false;
             }
-            
+
             @Override
             public boolean onDown(MotionEvent e) {
                 return true;
@@ -557,7 +617,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             }
             return false;
         });
+    }
 
+    /**
+     * Sets up bottom navigation tab switching, search input listeners, and sorting button.
+     */
+    private void setupNavigationAndSearch() {
         findViewById(R.id.btnSettings).setOnClickListener(view -> {
             triggerHapticFeedback(view);
             showMainSettingsDialog();
@@ -597,11 +662,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 filterData(query.toString());
             }
 
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         findViewById(R.id.btnSort).setOnClickListener(view -> {
@@ -614,32 +676,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         filterData(searchEditText.getText().toString());
                     }).show();
         });
+    }
 
-        findViewById(R.id.btnCreatePlaylist).setOnClickListener(view -> {
-            triggerHapticFeedback(view);
-            LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            EditText nameField = new EditText(this);
-            nameField.setHint("Playlist Name");
-            EditText descField = new EditText(this);
-            descField.setHint("Playlist Description");
-            layout.addView(nameField);
-            layout.addView(descField);
-
-            new AlertDialog.Builder(this)
-                    .setTitle("New Playlist")
-                    .setView(layout)
-                    .setPositiveButton("Create", (dialog, which) -> {
-                        Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
-                        newPlaylist.description = descField.getText().toString();
-                        allPlaylists.add(newPlaylist);
-                        savePlaylists();
-                        filterData(searchEditText.getText().toString());
-                        activePlaylistForImage = newPlaylist;
-                        imagePickerLauncher.launch(new String[]{"image/*"});
-                    }).show();
-        });
-
+    /**
+     * Binds progress changes on the full player seek bar to AudioService seek operations.
+     */
+    private void setupSeekBarListener() {
         seekBarView.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -652,11 +694,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
@@ -1065,45 +1104,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
 
         imageExecutor.execute(() -> {
-            Bitmap decodedBitmap = null;
-            try {
-                if (isUri) {
-                    if (artworkPath.startsWith("data:image/")) {
-                        int commaIndex = artworkPath.indexOf(",");
-                        if (commaIndex != -1) {
-                            String base64Data = artworkPath.substring(commaIndex + 1);
-                            byte[] decodedBytes = Base64.decode(base64Data, Base64.DEFAULT);
-                            BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-                            decodeOptions.inSampleSize = qualityMode;
-                            decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length, decodeOptions);
-                        }
-                    } else {
-                        InputStream inputStream = getContentResolver().openInputStream(Uri.parse(artworkPath));
-                        BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-                        decodeOptions.inSampleSize = qualityMode;
-                        decodedBitmap = BitmapFactory.decodeStream(inputStream, null, decodeOptions);
-                        if (inputStream != null) {
-                            inputStream.close();
-                        }
-                    }
-                } else {
-                    MediaMetadataRetriever retriever = null;
-                    try {
-                        retriever = new MediaMetadataRetriever();
-                        retriever.setDataSource(artworkPath);
-                        byte[] rawPictureData = retriever.getEmbeddedPicture();
-                        if (rawPictureData != null) {
-                            BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-                            decodeOptions.inSampleSize = qualityMode;
-                            decodedBitmap = BitmapFactory.decodeByteArray(rawPictureData, 0, rawPictureData.length, decodeOptions);
-                        }
-                    } finally {
-                        if (retriever != null) {
-                            try { retriever.release(); } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            } catch (Exception ignored) {}
+            Bitmap decodedBitmap = ArtUtil.decodeArtworkBitmap(getContentResolver(), artworkPath, isUri, qualityMode);
 
             if (decodedBitmap != null) {
                 artworkCache.put(cacheKey, decodedBitmap);
@@ -1393,36 +1394,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param query Search query string input.
      */
     private void filterData(String query) {
-        String trimmedQuery = query.toLowerCase().trim();
-        displaySongs.clear();
-        displayAlbums.clear();
-        displayPlaylists.clear();
-
-        if (trimmedQuery.isEmpty()) {
-            displaySongs.addAll(allSongs);
-            displayAlbums.addAll(allAlbums);
-            displayPlaylists.addAll(allPlaylists);
-        } else {
-            for (Song song : allSongs) {
-                if (song.title.toLowerCase().contains(trimmedQuery) || song.artist.toLowerCase().contains(trimmedQuery)) {
-                    displaySongs.add(song);
-                }
-            }
-            for (Album album : allAlbums) {
-                if (album.name.toLowerCase().contains(trimmedQuery) || album.artist.toLowerCase().contains(trimmedQuery)) {
-                    displayAlbums.add(album);
-                }
-            }
-            for (Playlist playlist : allPlaylists) {
-                if (playlist.name.toLowerCase().contains(trimmedQuery)) {
-                    displayPlaylists.add(playlist);
-                }
-            }
-        }
-        
-        Collections.sort(displayAlbums, (a, b) -> Boolean.compare(b.isFire, a.isFire));
-        Collections.sort(displayPlaylists, (a, b) -> Boolean.compare(b.isFire, a.isFire));
-
+        MusicLibraryUtil.filterData(query, allSongs, allAlbums, allPlaylists, displaySongs, displayAlbums, displayPlaylists);
         refreshAllAdapters();
     }
 
@@ -1433,73 +1405,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      */
     private void loadMusic() {
         new Thread(() -> {
-            ArrayList<Song> tempSongs = new ArrayList<>();
             HashMap<String, Album> albumMap = new HashMap<>();
-            try {
-                Cursor musicCursor;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    musicCursor = getContentResolver().query(
-                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                            null,
-                            MediaStore.Audio.Media.RELATIVE_PATH + " LIKE ?",
-                            new String[]{"%Music/%"},
-                            null
-                    );
-                } else {
-                    musicCursor = getContentResolver().query(
-                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                            null,
-                            MediaStore.Audio.Media.DATA + " LIKE ?",
-                            new String[]{"%/Music/%"},
-                            null
-                    );
-                }
-
-                if (musicCursor != null && musicCursor.moveToFirst()) {
-                    do {
-                        String id = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID));
-                        String title = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE));
-                        String artist = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
-                        String path = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
-                        String albumId = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID));
-                        String albumName = musicCursor.getString(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM));
-                        long dateAdded = musicCursor.getLong(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED));
-                        int trackNumber = musicCursor.getInt(musicCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK));
-
-                        if (title == null || title.trim().isEmpty()) {
-                            title = "Unknown Title";
-                        }
-                        if (artist == null || artist.trim().isEmpty()) {
-                            artist = "Unknown Artist";
-                        }
-                        if (albumName == null || albumName.trim().isEmpty()) {
-                            albumName = "Unknown Album";
-                        }
-
-                        if (artist.toLowerCase().contains("unknown")) {
-                            try {
-                                String[] pathSegments = path.split("/");
-                                if (pathSegments.length >= 3) {
-                                    albumName = pathSegments[pathSegments.length - 2];
-                                    artist = pathSegments[pathSegments.length - 3];
-                                }
-                            } catch (Exception ignored) {}
-                        }
-
-                        Song song = new Song(id, title, artist, path, albumId, albumName, trackNumber, dateAdded);
-                        tempSongs.add(song);
-
-                        if (!albumMap.containsKey(albumId)) {
-                            Album newAlbum = new Album(albumId, albumName, artist, dateAdded);
-                            newAlbum.isFire = fireAlbums.contains(albumId);
-                            albumMap.put(albumId, newAlbum);
-                        }
-                        albumMap.get(albumId).songs.add(song);
-
-                    } while (musicCursor.moveToNext());
-                    musicCursor.close();
-                }
-            } catch (Exception ignored) {}
+            ArrayList<Song> tempSongs = MusicLibraryUtil.queryMediaStoreSongs(getContentResolver(), fireAlbums, albumMap);
 
             ArrayList<Album> tempAlbums = new ArrayList<>(albumMap.values());
             for (Album album : tempAlbums) {
@@ -1513,35 +1420,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 songNameMap.put((s.title + "_" + s.artist).toLowerCase(Locale.getDefault()), s);
             }
 
-            ArrayList<Playlist> tempPlaylists = new ArrayList<>();
-            try {
-                JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
-                for (int i = 0; i < playlistsJsonArray.length(); i++) {
-                    JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                    Playlist playlist = new Playlist(
-                            playlistJsonObject.getString("name"),
-                            playlistJsonObject.optString("imageUri", null)
-                    );
-                    playlist.description = playlistJsonObject.optString("description", "");
-                    playlist.isFire = playlistJsonObject.optBoolean("isFire", false);
-                    JSONArray songsJsonArray = playlistJsonObject.getJSONArray("songData");
-                    for (int j = 0; j < songsJsonArray.length(); j++) {
-                        JSONObject songJsonObject = songsJsonArray.getJSONObject(j);
-                        String songId = songJsonObject.getString("id");
-                        String songTitle = songJsonObject.getString("t");
-                        String songArtist = songJsonObject.getString("a");
-
-                        Song matchedSong = songIdMap.get(songId);
-                        if (matchedSong == null) {
-                            matchedSong = songNameMap.get((songTitle + "_" + songArtist).toLowerCase(Locale.getDefault()));
-                        }
-                        if (matchedSong != null) {
-                            playlist.songs.add(matchedSong);
-                        }
-                    }
-                    tempPlaylists.add(playlist);
-                }
-            } catch (Exception ignored) {}
+            ArrayList<Playlist> tempPlaylists = PlaylistUtil.parsePlaylists(sharedPreferences, songIdMap, songNameMap);
 
             Comparator<Song> songComparator = (a, b) -> a.title.compareToIgnoreCase(b.title);
             Comparator<Album> albumComparator = (a, b) -> a.name.compareToIgnoreCase(b.name);
@@ -1562,32 +1441,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     /**
-     * Serializes playlist collection structures to a JSON String array, saving it
-     * persistently to the app's SharedPreferences storage.
+     * Serializes playlist collection structures to persistent SharedPreferences storage.
      */
     private void savePlaylists() {
-        try {
-            JSONArray playlistsJsonArray = new JSONArray();
-            for (Playlist playlist : allPlaylists) {
-                JSONObject playlistJsonObject = new JSONObject();
-                playlistJsonObject.put("name", playlist.name);
-                playlistJsonObject.put("imageUri", playlist.imageUri != null ? playlist.imageUri : "");
-                playlistJsonObject.put("description", playlist.description != null ? playlist.description : "");
-                playlistJsonObject.put("isFire", playlist.isFire);
-
-                JSONArray songsJsonArray = new JSONArray();
-                for (Song song : playlist.songs) {
-                    JSONObject songJsonObject = new JSONObject();
-                    songJsonObject.put("id", song.id);
-                    songJsonObject.put("t", song.title);
-                    songJsonObject.put("a", song.artist);
-                    songsJsonArray.put(songJsonObject);
-                }
-                playlistJsonObject.put("songData", songsJsonArray);
-                playlistsJsonArray.put(playlistJsonObject);
-            }
-            sharedPreferences.edit().putString("playlists", playlistsJsonArray.toString()).commit();
-        } catch (Exception ignored) {}
+        PlaylistUtil.savePlaylists(sharedPreferences, allPlaylists);
     }
 
     /**
@@ -1596,18 +1453,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param sortType Sort selector key index (0: A-Z, 1: Z-A, 2: Newest).
      */
     private void sortData(int sortType) {
-        Comparator<Song> songComparator = sortType == 0 
-                ? (a, b) -> a.title.compareToIgnoreCase(b.title) 
-                : sortType == 1 ? (a, b) -> b.title.compareToIgnoreCase(a.title) 
-                : (a, b) -> Long.compare(b.dateAdded, a.dateAdded);
-
-        Comparator<Album> albumComparator = sortType == 0 
-                ? (a, b) -> a.name.compareToIgnoreCase(b.name) 
-                : sortType == 1 ? (a, b) -> b.name.compareToIgnoreCase(a.name) 
-                : (a, b) -> Long.compare(b.dateAdded, a.dateAdded);
-
-        Collections.sort(allSongs, songComparator);
-        Collections.sort(allAlbums, albumComparator);
+        MusicLibraryUtil.sortData(sortType, allSongs, allAlbums);
     }
 
     /**
@@ -1628,69 +1474,22 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         TextView txtDetailDescription = findViewById(R.id.txtDetailDescription);
         if (isPlaylist && playlistObject != null) {
             btnDetailOptions.setVisibility(View.VISIBLE);
-            
             if (playlistObject.description != null && !playlistObject.description.isEmpty()) {
                 txtDetailDescription.setVisibility(View.VISIBLE);
                 txtDetailDescription.setText(playlistObject.description);
             } else {
                 txtDetailDescription.setVisibility(View.GONE);
             }
-
             btnDetailOptions.setOnClickListener(v -> {
                 triggerHapticFeedback(v);
-                String[] options = {"Edit Details", "Change Cover", "Download Image", "Delete"};
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle(playlistObject.name)
-                        .setItems(options, (dialog, which) -> {
-                            if (which == 0) {
-                                LinearLayout layout = new LinearLayout(MainActivity.this);
-                                layout.setOrientation(LinearLayout.VERTICAL);
-                                EditText nameField = new EditText(MainActivity.this);
-                                nameField.setHint("Playlist Name");
-                                nameField.setText(playlistObject.name);
-                                EditText descField = new EditText(MainActivity.this);
-                                descField.setHint("Playlist Description");
-                                descField.setText(playlistObject.description);
-                                layout.addView(nameField);
-                                layout.addView(descField);
-
-                                new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Edit Details")
-                                        .setView(layout)
-                                        .setPositiveButton("Save", (dialogInner, whichInner) -> {
-                                            playlistObject.name = nameField.getText().toString();
-                                            playlistObject.description = descField.getText().toString();
-                                            detailTitleTextView.setText(playlistObject.name);
-                                            
-                                            if (playlistObject.description != null && !playlistObject.description.isEmpty()) {
-                                                txtDetailDescription.setVisibility(View.VISIBLE);
-                                                txtDetailDescription.setText(playlistObject.description);
-                                            } else {
-                                                txtDetailDescription.setVisibility(View.GONE);
-                                            }
-                                            
-                                            savePlaylists();
-                                            filterData(searchEditText.getText().toString());
-                                        }).show();
-                            } else if (which == 1) {
-                                activePlaylistForImage = playlistObject;
-                                imagePickerLauncher.launch(new String[]{"image/*"});
-                            } else if (which == 2) {
-                                downloadImageFromImageView(detailCoverImageView, playlistObject.name);
-                            } else if (which == 3) {
-                                allPlaylists.remove(playlistObject);
-                                savePlaylists();
-                                filterData(searchEditText.getText().toString());
-                                expandedDetailsContainer.setVisibility(View.GONE);
-                            }
-                        }).show();
+                showPlaylistDetailOptionsDialog(playlistObject, txtDetailDescription);
             });
         } else {
             btnDetailOptions.setVisibility(View.GONE);
             txtDetailDescription.setVisibility(View.GONE);
         }
 
-        if (isPlaylist && playlistObject.imageUri != null) {
+        if (isPlaylist && playlistObject != null && playlistObject.imageUri != null) {
             loadArtAsync(detailCoverImageView, playlistObject.imageUri, true, QUALITY_HIGH, null);
         } else if (!songsList.isEmpty()) {
             loadArtAsync(detailCoverImageView, songsList.get(0).path, false, QUALITY_HIGH, null);
@@ -1718,27 +1517,103 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playAudio(shuffledQueue, 0);
             }
         });
-        
+
         ImageButton fireToggle = findViewById(R.id.btnDetailFireToggle);
-        boolean isFire = false;
-        if (isPlaylist && playlistObject != null) {
-            isFire = playlistObject.isFire;
-        } else if (!isPlaylist && albumObject != null) {
-            isFire = albumObject.isFire;
+        setupDetailFireToggle(fireToggle, isPlaylist, playlistObject, albumObject);
+
+        if (isSelectionMode) {
+            deleteSelectionButton.setVisibility(currentOpenPlaylist != null ? View.VISIBLE : View.GONE);
         }
+    }
+
+    /**
+     * Displays a dialog containing management options for an active playlist in detail view.
+     *
+     * @param playlist Target playlist to manage.
+     * @param txtDetailDescription View displaying playlist description text.
+     */
+    private void showPlaylistDetailOptionsDialog(Playlist playlist, TextView txtDetailDescription) {
+        String[] options = {"Edit Details", "Change Cover", "Download Image", "Delete"};
+        new AlertDialog.Builder(this)
+                .setTitle(playlist.name)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showEditPlaylistDialog(playlist, txtDetailDescription);
+                    } else if (which == 1) {
+                        activePlaylistForImage = playlist;
+                        imagePickerLauncher.launch(new String[]{"image/*"});
+                    } else if (which == 2) {
+                        downloadImageFromImageView(detailCoverImageView, playlist.name);
+                    } else if (which == 3) {
+                        allPlaylists.remove(playlist);
+                        savePlaylists();
+                        filterData(searchEditText.getText().toString());
+                        expandedDetailsContainer.setVisibility(View.GONE);
+                    }
+                }).show();
+    }
+
+    /**
+     * Displays input dialog to update playlist title and description metadata.
+     *
+     * @param playlist Target playlist to edit.
+     * @param txtDetailDescription View displaying playlist description text.
+     */
+    private void showEditPlaylistDialog(Playlist playlist, TextView txtDetailDescription) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        EditText nameField = new EditText(this);
+        nameField.setHint("Playlist Name");
+        nameField.setText(playlist.name);
+        EditText descField = new EditText(this);
+        descField.setHint("Playlist Description");
+        descField.setText(playlist.description);
+        layout.addView(nameField);
+        layout.addView(descField);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Details")
+                .setView(layout)
+                .setPositiveButton("Save", (dialogInner, whichInner) -> {
+                    playlist.name = nameField.getText().toString();
+                    playlist.description = descField.getText().toString();
+                    detailTitleTextView.setText(playlist.name);
+
+                    if (playlist.description != null && !playlist.description.isEmpty()) {
+                        txtDetailDescription.setVisibility(View.VISIBLE);
+                        txtDetailDescription.setText(playlist.description);
+                    } else {
+                        txtDetailDescription.setVisibility(View.GONE);
+                    }
+
+                    savePlaylists();
+                    filterData(searchEditText.getText().toString());
+                }).show();
+    }
+
+    /**
+     * Binds click handling and visual feedback animation to the detail view favorite/fire toggle.
+     *
+     * @param fireToggle Target fire toggle button.
+     * @param isPlaylist True if the details sheet represents a playlist.
+     * @param playlist Associated playlist if applicable.
+     * @param album Associated album if applicable.
+     */
+    private void setupDetailFireToggle(ImageButton fireToggle, boolean isPlaylist, Playlist playlist, Album album) {
+        boolean isFire = (isPlaylist && playlist != null) ? playlist.isFire : (album != null && album.isFire);
         fireToggle.setColorFilter(isFire ? android.graphics.Color.parseColor("#FF9800") : android.graphics.Color.WHITE);
-        
+
         fireToggle.setOnClickListener(v -> {
             triggerHapticFeedback(v);
             boolean newFire = false;
-            if (isPlaylist && playlistObject != null) {
-                playlistObject.isFire = !playlistObject.isFire;
-                newFire = playlistObject.isFire;
-            } else if (!isPlaylist && albumObject != null) {
-                albumObject.isFire = !albumObject.isFire;
-                newFire = albumObject.isFire;
-                if (newFire) fireAlbums.add(albumObject.albumId);
-                else fireAlbums.remove(albumObject.albumId);
+            if (isPlaylist && playlist != null) {
+                playlist.isFire = !playlist.isFire;
+                newFire = playlist.isFire;
+            } else if (!isPlaylist && album != null) {
+                album.isFire = !album.isFire;
+                newFire = album.isFire;
+                if (newFire) fireAlbums.add(album.albumId);
+                else fireAlbums.remove(album.albumId);
                 sharedPreferences.edit().putStringSet("fireAlbums", fireAlbums).apply();
             }
             savePlaylists();
@@ -1749,9 +1624,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 filterData(searchEditText.getText().toString());
             }).start();
         });
-        if (isSelectionMode) {
-            deleteSelectionButton.setVisibility(currentOpenPlaylist != null ? View.VISIBLE : View.GONE);
-        }
     }
 
     /**
@@ -1806,6 +1678,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
     }
 
+    /**
+     * Downloads and exports the artwork bitmap displayed in an ImageView to user gallery.
+     *
+     * @param view ImageView holding the artwork tag.
+     * @param title Title used for naming the image file.
+     */
     private void downloadImageFromImageView(ImageView view, String title) {
         String artworkPath = (String) view.getTag();
         if (artworkPath == null || artworkPath.isEmpty()) {
@@ -1814,71 +1692,15 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
 
         imageExecutor.execute(() -> {
-            android.graphics.Bitmap decodedBitmap = null;
             boolean isUri = artworkPath.startsWith("content://") || artworkPath.startsWith("data:image/");
-            try {
-                if (isUri) {
-                    if (artworkPath.startsWith("data:image/")) {
-                        int commaIndex = artworkPath.indexOf(",");
-                        if (commaIndex != -1) {
-                            String base64Data = artworkPath.substring(commaIndex + 1);
-                            byte[] decodedBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT);
-                            android.graphics.BitmapFactory.Options decodeOptions = new android.graphics.BitmapFactory.Options();
-                            decodeOptions.inSampleSize = 1;
-                            decodedBitmap = android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length, decodeOptions);
-                        }
-                    } else {
-                        java.io.InputStream inputStream = getContentResolver().openInputStream(Uri.parse(artworkPath));
-                        android.graphics.BitmapFactory.Options decodeOptions = new android.graphics.BitmapFactory.Options();
-                        decodeOptions.inSampleSize = 1;
-                        decodedBitmap = android.graphics.BitmapFactory.decodeStream(inputStream, null, decodeOptions);
-                        if (inputStream != null) inputStream.close();
-                    }
-                } else {
-                    android.media.MediaMetadataRetriever retriever = null;
-                    try {
-                        retriever = new android.media.MediaMetadataRetriever();
-                        retriever.setDataSource(artworkPath);
-                        byte[] rawPictureData = retriever.getEmbeddedPicture();
-                        if (rawPictureData != null) {
-                            android.graphics.BitmapFactory.Options decodeOptions = new android.graphics.BitmapFactory.Options();
-                            decodeOptions.inSampleSize = 1;
-                            decodedBitmap = android.graphics.BitmapFactory.decodeByteArray(rawPictureData, 0, rawPictureData.length, decodeOptions);
-                        }
-                    } finally {
-                        if (retriever != null) try { retriever.release(); } catch (Exception ignored) {}
-                    }
-                }
-
-                if (decodedBitmap == null) {
-                    mainHandler.post(() -> Toast.makeText(this, "No valid high-res image found", Toast.LENGTH_SHORT).show());
-                    return;
-                }
-
-                android.content.ContentValues values = new android.content.ContentValues();
-                values.put(MediaStore.Images.Media.DISPLAY_NAME, title.replaceAll("[^a-zA-Z0-9.-]", "_") + "_cover.jpg");
-                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Images.Media.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/VibeStation");
-                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
-                }
-                Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                if (uri != null) {
-                    java.io.OutputStream out = getContentResolver().openOutputStream(uri);
-                    decodedBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, out);
-                    out.close();
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        values.clear();
-                        values.put(MediaStore.Images.Media.IS_PENDING, 0);
-                        getContentResolver().update(uri, values, null, null);
-                    }
-                    mainHandler.post(() -> Toast.makeText(this, "Image saved to Pictures!", Toast.LENGTH_SHORT).show());
-                } else {
-                    mainHandler.post(() -> Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show());
-                }
-            } catch (Exception e) {
-                mainHandler.post(() -> Toast.makeText(this, "Failed to download image", Toast.LENGTH_SHORT).show());
+            Bitmap decodedBitmap = ArtUtil.decodeArtworkBitmap(getContentResolver(), artworkPath, isUri, 1);
+            if (decodedBitmap == null) {
+                mainHandler.post(() -> Toast.makeText(this, "No valid high-res image found", Toast.LENGTH_SHORT).show());
+                return;
             }
+
+            boolean saved = ArtUtil.saveBitmapToGallery(getContentResolver(), decodedBitmap, title);
+            mainHandler.post(() -> Toast.makeText(this, saved ? "Image saved to Pictures!" : "Failed to save image", Toast.LENGTH_SHORT).show());
         });
     }
 
@@ -1887,82 +1709,28 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * exporting playlist backup backups, and restoring backups.
      */
     private void setupLaunchers() {
-        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), documentUri -> {
-            if (documentUri != null) {
-                try {
-                    getContentResolver().takePersistableUriPermission(documentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (Exception ignored) {}
-                
-                if (activePlaylistForImage != null) {
-                    activePlaylistForImage.imageUri = documentUri.toString();
-                    savePlaylists();
-                    filterData("");
-                } else if (activeAlbumForImage != null) {
-                    updateAlbumArt(activeAlbumForImage, documentUri);
-                }
-            }
-        });
-
-        backupFileLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("text/plain"), documentUri -> {
-            if (documentUri != null) {
-                new Thread(() -> {
-                    try (OutputStream outputStream = getContentResolver().openOutputStream(documentUri)) {
-                        JSONArray playlistsJsonArray = new JSONArray(sharedPreferences.getString("playlists", "[]"));
-                        for (int i = 0; i < playlistsJsonArray.length(); i++) {
-                            JSONObject playlistJsonObject = playlistsJsonArray.getJSONObject(i);
-                            String imageUri = playlistJsonObject.optString("imageUri", "");
-                            if (!imageUri.isEmpty()) {
-                                playlistJsonObject.put("b64", getBase64Image(Uri.parse(imageUri)));
-                            }
-                        }
-                        if (outputStream != null) {
-                            outputStream.write(playlistsJsonArray.toString().getBytes());
-                        }
-                        runOnUiThread(() -> Toast.makeText(this, "Export Ready!", Toast.LENGTH_SHORT).show());
-                    } catch (Exception ignored) {}
-                }).start();
-            }
-        });
-
-        restoreFileLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), documentUri -> {
-            if (documentUri != null) {
-                new Thread(() -> {
-                    try (InputStream inputStream = getContentResolver().openInputStream(documentUri);
-                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-                        StringBuilder stringBuilder = new StringBuilder();
-                        String line;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            stringBuilder.append(line);
-                        }
-                        sharedPreferences.edit().putString("playlists", stringBuilder.toString()).apply();
-                        runOnUiThread(() -> {
-                            loadMusic();
-                            Toast.makeText(this, "Restore Successful!", Toast.LENGTH_SHORT).show();
-                        });
-                    } catch (Exception ignored) {}
-                }).start();
-            }
-        });
+        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::handleImagePickerResult);
+        backupFileLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("text/plain"), documentUri -> PlaylistUtil.exportBackup(this, sharedPreferences, documentUri));
+        restoreFileLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), documentUri -> PlaylistUtil.restoreBackup(this, sharedPreferences, documentUri, this::loadMusic));
     }
 
     /**
-     * Reads a image file content from a provider, scales it to standard size constraints (400x400),
-     * and compiles it to a compressed Base64 representation for JSON persistence.
+     * Updates active playlist or album cover image reference with the selected document URI.
      *
-     * @param uri Provider path pointing to the selected image.
-     * @return    Base64 encoded representation string.
+     * @param documentUri Selected image document URI.
      */
-    private String getBase64Image(Uri uri) {
+    private void handleImagePickerResult(Uri documentUri) {
+        if (documentUri == null) return;
         try {
-            InputStream inputStream = getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            if (bitmap == null) return "";
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 400, 400, true);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
-            return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT);
-        } catch (Exception e) {
-            return "";
+            getContentResolver().takePersistableUriPermission(documentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {}
+
+        if (activePlaylistForImage != null) {
+            activePlaylistForImage.imageUri = documentUri.toString();
+            savePlaylists();
+            filterData("");
+        } else if (activeAlbumForImage != null) {
+            updateAlbumArt(activeAlbumForImage, documentUri);
         }
     }
 
@@ -2456,29 +2224,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param newAlbum The new album name.
      */
     private void updateSongMetadata(Song song, String newTitle, String newArtist, String newAlbum) {
-        new Thread(() -> {
-            try {
-                File file = new File(song.path);
-                AudioFile audioFile = AudioFileIO.read(file);
-                Tag tag = audioFile.getTag();
-                if (tag != null) {
-                    tag.setField(FieldKey.TITLE, newTitle);
-                    tag.setField(FieldKey.ARTIST, newArtist);
-                    tag.setField(FieldKey.ALBUM, newAlbum);
-                    AudioFileIO.write(audioFile);
-                    
-                    android.media.MediaScannerConnection.scanFile(this, new String[]{song.path}, null, (path, uri) -> {
-                        runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this, "Metadata updated successfully", Toast.LENGTH_SHORT).show();
-                            loadMusic();
-                        });
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "Failed to update metadata: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        }).start();
+        MediaMetadataUtil.updateSongMetadata(this, song, newTitle, newArtist, newAlbum, this::loadMusic);
     }
 
     /**
@@ -2489,37 +2235,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param newArtist The new artist name.
      */
     private void updateAlbumMetadata(Album album, String newAlbum, String newArtist) {
-        new Thread(() -> {
-            try {
-                for (Song song : album.songs) {
-                    File file = new File(song.path);
-                    AudioFile audioFile = AudioFileIO.read(file);
-                    Tag tag = audioFile.getTag();
-                    if (tag != null) {
-                        tag.setField(FieldKey.ALBUM, newAlbum);
-                        tag.setField(FieldKey.ARTIST, newArtist);
-                        AudioFileIO.write(audioFile);
-                    }
-                }
-                
-                String[] paths = new String[album.songs.size()];
-                for (int i = 0; i < album.songs.size(); i++) {
-                    paths[i] = album.songs.get(i).path;
-                }
-                java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(paths.length);
-                android.media.MediaScannerConnection.scanFile(this, paths, null, (path, uri) -> {
-                    if (count.decrementAndGet() == 0) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this, "Album metadata updated", Toast.LENGTH_SHORT).show();
-                            loadMusic();
-                        });
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "Failed to update metadata: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        }).start();
+        MediaMetadataUtil.updateAlbumMetadata(this, album, newAlbum, newArtist, this::loadMusic);
     }
 
     /**
@@ -2529,56 +2245,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param imageUri The new image URI.
      */
     private void updateAlbumArt(Album album, Uri imageUri) {
-        new Thread(() -> {
-            try {
-                InputStream is = getContentResolver().openInputStream(imageUri);
-                if (is == null) return;
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                int nRead;
-                byte[] data = new byte[16384];
-                while ((nRead = is.read(data, 0, data.length)) != -1) {
-                    buffer.write(data, 0, nRead);
-                }
-                buffer.flush();
-                byte[] imageData = buffer.toByteArray();
-                is.close();
-                
-                org.jaudiotagger.tag.images.Artwork artwork = org.jaudiotagger.tag.images.ArtworkFactory.getNew();
-                artwork.setBinaryData(imageData);
-                artwork.setMimeType("image/jpeg");
-                artwork.setPictureType(org.jaudiotagger.tag.reference.PictureTypes.DEFAULT_ID);
-
-                for (Song song : album.songs) {
-                    File file = new File(song.path);
-                    AudioFile audioFile = AudioFileIO.read(file);
-                    Tag tag = audioFile.getTag();
-                    if (tag != null) {
-                        tag.deleteArtworkField();
-                        tag.setField(artwork);
-                        AudioFileIO.write(audioFile);
-                    }
-                }
-                
-                String[] paths = new String[album.songs.size()];
-                for (int i = 0; i < album.songs.size(); i++) {
-                    paths[i] = album.songs.get(i).path;
-                }
-                java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(paths.length);
-                android.media.MediaScannerConnection.scanFile(this, paths, null, (path, uri) -> {
-                    if (count.decrementAndGet() == 0) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this, "Album cover updated", Toast.LENGTH_SHORT).show();
-                            loadMusic();
-                        });
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "Failed to update cover: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            } finally {
-                activeAlbumForImage = null;
-            }
-        }).start();
+        activeAlbumForImage = null;
+        MediaMetadataUtil.updateAlbumArt(this, album, imageUri, this::loadMusic);
     }
 
     /**
@@ -2587,20 +2255,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
      * @param album The album model to delete.
      */
     private void deleteAlbum(Album album) {
-        new Thread(() -> {
-            String[] paths = new String[album.songs.size()];
-            for (int i = 0; i < album.songs.size(); i++) {
-                Song song = album.songs.get(i);
-                paths[i] = song.path;
-                new File(song.path).delete();
-            }
-            
-            android.media.MediaScannerConnection.scanFile(this, paths, null, null);
-            
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Album deleted", Toast.LENGTH_SHORT).show();
-                loadMusic();
-            });
-        }).start();
+        MediaMetadataUtil.deleteAlbum(this, album, this::loadMusic);
     }
 }
