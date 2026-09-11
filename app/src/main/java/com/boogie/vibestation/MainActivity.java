@@ -84,6 +84,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import com.boogie.vibestation.models.Album;
 import com.boogie.vibestation.models.Playlist;
@@ -387,27 +388,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         findViewById(R.id.btnCreatePlaylist).setOnClickListener(view -> {
             triggerHapticFeedback(view);
-            LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            EditText nameField = new EditText(this);
-            nameField.setHint("Playlist Name");
-            EditText descField = new EditText(this);
-            descField.setHint("Playlist Description");
-            layout.addView(nameField);
-            layout.addView(descField);
-
-            new AlertDialog.Builder(this)
-                    .setTitle("New Playlist")
-                    .setView(layout)
-                    .setPositiveButton("Create", (dialog, which) -> {
-                        Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
-                        newPlaylist.description = descField.getText().toString();
-                        allPlaylists.add(newPlaylist);
-                        savePlaylists();
-                        filterData(searchEditText.getText().toString());
-                        activePlaylistForImage = newPlaylist;
-                        imagePickerLauncher.launch(new String[]{"image/*"});
-                    }).show();
+            showCreatePlaylistDialog(newPlaylist -> {
+                filterData(searchEditText.getText().toString());
+                activePlaylistForImage = newPlaylist;
+                imagePickerLauncher.launch(new String[]{"image/*"});
+            });
         });
 
         setupSeekBarListener();
@@ -899,6 +884,37 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     /**
+     * Displays a dialog prompting the user for a new playlist name and optional description.
+     *
+     * @param onCreated Callback consumer executed after the new playlist is persisted.
+     */
+    private void showCreatePlaylistDialog(Consumer<Playlist> onCreated) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        EditText nameField = new EditText(this);
+        nameField.setHint("Playlist Name");
+        EditText descField = new EditText(this);
+        descField.setHint("Playlist Description");
+        layout.addView(nameField);
+        layout.addView(descField);
+
+        new AlertDialog.Builder(this)
+                .setTitle("New Playlist")
+                .setView(layout)
+                .setPositiveButton("Create", (dialog, which) -> {
+                    Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
+                    newPlaylist.description = descField.getText().toString();
+                    allPlaylists.add(newPlaylist);
+                    savePlaylists();
+                    if (onCreated != null) {
+                        onCreated.accept(newPlaylist);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
      * Displays a dialog selection list prompting users to assign all currently selected
      * tracks to an existing playlist or create a new playlist with them.
      */
@@ -914,28 +930,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 .setTitle("Add " + selectedSongs.size() + " songs to...")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        LinearLayout layout = new LinearLayout(this);
-                        layout.setOrientation(LinearLayout.VERTICAL);
-                        EditText nameField = new EditText(this);
-                        nameField.setHint("Playlist Name");
-                        EditText descField = new EditText(this);
-                        descField.setHint("Playlist Description");
-                        layout.addView(nameField);
-                        layout.addView(descField);
-
-                        new AlertDialog.Builder(this)
-                                .setTitle("New Playlist")
-                                .setView(layout)
-                                .setPositiveButton("Create", (dialog2, which2) -> {
-                                    Playlist newPlaylist = new Playlist(nameField.getText().toString(), null);
-                                    newPlaylist.description = descField.getText().toString();
-                                    newPlaylist.songs.addAll(selectedSongs);
-                                    allPlaylists.add(newPlaylist);
-                                    savePlaylists();
-                                    filterData("");
-                                    Toast.makeText(this, "Created & Added " + selectedSongs.size() + " songs!", Toast.LENGTH_SHORT).show();
-                                    clearSelection();
-                                }).show();
+                        showCreatePlaylistDialog(newPlaylist -> {
+                            newPlaylist.songs.addAll(selectedSongs);
+                            savePlaylists();
+                            filterData("");
+                            Toast.makeText(this, "Created & Added " + selectedSongs.size() + " songs!", Toast.LENGTH_SHORT).show();
+                            clearSelection();
+                        });
                     } else {
                         Playlist targetPlaylist = allPlaylists.get(which - 1);
                         int addedCount = 0;
@@ -1135,6 +1136,72 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     /**
+     * Binds track information, cover art, and interaction listeners to an item_song view.
+     *
+     * @param position Adapter item index.
+     * @param convertView Recycled view instance.
+     * @param parent Container view group.
+     * @param songs List of songs backing the adapter.
+     * @return Bound view hierarchy.
+     */
+    private View bindSongItemView(int position, View convertView, ViewGroup parent, ArrayList<Song> songs) {
+        SongViewHolder viewHolder;
+        if (convertView == null) {
+            convertView = getLayoutInflater().inflate(R.layout.item_song, parent, false);
+            viewHolder = new SongViewHolder();
+            viewHolder.selectionCheckBox = convertView.findViewById(R.id.chkSelect);
+            viewHolder.titleTextView = convertView.findViewById(R.id.txtTitle);
+            viewHolder.artistTextView = convertView.findViewById(R.id.txtArtist);
+            viewHolder.artworkImageView = convertView.findViewById(R.id.imgArt);
+            convertView.setTag(viewHolder);
+        } else {
+            viewHolder = (SongViewHolder) convertView.getTag();
+        }
+
+        Song currentSong = songs.get(position);
+        viewHolder.titleTextView.setText(currentSong.title);
+        viewHolder.artistTextView.setText(currentSong.artist);
+        loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null);
+
+        if (isSelectionMode) {
+            viewHolder.selectionCheckBox.setVisibility(View.VISIBLE);
+            viewHolder.selectionCheckBox.setChecked(selectedSongs.contains(currentSong));
+        } else {
+            viewHolder.selectionCheckBox.setVisibility(View.GONE);
+        }
+
+        convertView.setOnClickListener(clickedView -> {
+            triggerHapticFeedback(clickedView);
+            if (isSelectionMode) {
+                toggleSelectionMode(currentSong);
+            } else {
+                playAudio(songs, position);
+            }
+        });
+        convertView.setOnLongClickListener(clickedView -> {
+            triggerHapticFeedback(clickedView);
+            if (!isSelectionMode) {
+                String[] options = {"Select", "Edit Metadata", "Download Image"};
+                new android.app.AlertDialog.Builder(MainActivity.this)
+                    .setItems(options, (dialog, which) -> {
+                        if (which == 0) {
+                            toggleSelectionMode(currentSong);
+                        } else if (which == 1) {
+                            showEditSongMetadataDialog(currentSong);
+                        } else if (which == 2) {
+                            downloadImageFromImageView(viewHolder.artworkImageView, currentSong.title);
+                        }
+                    })
+                    .show();
+            } else {
+                toggleSelectionMode(currentSong);
+            }
+            return true;
+        });
+        return convertView;
+    }
+
+    /**
      * Adapter for displaying songs in the primary library list view.
      */
     private class SongAdapter extends android.widget.ArrayAdapter<Song> {
@@ -1148,60 +1215,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         @NonNull
         @Override
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            SongViewHolder viewHolder;
-            if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.item_song, parent, false);
-                viewHolder = new SongViewHolder();
-                viewHolder.selectionCheckBox = convertView.findViewById(R.id.chkSelect);
-                viewHolder.titleTextView = convertView.findViewById(R.id.txtTitle);
-                viewHolder.artistTextView = convertView.findViewById(R.id.txtArtist);
-                viewHolder.artworkImageView = convertView.findViewById(R.id.imgArt);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (SongViewHolder) convertView.getTag();
-            }
-
-            Song currentSong = songsList.get(position);
-            viewHolder.titleTextView.setText(currentSong.title);
-            viewHolder.artistTextView.setText(currentSong.artist);
-            loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null);
-
-            if (isSelectionMode) {
-                viewHolder.selectionCheckBox.setVisibility(View.VISIBLE);
-                viewHolder.selectionCheckBox.setChecked(selectedSongs.contains(currentSong));
-            } else {
-                viewHolder.selectionCheckBox.setVisibility(View.GONE);
-            }
-
-            convertView.setOnClickListener(clickedView -> {
-                triggerHapticFeedback(clickedView);
-                if (isSelectionMode) {
-                    toggleSelectionMode(currentSong);
-                } else {
-                    playAudio(songsList, position);
-                }
-            });
-            convertView.setOnLongClickListener(clickedView -> {
-                triggerHapticFeedback(clickedView);
-                if (!isSelectionMode) {
-                    String[] options = {"Select", "Edit Metadata", "Download Image"};
-                    new android.app.AlertDialog.Builder(MainActivity.this)
-                        .setItems(options, (dialog, which) -> {
-                            if (which == 0) {
-                                toggleSelectionMode(currentSong);
-                            } else if (which == 1) {
-                                showEditSongMetadataDialog(currentSong);
-                            } else if (which == 2) {
-                                downloadImageFromImageView(viewHolder.artworkImageView, currentSong.title);
-                            }
-                        })
-                        .show();
-                } else {
-                    toggleSelectionMode(currentSong);
-                }
-                return true;
-            });
-            return convertView;
+            return bindSongItemView(position, convertView, parent, songsList);
         }
     }
 
@@ -1226,60 +1240,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            SongViewHolder viewHolder;
-            if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.item_song, parent, false);
-                viewHolder = new SongViewHolder();
-                viewHolder.selectionCheckBox = convertView.findViewById(R.id.chkSelect);
-                viewHolder.titleTextView = convertView.findViewById(R.id.txtTitle);
-                viewHolder.artistTextView = convertView.findViewById(R.id.txtArtist);
-                viewHolder.artworkImageView = convertView.findViewById(R.id.imgArt);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (SongViewHolder) convertView.getTag();
-            }
-
-            Song currentSong = displayDetailSongs.get(position);
-            viewHolder.titleTextView.setText(currentSong.title);
-            viewHolder.artistTextView.setText(currentSong.artist);
-            loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null);
-
-            if (isSelectionMode) {
-                viewHolder.selectionCheckBox.setVisibility(View.VISIBLE);
-                viewHolder.selectionCheckBox.setChecked(selectedSongs.contains(currentSong));
-            } else {
-                viewHolder.selectionCheckBox.setVisibility(View.GONE);
-            }
-
-            convertView.setOnClickListener(clickedView -> {
-                triggerHapticFeedback(clickedView);
-                if (isSelectionMode) {
-                    toggleSelectionMode(currentSong);
-                } else {
-                    playAudio(displayDetailSongs, position);
-                }
-            });
-            convertView.setOnLongClickListener(clickedView -> {
-                triggerHapticFeedback(clickedView);
-                if (!isSelectionMode) {
-                    String[] options = {"Select", "Edit Metadata", "Download Image"};
-                    new android.app.AlertDialog.Builder(MainActivity.this)
-                        .setItems(options, (dialog, which) -> {
-                            if (which == 0) {
-                                toggleSelectionMode(currentSong);
-                            } else if (which == 1) {
-                                showEditSongMetadataDialog(currentSong);
-                            } else if (which == 2) {
-                                downloadImageFromImageView(viewHolder.artworkImageView, currentSong.title);
-                            }
-                        })
-                        .show();
-                } else {
-                    toggleSelectionMode(currentSong);
-                }
-                return true;
-            });
-            return convertView;
+            return bindSongItemView(position, convertView, parent, displayDetailSongs);
         }
     }
 
