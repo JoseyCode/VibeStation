@@ -400,17 +400,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     /**
-     * Reads package metadata and initializes version text display if the view is present.
+     * Binds the application version display in the top bar using the tracked AppConfig constant.
      */
     private void setupAppVersionDisplay() {
         TextView txtAppVersion = findViewById(R.id.txtAppVersion);
         if (txtAppVersion != null) {
-            try {
-                android.content.pm.PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                txtAppVersion.setText(pInfo.versionName);
-            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-                txtAppVersion.setText("Vibe");
-            }
+            txtAppVersion.setText(AppConfig.APP_VERSION);
         }
     }
 
