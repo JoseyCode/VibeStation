@@ -19,6 +19,6 @@ public class AppConfigTest {
         assertNotNull(AppConfig.APP_VERSION);
         assertTrue("APP_VERSION should follow semantic versioning",
                 AppConfig.APP_VERSION.matches("^\\d+\\.\\d+\\.\\d+$"));
-        assertEquals("2.5.3", AppConfig.APP_VERSION);
+        assertEquals("3.0.0", AppConfig.APP_VERSION);
     }
 }

@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 16
-        versionName = "2.5.3"
+        versionCode = 17
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -61,6 +61,7 @@ val cpdConfig: Configuration by configurations.creating
 dependencies {
     cpdConfig("net.sourceforge.pmd:pmd-cli:7.10.0")
     cpdConfig("net.sourceforge.pmd:pmd-java:7.10.0")
+    cpdConfig("net.sourceforge.pmd:pmd-kotlin:7.10.0")
     cpdConfig("org.slf4j:slf4j-api:2.0.12")
     cpdConfig("org.slf4j:slf4j-simple:2.0.12")
 }
@@ -86,7 +87,7 @@ tasks.register<Pmd>("pmd") {
 }
 
 tasks.register<JavaExec>("cpd") {
-    description = "Run CPD (Copy-Paste Detector) analysis"
+    description = "Run CPD (Copy-Paste Detector) analysis on Kotlin sources"
     group = "verification"
     classpath = cpdConfig
     mainClass.set("net.sourceforge.pmd.cli.PmdCli")
@@ -94,7 +95,7 @@ tasks.register<JavaExec>("cpd") {
         "cpd",
         "--minimum-tokens", "50",
         "--dir", "${project.projectDir}/src/main/java",
-        "--language", "java",
+        "--language", "kotlin",
         "--format", "text"
     )
     isIgnoreExitValue = true
