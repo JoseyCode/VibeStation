@@ -68,12 +68,21 @@ kover {
         filters {
             excludes {
                 classes("*.BuildConfig", "*.R", "*.R\$*")
+                // Share Mode classes that only exist to drive the radio, the foreground service and the screen.
+                // They contain no decisions (those are in the tested share/ classes) and can only be checked on
+                // real phones, so counting them would push the ratchet down without saying anything about quality.
+                classes(
+                    "*.share.NearbyShareTransport*",
+                    "*.share.ShareService*",
+                    "*.share.ShareActivity*",
+                    "*.views.ShareCircleView*"
+                )
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 21.92% (after playlist cover backup tests).
+            // Ratchet: raise as tests land, never lower. Last measured 41.91% (after the Share Mode classes).
             rule {
-                minBound(38)
+                minBound(41)
             }
         }
     }
