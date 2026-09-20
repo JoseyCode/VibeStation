@@ -1,12 +1,11 @@
 package com.boogie.vibestation
 
-import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
 import com.boogie.vibestation.models.Song
+import com.boogie.vibestation.util.MediaStoreWriter
+import com.boogie.vibestation.util.NewTrack
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -206,8 +205,8 @@ object SyncManager {
     }
 
     /**
-     * Streams the audio file content from the server and inserts it into the Android MediaStore content provider.
-     * Compatible with Android 10+ scoped storage policies using MediaStore IS_PENDING flags.
+     * Streams the audio file content from the server and inserts it into the Android MediaStore content provider
+     * through [MediaStoreWriter].
      *
      * @param context    Application context for content resolution.
      * @param client     OkHttpClient.
@@ -221,48 +220,16 @@ object SyncManager {
             if (!response.isSuccessful) throw IOException("Failed to download stream")
             val body = response.body ?: throw IOException("Empty response body from stream")
 
-            // Build metadata records for insertion into MediaStore content provider
-            val values = ContentValues().apply {
-                put(MediaStore.Audio.Media.DISPLAY_NAME, safeFileName(remoteSong.title) + ".mp3")
-                put(MediaStore.Audio.Media.TITLE, remoteSong.title)
-                put(MediaStore.Audio.Media.ARTIST, remoteSong.artist)
-                put(MediaStore.Audio.Media.ALBUM, remoteSong.album)
-                put(MediaStore.Audio.Media.MIME_TYPE, "audio/mpeg")
-                // Scoped storage requirements for Android 10 (Q) and higher
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/")
-                    put(MediaStore.Audio.Media.IS_PENDING, 1)
-                }
-            }
-
-            val resolver = context.contentResolver
-            var insertedUri: Uri? = null
-            try {
-                val uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)
-                    ?: throw IOException("Failed to insert MediaStore record")
-                insertedUri = uri
-
-                // Write the download stream into the shared system output storage path
-                body.byteStream().use { input ->
-                    val output = resolver.openOutputStream(uri) ?: throw IOException("Failed to open MediaStore output")
-                    output.use { input.copyTo(it) }
-                }
-
-                // Turn off pending status flag once writing successfully completes on Q+
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    values.clear()
-                    values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-                    resolver.update(uri, values, null, null)
-                }
-            } catch (e: Exception) {
-                // Delete orphaned provider entries in the event of an IO failure during writing
-                insertedUri?.let {
-                    try {
-                        resolver.delete(it, null, null)
-                    } catch (ignored: Exception) {
-                    }
-                }
-                throw e
+            val track = NewTrack(
+                displayName = safeFileName(remoteSong.title) + ".mp3",
+                title = remoteSong.title,
+                artist = remoteSong.artist,
+                album = remoteSong.album,
+                mimeType = "audio/mpeg",
+                relativePath = "Music/"
+            )
+            MediaStoreWriter.insertTrack(context.contentResolver, track) { output ->
+                body.byteStream().use { it.copyTo(output) }
             }
         }
     }
