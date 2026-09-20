@@ -2,6 +2,13 @@
 # Limits ported from the retired PMD ruleset (config/pmd/ruleset.xml); PMD reported at
 # the level, detekt reports above the allowed value, hence the -1 on complexity.
 # Keys follow detekt 2.0 alpha naming; re-check on every alpha bump.
+comments:
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: true
 complexity:
   CyclomaticComplexMethod:
     active: true

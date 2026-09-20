@@ -229,12 +229,24 @@ class VisualizerView @JvmOverloads constructor(
         val alphaFactor: Float
     )
 
+    /** Tuning constants for wave rendering and FFT band extraction. */
     companion object {
+        /** Number of control points along each wave. */
         const val RENDER_BINS = 32
+
+        /** Base paint opacity of a wave layer, 0 to 255; scaled per layer by its alpha factor. */
         const val WAVE_ALPHA = 30
+
+        /** Fraction of the gap to the target amplitude covered per frame; lower is smoother. */
         const val DAMPING_FACTOR = 0.25f
+
+        /** Exclusive upper FFT bin of the bass band, which starts at bin 1. */
         const val BASS_BIN_END = 6
+
+        /** Exclusive upper FFT bin of the mid band; the high band runs from here to the last bin. */
         const val MID_BIN_END = 60
+
+        /** Divisor that normalizes a peak FFT magnitude to roughly 0..1. */
         const val FFT_MAGNITUDE_DIVISOR = 128f
 
         private const val FRAME_SETTLE_EPSILON = 0.005f

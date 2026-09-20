@@ -14,6 +14,7 @@ import java.util.Locale
  */
 object MusicLibraryUtil {
 
+    /** MediaStore columns read for each song; [buildSongFromCursor] maps rows by these column names. */
     val SONG_PROJECTION = arrayOf(
         MediaStore.Audio.Media._ID,
         MediaStore.Audio.Media.TITLE,

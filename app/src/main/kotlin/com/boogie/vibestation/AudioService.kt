@@ -56,6 +56,7 @@ class AudioService : Service() {
      * Local Binder implementation returning this Service instance to bound Activities.
      */
     inner class LocalBinder : Binder() {
+        /** The running service instance. */
         val service: AudioService
             get() = this@AudioService
     }
@@ -453,10 +454,17 @@ class AudioService : Service() {
         artworkExecutor.shutdown()
     }
 
+    /** Intent actions carried by notification buttons and handled in [onStartCommand]. */
     companion object {
+        /** Toggles between playing and paused. */
         const val ACTION_PLAY_PAUSE = "com.boogie.vibestation.ACTION_PLAY_PAUSE"
+
+        /** Skips to the next song. */
         const val ACTION_NEXT = "com.boogie.vibestation.ACTION_NEXT"
+
+        /** Returns to the previous song, or restarts the current one. */
         const val ACTION_PREV = "com.boogie.vibestation.ACTION_PREV"
+
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "vibe_channel"
         private const val CHANNEL_NAME = "VibeStation Playback"

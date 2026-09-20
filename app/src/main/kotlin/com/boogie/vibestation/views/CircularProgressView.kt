@@ -50,9 +50,15 @@ class CircularProgressView @JvmOverloads constructor(
         canvas.drawArc(rect, START_ANGLE, calculateSweepAngle(progress), false, paint)
     }
 
+    /** Drawing defaults. */
     companion object {
+        /** Arc thickness in pixels. */
         const val DEFAULT_STROKE_WIDTH = 12f
+
+        /** Angle in degrees where the arc begins (90 is the 6 o'clock position). */
         const val START_ANGLE = 90f
+
+        /** Arc color, opaque white. */
         const val DEFAULT_COLOR = 0xFFFFFFFF.toInt()
 
         /**

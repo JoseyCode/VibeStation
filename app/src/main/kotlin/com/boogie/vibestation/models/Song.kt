@@ -6,6 +6,15 @@ import java.util.Objects
 /**
  * Represents a single audio track retrieved from the MediaStore database.
  * Identity is the track ID plus storage path; other fields are display metadata.
+ *
+ * @property id          MediaStore audio row ID, as a string.
+ * @property title       Track title.
+ * @property artist      Track artist name.
+ * @property path        Absolute file path, or null when MediaStore does not report one.
+ * @property albumId     MediaStore ID of the album this track belongs to.
+ * @property album       Album title.
+ * @property trackNumber Track position as reported by the MediaStore TRACK column.
+ * @property dateAdded   Time the file was added to MediaStore, in seconds since the epoch.
  */
 class Song(
     val id: String,
@@ -42,7 +51,9 @@ class Song(
     /** Computes hash code from unique track ID and storage path. */
     override fun hashCode(): Int = Objects.hash(id, path)
 
+    /** Shared constants for building artwork URIs. */
     companion object {
+        /** Content provider prefix; append an album ID to address that album's artwork. */
         const val ALBUM_ART_URI_PREFIX = "content://media/external/audio/albumart/"
     }
 }

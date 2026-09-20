@@ -32,6 +32,12 @@ class ParticleView @JvmOverloads constructor(
 
     /**
      * Data holder representing state, geometry, and motion vectors for an individual particle.
+     *
+     * @property x      Horizontal position in pixels.
+     * @property y      Vertical position in pixels; decreases as the particle rises.
+     * @property radius Circle radius in pixels.
+     * @property speed  Upward movement in pixels per animation frame.
+     * @property alpha  Paint opacity, 0 (transparent) to 255 (opaque).
      */
     class Particle(
         var x: Float = 0f,
@@ -98,9 +104,15 @@ class ParticleView @JvmOverloads constructor(
         animator?.cancel()
     }
 
+    /** Animation defaults. */
     companion object {
+        /** Number of particles created each time the view is sized. */
         const val DEFAULT_PARTICLE_COUNT = 40
+
+        /** Particle color, opaque white. */
         const val DEFAULT_COLOR = 0xFFFFFFFF.toInt()
+
+        /** Length of one animator cycle in milliseconds. */
         const val ANIMATION_DURATION_MS = 1000L
 
         /**

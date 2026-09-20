@@ -5,15 +5,21 @@ import java.util.Objects
 /**
  * Represents a user-customizable playlist containing a list of Songs.
  * Identity is the playlist name alone.
+ *
+ * @property name     Display name; also the playlist's identity.
+ * @property imageUri Custom cover image URI, or null when none is set.
  */
 class Playlist(
     var name: String,
     var imageUri: String?
 ) {
+    /** Free-text description shown with the playlist. */
     var description: String = ""
 
+    /** Whether the user has marked this playlist as a favorite ("fire"). */
     var isFire: Boolean = false
 
+    /** Tracks in playlist order. */
     val songs: ArrayList<Song> = ArrayList()
 
     /**
