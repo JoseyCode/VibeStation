@@ -101,7 +101,7 @@ tasks.register<JavaExec>("cpd") {
     args = listOf(
         "cpd",
         "--minimum-tokens", "50",
-        "--dir", "${project.projectDir}/src/main/java",
+        "--dir", "${project.projectDir}/src/main/kotlin",
         "--language", "kotlin",
         "--format", "text"
     )
