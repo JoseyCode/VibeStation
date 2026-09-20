@@ -15,7 +15,9 @@ internal object SharePermissions {
     fun runtimePermissions(sdkInt: Int = Build.VERSION.SDK_INT): List<String> = when {
         sdkInt >= Build.VERSION_CODES.TIRAMISU -> bluetooth() + Manifest.permission.NEARBY_WIFI_DEVICES
         sdkInt >= Build.VERSION_CODES.S_V2 -> bluetooth()
-        sdkInt >= Build.VERSION_CODES.S -> bluetooth() + Manifest.permission.ACCESS_FINE_LOCATION
+        // Android 12 lets the user grant approximate location only, so fine must be asked for together with coarse.
+        sdkInt >= Build.VERSION_CODES.S -> bluetooth() + Manifest.permission.ACCESS_FINE_LOCATION +
+            Manifest.permission.ACCESS_COARSE_LOCATION
         sdkInt >= Build.VERSION_CODES.Q -> listOf(Manifest.permission.ACCESS_FINE_LOCATION)
         else -> listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
     }

@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.media:media:1.6.0")
     implementation("androidx.palette:palette:1.0.0")
     implementation(libs.okhttp)
+    implementation(libs.play.services.nearby)
     implementation("net.jthink:jaudiotagger:3.0.1")
 }
 

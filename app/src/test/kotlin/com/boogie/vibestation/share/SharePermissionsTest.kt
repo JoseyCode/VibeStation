@@ -25,8 +25,11 @@ class SharePermissionsTest {
     }
 
     @Test
-    fun android12StillNeedsFineLocation() {
-        assertEquals(bluetooth + Manifest.permission.ACCESS_FINE_LOCATION, at(31))
+    fun android12StillNeedsLocationAskedAsAPair() {
+        assertEquals(
+            bluetooth + Manifest.permission.ACCESS_FINE_LOCATION + Manifest.permission.ACCESS_COARSE_LOCATION,
+            at(31)
+        )
     }
 
     @Test
