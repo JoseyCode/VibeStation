@@ -69,8 +69,8 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Re-baselined 5.3% -> 4.8% when the tests moved to
-            // Kotlin: Java tests hit the @JvmStatic bridge methods (9 lines) that Kotlin callers bypass.
+            // Ratchet: raise as tests land, never lower. Measured 4.96% after the Java tests and interop
+            // annotations were removed (5.3% earlier included @JvmStatic bridge lines only Java tests hit).
             rule {
                 minBound(4)
             }

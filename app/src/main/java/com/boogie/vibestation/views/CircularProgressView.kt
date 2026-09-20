@@ -61,7 +61,6 @@ class CircularProgressView @JvmOverloads constructor(
          * @param progress Raw progress input value.
          * @return Clamped progress in the range 0.0f to 1.0f inclusive.
          */
-        @JvmStatic
         fun clampProgress(progress: Float): Float = progress.coerceIn(0f, 1f)
 
         /**
@@ -70,7 +69,6 @@ class CircularProgressView @JvmOverloads constructor(
          * @param progress Progress fractional value [0.0, 1.0].
          * @return Sweep angle from 0.0f to 360.0f degrees.
          */
-        @JvmStatic
         fun calculateSweepAngle(progress: Float): Float = clampProgress(progress) * 360f
     }
 }

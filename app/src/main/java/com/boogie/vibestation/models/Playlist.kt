@@ -7,16 +7,13 @@ import java.util.Objects
  * Identity is the playlist name alone.
  */
 class Playlist(
-    @JvmField var name: String,
-    @JvmField var imageUri: String?
+    var name: String,
+    var imageUri: String?
 ) {
-    @JvmField
     var description: String = ""
 
-    @JvmField
     var isFire: Boolean = false
 
-    @JvmField
     val songs: ArrayList<Song> = ArrayList()
 
     /**

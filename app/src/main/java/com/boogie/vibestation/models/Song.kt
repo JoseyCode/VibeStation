@@ -8,14 +8,14 @@ import java.util.Objects
  * Identity is the track ID plus storage path; other fields are display metadata.
  */
 class Song(
-    @JvmField val id: String,
-    @JvmField val title: String,
-    @JvmField val artist: String,
-    @JvmField val path: String?,
-    @JvmField val albumId: String,
-    @JvmField val album: String,
-    @JvmField val trackNumber: Int,
-    @JvmField val dateAdded: Long
+    val id: String,
+    val title: String,
+    val artist: String,
+    val path: String?,
+    val albumId: String,
+    val album: String,
+    val trackNumber: Int,
+    val dateAdded: Long
 ) {
 
     /** Content provider URI string for this song's album artwork. */

@@ -33,12 +33,12 @@ class ParticleView @JvmOverloads constructor(
     /**
      * Data holder representing state, geometry, and motion vectors for an individual particle.
      */
-    class Particle @JvmOverloads constructor(
-        @JvmField var x: Float = 0f,
-        @JvmField var y: Float = 0f,
-        @JvmField var radius: Float = 0f,
-        @JvmField var speed: Float = 0f,
-        @JvmField var alpha: Float = 0f
+    class Particle(
+        var x: Float = 0f,
+        var y: Float = 0f,
+        var radius: Float = 0f,
+        var speed: Float = 0f,
+        var alpha: Float = 0f
     )
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -111,7 +111,6 @@ class ParticleView @JvmOverloads constructor(
          * @param viewWidth  Total view width.
          * @param random     Random instance for horizontal respawn.
          */
-        @JvmStatic
         fun updateParticlePosition(p: Particle?, viewHeight: Float, viewWidth: Float, random: Random?) {
             if (p == null) return
             p.y -= p.speed
@@ -129,7 +128,6 @@ class ParticleView @JvmOverloads constructor(
          * @param random     Random instance.
          * @return Initialized particle.
          */
-        @JvmStatic
         fun createRandomParticle(viewWidth: Float, viewHeight: Float, random: Random): Particle = Particle(
             x = random.nextFloat() * viewWidth,
             y = random.nextFloat() * viewHeight,

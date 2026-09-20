@@ -259,7 +259,6 @@ class VisualizerView @JvmOverloads constructor(
          * @param imag Imaginary frequency component byte.
          * @return Calculated magnitude.
          */
-        @JvmStatic
         fun calculateMagnitude(real: Byte, imag: Byte): Float =
             sqrt((real * real + imag * imag).toFloat())
 
@@ -270,7 +269,6 @@ class VisualizerView @JvmOverloads constructor(
          * @param k     Frequency bin index.
          * @return Magnitude of the indexed bin, or 0.0f if out of bounds.
          */
-        @JvmStatic
         fun getMagnitude(bytes: ByteArray?, k: Int): Float {
             if (bytes == null || k < 0) return 0f
             val realIndex = k * 2
@@ -285,7 +283,6 @@ class VisualizerView @JvmOverloads constructor(
          * @param bytes Raw FFT data bytes from Android Visualizer.
          * @return 3-element float array containing [targetBass, targetMid, targetHigh].
          */
-        @JvmStatic
         fun extractFrequencyBands(bytes: ByteArray?): FloatArray {
             if (bytes == null || bytes.isEmpty()) return FloatArray(3)
             val fftSize = bytes.size / 2
@@ -319,7 +316,6 @@ class VisualizerView @JvmOverloads constructor(
          * @param factor  Damping interpolation factor.
          * @return Interpolated smoothed amplitude.
          */
-        @JvmStatic
         fun applyDamping(current: Float, target: Float, factor: Float): Float =
             current + (target - current) * factor
 
@@ -331,7 +327,6 @@ class VisualizerView @JvmOverloads constructor(
          * @param height      View height in pixels.
          * @return Maximum allowed wave excursion width.
          */
-        @JvmStatic
         fun calculateMaxAllowedWidth(isLandscape: Boolean, width: Float, height: Float): Float =
             if (isLandscape) height * 0.95f else width * 0.18f
     }

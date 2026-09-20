@@ -7,15 +7,13 @@ import java.util.Objects
  * Identity is the album ID alone.
  */
 class Album(
-    @JvmField val albumId: String,
-    @JvmField val name: String,
-    @JvmField val artist: String,
-    @JvmField val dateAdded: Long
+    val albumId: String,
+    val name: String,
+    val artist: String,
+    val dateAdded: Long
 ) {
-    @JvmField
     var isFire: Boolean = false
 
-    @JvmField
     val songs: ArrayList<Song> = ArrayList()
 
     /**

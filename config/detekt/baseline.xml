@@ -31,7 +31,7 @@
     <ID>ReturnCount:ArtUtil.kt:ArtUtil$fun getBase64Image: String</ID>
     <ID>ReturnCount:ArtUtil.kt:ArtUtil$fun saveBitmapToGallery: Boolean</ID>
     <ID>ReturnCount:MainActivity.kt:MainActivity$private fun setupVisualizer</ID>
-    <ID>ReturnCount:VisualizerView.kt:VisualizerView.Companion$@JvmStatic fun extractFrequencyBands: FloatArray</ID>
+    <ID>ReturnCount:VisualizerView.kt:VisualizerView.Companion$fun extractFrequencyBands: FloatArray</ID>
     <ID>SwallowedException:ArtUtil.kt:ArtUtil$e: Exception</ID>
     <ID>SwallowedException:AudioService.kt:AudioService$e: Exception</ID>
     <ID>SwallowedException:AudioService.kt:AudioService$exception: Exception</ID>
