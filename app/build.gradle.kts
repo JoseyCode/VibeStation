@@ -52,12 +52,13 @@ dependencies {
     testImplementation(libs.archunit.junit4)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.mockk)
+    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.org.json)
     detektPlugins(libs.detekt.ktlint)
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.media:media:1.6.0")
     implementation("androidx.palette:palette:1.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.okhttp)
     implementation("net.jthink:jaudiotagger:3.0.1")
 }
 
@@ -69,9 +70,9 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 10.72% (after MusicLibraryUtil tests).
+            // Ratchet: raise as tests land, never lower. Last measured 14.81% (after SyncManager tests).
             rule {
-                minBound(10)
+                minBound(14)
             }
         }
     }

@@ -103,7 +103,7 @@ object SyncManager {
      * @throws IOException If server network communication fails.
      * @throws org.json.JSONException If server response JSON parsing fails.
      */
-    private fun fetchRemoteSongs(client: OkHttpClient, serverUrl: String): List<RemoteSong> {
+    internal fun fetchRemoteSongs(client: OkHttpClient, serverUrl: String): List<RemoteSong> {
         val request = Request.Builder().url("$serverUrl/api/songs").build()
         val json = client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Server error: ${response.code}")
@@ -133,7 +133,7 @@ object SyncManager {
      * @param titleOf Extracts the display title for messages.
      * @return Number of items transferred without throwing.
      */
-    private fun <T> transferAll(
+    internal fun <T> transferAll(
         items: List<T>,
         progressLabel: String,
         failureLabel: String,
@@ -165,7 +165,7 @@ object SyncManager {
      * @param artist The song artist.
      * @return       A clean lowercase identification key.
      */
-    private fun makeMatchKey(title: String, artist: String): String {
+    internal fun makeMatchKey(title: String, artist: String): String {
         val safeTitle = title.trim()
         val safeArtist = artist.trim()
         if (safeTitle.isEmpty() && safeArtist.isEmpty()) return "unknown_track"
@@ -178,7 +178,7 @@ object SyncManager {
      * @param name Name string to sanitize.
      * @return     A filesystem-safe name string.
      */
-    private fun safeFileName(name: String): String {
+    internal fun safeFileName(name: String): String {
         if (name.isBlank()) return "track_${System.currentTimeMillis()}"
         return name.replace(Regex("""[\\/:*?"<>|\x00-\x1F]"""), "_")
     }
@@ -190,7 +190,7 @@ object SyncManager {
      * @param serverUrl Server destination base URL.
      * @param song      The local Song object to upload.
      */
-    private fun uploadSong(client: OkHttpClient, serverUrl: String, song: Song) {
+    internal fun uploadSong(client: OkHttpClient, serverUrl: String, song: Song) {
         val file = File(song.path ?: return)
         if (!file.exists()) return
 
@@ -275,7 +275,7 @@ object SyncManager {
      * @param client    OkHttpClient.
      * @param serverUrl Destination server base URL.
      */
-    private fun syncPlaylists(context: Context, client: OkHttpClient, serverUrl: String) {
+    internal fun syncPlaylists(context: Context, client: OkHttpClient, serverUrl: String) {
         try {
             val prefs = context.getSharedPreferences("RetroPrefs", Context.MODE_PRIVATE)
             val localPlaylistsJson = prefs.getString("playlists", "[]") ?: "[]"
@@ -296,5 +296,5 @@ object SyncManager {
     }
 
     /** Local model representing a remote server track definition metadata block. */
-    private class RemoteSong(val id: String, val title: String, val artist: String, val album: String)
+    internal class RemoteSong(val id: String, val title: String, val artist: String, val album: String)
 }
