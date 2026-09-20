@@ -69,10 +69,9 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Measured 4.96% after the Java tests and interop
-            // annotations were removed (5.3% earlier included @JvmStatic bridge lines only Java tests hit).
+            // Ratchet: raise as tests land, never lower. Last measured 7.19% (after PlaylistUtil tests).
             rule {
-                minBound(4)
+                minBound(7)
             }
         }
     }

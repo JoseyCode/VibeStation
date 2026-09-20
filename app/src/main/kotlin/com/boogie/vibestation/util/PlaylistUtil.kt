@@ -135,12 +135,7 @@ object PlaylistUtil {
                     ?: throw IOException("Unable to open backup document")
                 val backupContent = inputStream.bufferedReader(Charsets.UTF_8).use { it.readLines().joinToString("") }
 
-                // Validate that the restored file contains a valid JSON array and strip redundant b64 payloads
-                val validatedArray = JSONArray(backupContent)
-                for (i in 0 until validatedArray.length()) {
-                    validatedArray.optJSONObject(i)?.remove("b64")
-                }
-                prefs.edit().putString(PLAYLISTS_KEY, validatedArray.toString()).apply()
+                prefs.edit().putString(PLAYLISTS_KEY, sanitizeBackup(backupContent)).apply()
                 mainHandler.post {
                     onRestoreComplete()
                     Toast.makeText(context, "Restore Successful!", Toast.LENGTH_SHORT).show()
@@ -149,6 +144,21 @@ object PlaylistUtil {
                 toastOnMain(context, "Failed to restore backup: Invalid file")
             }
         }
+    }
+
+    /**
+     * Validates that backup content is a JSON array and strips legacy inline `b64` cover payloads.
+     *
+     * @param backupContent Raw text of a user-selected backup file.
+     * @return Normalized JSON array text safe to store as the playlists preference.
+     * @throws org.json.JSONException If the content is not a valid JSON array.
+     */
+    internal fun sanitizeBackup(backupContent: String): String {
+        val validatedArray = JSONArray(backupContent)
+        for (i in 0 until validatedArray.length()) {
+            validatedArray.optJSONObject(i)?.remove("b64")
+        }
+        return validatedArray.toString()
     }
 
     /** Shows a short toast from any thread. */
