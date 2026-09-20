@@ -165,7 +165,7 @@ class ShareActivity : AppCompatActivity() {
     }
 
     private fun showKindPicker() {
-        val kinds = listOf(ShareKind.SONG to "A song", ShareKind.ALBUM to "An album", ShareKind.PLAYLIST to "A playlist")
+        val kinds = listOf(ShareKind.SONG to "Song", ShareKind.ALBUM to "Album", ShareKind.PLAYLIST to "Playlist")
         AlertDialog.Builder(this)
             .setTitle("Send")
             .setItems(kinds.map { it.second }.toTypedArray()) { _, which -> loadLibraryThen(kinds[which].first) }
