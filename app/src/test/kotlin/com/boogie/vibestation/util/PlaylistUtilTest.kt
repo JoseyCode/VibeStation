@@ -223,6 +223,82 @@ class PlaylistUtilTest {
         assertFailsWith<JSONException> { PlaylistUtil.sanitizeBackup("garbage") }
     }
 
+    /**
+     * Verifies the name key is lowercase "title_artist" with no trimming or punctuation stripping
+     * (unlike SyncManager's match key), and is the key parsePlaylists falls back on.
+     */
+    @Test
+    fun songNameKeyIsLowercaseTitleUnderscoreArtist() {
+        assertEquals("get lucky_daft punk", PlaylistUtil.songNameKey("Get Lucky", "Daft Punk"))
+        assertEquals(" a !_b ", PlaylistUtil.songNameKey(" A !", "B "))
+        assertEquals("_", PlaylistUtil.songNameKey("", ""))
+    }
+
+    /**
+     * Verifies a saved entry whose ID is gone is re-linked through a map built with songNameKey,
+     * so producer and consumer of the key cannot drift apart.
+     */
+    @Test
+    fun parsePlaylistsRelinksByNameKeyMadeWithSongNameKey() {
+        val byName = mapOf(PlaylistUtil.songNameKey(nightcall.title, nightcall.artist) to nightcall)
+
+        val playlists = parse(playlistJson("P", listOf(Triple("stale-id", "NIGHTCALL", "kavinsky"))), byName = byName)
+
+        assertEquals(listOf(nightcall), playlists.single().songs)
+    }
+
+    private fun named(name: String) = Playlist(name, null)
+
+    /**
+     * Verifies a drag in an unfiltered list reorders both lists identically.
+     */
+    @Test
+    fun movePlaylistReordersBothListsWhenUnfiltered() {
+        val (a, b, c) = listOf(named("A"), named("B"), named("C"))
+        val all = mutableListOf(a, b, c)
+        val display = mutableListOf(a, b, c)
+
+        PlaylistUtil.movePlaylist(all, display, 0, 2)
+
+        assertEquals(listOf(b, c, a), display)
+        assertEquals(listOf(b, c, a), all)
+    }
+
+    /**
+     * Verifies a drag in a filtered list lands at the dropped-on playlist's position in the master
+     * list, leaving hidden playlists in place around it.
+     */
+    @Test
+    fun movePlaylistMirrorsIntoMasterListWhenFiltered() {
+        val a = named("A")
+        val b = named("B")
+        val c = named("C")
+        val d = named("D")
+        val all = mutableListOf(a, b, c, d)
+        val display = mutableListOf(a, c, d)
+
+        PlaylistUtil.movePlaylist(all, display, 2, 0)
+
+        assertEquals(listOf(d, a, c), display)
+        assertEquals(listOf(d, a, b, c), all)
+    }
+
+    /**
+     * Verifies a playlist absent from the master list still moves in the displayed list, without
+     * touching the master.
+     */
+    @Test
+    fun movePlaylistOnlyMovesDisplayWhenMissingFromMaster() {
+        val (a, b, ghost) = listOf(named("A"), named("B"), named("Ghost"))
+        val all = mutableListOf(a, b)
+        val display = mutableListOf(a, b, ghost)
+
+        PlaylistUtil.movePlaylist(all, display, 2, 0)
+
+        assertEquals(listOf(ghost, a, b), display)
+        assertEquals(listOf(a, b), all)
+    }
+
     private fun playlistJson(name: String, songs: List<Triple<String, String, String>>): String {
         val songArray = JSONArray()
         for ((id, title, artist) in songs) {

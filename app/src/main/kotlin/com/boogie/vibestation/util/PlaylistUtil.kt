@@ -25,6 +25,36 @@ object PlaylistUtil {
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
     /**
+     * Builds the fallback key that links a saved playlist entry to a library song when its ID no
+     * longer matches (for example after the file was re-scanned). [parsePlaylists] looks entries up
+     * with this key, so the caller must build its `songNameMap` with it too.
+     *
+     * @param title  Song title.
+     * @param artist Song artist.
+     * @return Lowercase "title_artist" key; no trimming or punctuation stripping is applied.
+     */
+    fun songNameKey(title: String, artist: String): String = "${title}_$artist".lowercase(Locale.getDefault())
+
+    /**
+     * Moves the playlist shown at [from] to position [to] in the displayed (possibly filtered) list
+     * and mirrors the move into the master list, so a manual order survives clearing the search.
+     * If either playlist is missing from [all], only the displayed list changes.
+     *
+     * @param all     Master playlist list, in persisted order.
+     * @param display Displayed list, a filtered view of [all].
+     * @param from    Displayed index of the dragged playlist.
+     * @param to      Displayed index it was dropped on.
+     */
+    fun movePlaylist(all: MutableList<Playlist>, display: MutableList<Playlist>, from: Int, to: Int) {
+        val allFrom = all.indexOf(display[from])
+        val allTo = all.indexOf(display[to])
+        if (allFrom != -1 && allTo != -1) {
+            all.add(allTo, all.removeAt(allFrom))
+        }
+        display.add(to, display.removeAt(from))
+    }
+
+    /**
      * Serializes playlist collection structures to JSON array and saves to SharedPreferences.
      *
      * @param prefs Target SharedPreferences instance.
@@ -85,7 +115,7 @@ object PlaylistUtil {
                 val songsJsonArray = playlistJson.getJSONArray("songData")
                 for (j in 0 until songsJsonArray.length()) {
                     val songJson = songsJsonArray.getJSONObject(j)
-                    val nameKey = "${songJson.getString("t")}_${songJson.getString("a")}".lowercase(Locale.getDefault())
+                    val nameKey = songNameKey(songJson.getString("t"), songJson.getString("a"))
                     val matchedSong = songIdMap[songJson.getString("id")] ?: songNameMap[nameKey]
                     if (matchedSong != null) {
                         playlist.songs.add(matchedSong)
