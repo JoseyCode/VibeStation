@@ -70,7 +70,7 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 18.24% (after MediaMetadataUtil tests).
+            // Ratchet: raise as tests land, never lower. Last measured 18.94% (after PlaybackQueue tests).
             rule {
                 minBound(18)
             }

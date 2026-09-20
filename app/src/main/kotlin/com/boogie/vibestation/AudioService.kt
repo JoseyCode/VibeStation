@@ -68,9 +68,7 @@ class AudioService : Service() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timeoutRunnable = Runnable { stopSelf() }
 
-    // Playback queue state; the queue is held by reference so callers' list edits are visible here
-    private var currentQueue: List<Song> = emptyList()
-    private var currentIndex = -1
+    private val queue = PlaybackQueue()
     private var equalizerInstance: Equalizer? = null
 
     /** Callback notified of track and playback state changes. */
@@ -175,8 +173,7 @@ class AudioService : Service() {
      * @param initialPosition Index position in list to begin playback at.
      */
     fun setQueueAndPlay(newQueue: List<Song>, initialPosition: Int) {
-        currentQueue = newQueue
-        currentIndex = initialPosition
+        queue.set(newQueue, initialPosition)
         playTrack()
     }
 
@@ -185,9 +182,9 @@ class AudioService : Service() {
      * Requests OS audio focus before initiating.
      */
     private fun playTrack() {
-        if (currentIndex !in currentQueue.indices || !requestFocus()) return
+        val song = queue.current ?: return
+        if (!requestFocus()) return
 
-        val song = currentQueue[currentIndex]
         currentSong = song
 
         try {
@@ -246,15 +243,11 @@ class AudioService : Service() {
      * Retrieves the upcoming songs in the queue to be used for cache preloading.
      * Wraps around the end of the queue.
      */
-    fun getUpcomingSongs(count: Int): List<Song> {
-        if (currentQueue.isEmpty()) return emptyList()
-        return (1..count).map { currentQueue[(currentIndex + it) % currentQueue.size] }
-    }
+    fun getUpcomingSongs(count: Int): List<Song> = queue.upcoming(count)
 
     /** Skips to the next song in the active queue list (wraps around on end). */
     fun playNext() {
-        if (currentQueue.isEmpty()) return
-        currentIndex = (currentIndex + 1) % currentQueue.size
+        if (!queue.advance()) return
         playTrack()
     }
 
@@ -263,12 +256,12 @@ class AudioService : Service() {
      * Restarts the current song instead if it has played for more than 3 seconds.
      */
     fun playPrev() {
-        if (currentQueue.isEmpty()) return
+        if (queue.isEmpty) return
         if (mediaPlayer.currentPosition > RESTART_THRESHOLD_MS) {
             playTrack()
             return
         }
-        currentIndex = (currentIndex - 1 + currentQueue.size) % currentQueue.size
+        queue.retreat()
         playTrack()
     }
 
