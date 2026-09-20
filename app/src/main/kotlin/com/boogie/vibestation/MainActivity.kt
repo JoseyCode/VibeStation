@@ -1,21 +1,21 @@
 package com.boogie.vibestation
 
+import android.Manifest
 import android.app.AlertDialog
-import android.content.ClipboardManager
 import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.content.ServiceConnection
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.graphics.PorterDuff
-import android.Manifest
+import android.graphics.drawable.GradientDrawable
 import android.media.audiofx.Visualizer
 import android.net.Uri
 import android.os.Build
@@ -67,6 +67,8 @@ import com.boogie.vibestation.models.Album
 import com.boogie.vibestation.models.Playlist
 import com.boogie.vibestation.models.Song
 import com.boogie.vibestation.util.ArtUtil
+import com.boogie.vibestation.util.FormatUtil.formatSpeed
+import com.boogie.vibestation.util.FormatUtil.formatTime
 import com.boogie.vibestation.util.MediaMetadataUtil
 import com.boogie.vibestation.util.MusicLibraryUtil
 import com.boogie.vibestation.util.PlaylistUtil
@@ -75,9 +77,9 @@ import com.boogie.vibestation.views.ParticleView
 import com.boogie.vibestation.views.VisualizerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
-import java.util.concurrent.Executors
-import java.util.concurrent.ExecutorService
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.floor
 
 /**
@@ -418,9 +420,6 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             true
         }
     }
-
-    /** Formats a playback speed multiplier for button and dialog labels, e.g. "1.25x". */
-    private fun formatSpeed(speed: Float): String = String.format(Locale.getDefault(), "%.2fx", speed)
 
     /**
      * Displays a dialog containing a continuous slider to adjust playback speed precisely.
@@ -1476,23 +1475,6 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         loadMusic()
-    }
-
-    /**
-     * Converts raw millisecond values to standard MM:SS time string formats.
-     *
-     * @param positionMs Position value in milliseconds.
-     * @return           Formatted time string.
-     */
-    private fun formatTime(positionMs: Int): String {
-        val hours = positionMs / (1000 * 60 * 60)
-        val minutes = (positionMs / (1000 * 60)) % 60
-        val seconds = (positionMs / 1000) % 60
-        return if (hours > 0) {
-            String.format(Locale.getDefault(), "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format(Locale.getDefault(), "%d:%02d", minutes, seconds)
-        }
     }
 
     /**
