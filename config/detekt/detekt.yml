@@ -1,0 +1,49 @@
+# Layered on top of detekt defaults (buildUponDefaultConfig = true).
+# Limits ported from the retired PMD ruleset (config/pmd/ruleset.xml); PMD reported at
+# the level, detekt reports above the allowed value, hence the -1 on complexity.
+# Keys follow detekt 2.0 alpha naming; re-check on every alpha bump.
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+    allowedComplexity: 24
+  CognitiveComplexMethod:
+    active: true
+    allowedComplexity: 29
+  LongMethod:
+    active: true
+    allowedLines: 120
+  LargeClass:
+    active: true
+    allowedLines: 1500
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+ktlint:
+  active: true
+  autoCorrect: false
+  MaximumLineLength:
+    active: true
+    maxLineLength: 140
+  # Layout opinions that conflict with the existing Android Studio formatting. Re-enable
+  # per rule (with a one-off auto-format commit) if the team wants the stricter style.
+  ArgumentListWrapping:
+    active: false
+  BinaryExpressionWrapping:
+    active: false
+  BlankLineBetweenWhenConditions:
+    active: false
+  ClassSignature:
+    active: false
+  FunctionSignature:
+    active: false
+  ParameterListWrapping:
+    active: false
+  PropertyWrapping:
+    active: false
+  TrailingCommaOnCallSite:
+    active: false
+  TrailingCommaOnDeclarationSite:
+    active: false
+  Wrapping:
+    active: false

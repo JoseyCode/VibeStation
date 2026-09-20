@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>EmptyFunctionBlock:MainActivity.kt:MainActivity.&lt;no name provided&gt;${}</ID>
+    <ID>FunctionLiteral:MainActivity.kt:MainActivity$&lt;anonymous&gt;</ID>
+    <ID>FunctionLiteral:SyncManager.kt:SyncManager$&lt;anonymous&gt;</ID>
+    <ID>ImportOrdering:MainActivity.kt:import android.app.AlertDialog import android.content.ClipboardManager import android.content.ClipData import android.content.ComponentName import android.content.Context import android.content.Intent import android.content.pm.PackageManager import android.content.res.ColorStateList import android.content.res.Configuration import android.content.ServiceConnection import android.content.SharedPreferences import android.graphics.Bitmap import android.graphics.Color import android.graphics.drawable.GradientDrawable import android.graphics.PorterDuff import android.Manifest import android.media.audiofx.Visualizer import android.net.Uri import android.os.Build import android.os.Bundle import android.os.Environment import android.os.Handler import android.os.IBinder import android.os.Looper import android.provider.Settings import android.text.Editable import android.text.TextWatcher import android.view.GestureDetector import android.view.Gravity import android.view.HapticFeedbackConstants import android.view.MotionEvent import android.view.View import android.view.ViewGroup import android.view.WindowManager import android.widget.ArrayAdapter import android.widget.BaseAdapter import android.widget.Button import android.widget.CheckBox import android.widget.EditText import android.widget.GridView import android.widget.ImageButton import android.widget.ImageView import android.widget.LinearLayout import android.widget.ListView import android.widget.ProgressBar import android.widget.SeekBar import android.widget.TextView import android.widget.Toast import androidx.activity.OnBackPressedCallback import androidx.activity.result.ActivityResultLauncher import androidx.activity.result.contract.ActivityResultContracts import androidx.appcompat.app.AppCompatActivity import androidx.appcompat.widget.SwitchCompat import androidx.collection.LruCache import androidx.core.app.ActivityCompat import androidx.core.content.ContextCompat import androidx.core.view.WindowCompat import androidx.core.view.WindowInsetsCompat import androidx.core.view.WindowInsetsControllerCompat import androidx.palette.graphics.Palette import androidx.recyclerview.widget.GridLayoutManager import androidx.recyclerview.widget.ItemTouchHelper import androidx.recyclerview.widget.RecyclerView import com.boogie.vibestation.models.Album import com.boogie.vibestation.models.Playlist import com.boogie.vibestation.models.Song import com.boogie.vibestation.util.ArtUtil import com.boogie.vibestation.util.MediaMetadataUtil import com.boogie.vibestation.util.MusicLibraryUtil import com.boogie.vibestation.util.PlaylistUtil import com.boogie.vibestation.views.CircularProgressView import com.boogie.vibestation.views.ParticleView import com.boogie.vibestation.views.VisualizerView import com.google.android.material.bottomnavigation.BottomNavigationView import com.google.android.material.button.MaterialButton import java.util.concurrent.Executors import java.util.concurrent.ExecutorService import java.util.Locale import kotlin.math.floor</ID>
+    <ID>MagicNumber:ArtUtil.kt:ArtUtil$100</ID>
+    <ID>MagicNumber:CircularProgressView.kt:CircularProgressView.Companion$360f</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$0.25f</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$1.2f</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$150</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$2.51f</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$3</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$4</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$500</ID>
+    <ID>MagicNumber:MainActivity.kt:MainActivity$75</ID>
+    <ID>MagicNumber:MusicLibraryUtil.kt:MusicLibraryUtil$3</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView$0.1f</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView$3f</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView$6f</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView.Companion$0.18f</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView.Companion$0.95f</ID>
+    <ID>MagicNumber:VisualizerView.kt:VisualizerView.Companion$3</ID>
+    <ID>MaxLineLength:MainActivity.kt:MainActivity$private</ID>
+    <ID>MaximumLineLength:MainActivity.kt:MainActivity${</ID>
+    <ID>NoMultipleSpaces:AudioService.kt:AudioService$ </ID>
+    <ID>NoMultipleSpaces:MainActivity.kt:MainActivity$ </ID>
+    <ID>NoMultipleSpaces:SyncManager.kt:SyncManager$ </ID>
+    <ID>ReturnCount:ArtUtil.kt:ArtUtil$fun getBase64Image: String</ID>
+    <ID>ReturnCount:ArtUtil.kt:ArtUtil$fun saveBitmapToGallery: Boolean</ID>
+    <ID>ReturnCount:MainActivity.kt:MainActivity$private fun setupVisualizer</ID>
+    <ID>ReturnCount:VisualizerView.kt:VisualizerView.Companion$@JvmStatic fun extractFrequencyBands: FloatArray</ID>
+    <ID>SwallowedException:ArtUtil.kt:ArtUtil$e: Exception</ID>
+    <ID>SwallowedException:AudioService.kt:AudioService$e: Exception</ID>
+    <ID>SwallowedException:AudioService.kt:AudioService$exception: Exception</ID>
+    <ID>SwallowedException:MainActivity.kt:MainActivity$e: Exception</ID>
+    <ID>SwallowedException:MainActivity.kt:MainActivity.&lt;no name provided&gt;$e: Exception</ID>
+    <ID>SwallowedException:PlaylistUtil.kt:PlaylistUtil$e: Exception</ID>
+    <ID>ThrowsCount:SyncManager.kt:SyncManager$private fun downloadSong</ID>
+    <ID>TooGenericExceptionCaught:ArtUtil.kt:ArtUtil$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AudioService.kt:AudioService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AudioService.kt:AudioService$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:MainActivity.kt:MainActivity$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MainActivity.kt:MainActivity.&lt;no name provided&gt;$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MediaMetadataUtil.kt:MediaMetadataUtil$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PlaylistUtil.kt:PlaylistUtil$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SyncManager.kt:SyncManager$e: Exception</ID>
+    <ID>TooManyFunctions:AudioService.kt:AudioService : Service</ID>
+    <ID>TooManyFunctions:MainActivity.kt:MainActivity : AppCompatActivityServiceCallback</ID>
+  </CurrentIssues>
+</SmellBaseline>

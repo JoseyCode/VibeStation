@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("pmd")
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -49,6 +49,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     testImplementation("com.tngtech.archunit:archunit-junit4:1.3.0")
+    detektPlugins(libs.detekt.ktlint)
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.media:media:1.6.0")
     implementation("androidx.palette:palette:1.0.0")
@@ -60,30 +61,15 @@ val cpdConfig: Configuration by configurations.creating
 
 dependencies {
     cpdConfig("net.sourceforge.pmd:pmd-cli:7.10.0")
-    cpdConfig("net.sourceforge.pmd:pmd-java:7.10.0")
     cpdConfig("net.sourceforge.pmd:pmd-kotlin:7.10.0")
     cpdConfig("org.slf4j:slf4j-api:2.0.12")
     cpdConfig("org.slf4j:slf4j-simple:2.0.12")
 }
 
-pmd {
-    isConsoleOutput = true
-    toolVersion = "7.10.0"
-}
-
-tasks.register<Pmd>("pmd") {
-    description = "Run PMD code analysis on Java source files"
-    group = "verification"
-    ruleSetFiles = files("${project.rootDir}/config/pmd/ruleset.xml")
-    ruleSets = listOf()
-    source = fileTree("src/main/java") {
-        include("**/*.java")
-    }
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
-    ignoreFailures = true
+detekt {
+    config.setFrom("${project.rootDir}/config/detekt/detekt.yml")
+    baseline = file("${project.rootDir}/config/detekt/baseline.xml")
+    buildUponDefaultConfig = true
 }
 
 tasks.register<JavaExec>("cpd") {
@@ -102,7 +88,7 @@ tasks.register<JavaExec>("cpd") {
 }
 
 tasks.register("checkQuality") {
-    description = "Run all quality verification checks: unit tests, lint, PMD, and CPD"
+    description = "Run all quality verification checks: unit tests, lint, detekt, and CPD"
     group = "verification"
-    dependsOn("testDebugUnitTest", "lintDebug", "pmd", "cpd")
+    dependsOn("testDebugUnitTest", "lintDebug", "detekt", "cpd")
 }
