@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 19
-        versionName = "3.0.2"
+        versionCode = 20
+        versionName = "3.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -70,7 +70,7 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 21.37% (after library assembly tests).
+            // Ratchet: raise as tests land, never lower. Last measured 21.92% (after playlist cover backup tests).
             rule {
                 minBound(21)
             }

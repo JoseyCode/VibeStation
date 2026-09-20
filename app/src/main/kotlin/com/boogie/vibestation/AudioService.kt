@@ -79,10 +79,19 @@ class AudioService : Service() {
     var currentSong: Song? = null
         private set
 
-    /** Decimated album art of the active song; written by the artwork thread, read on the main thread. */
-    @Volatile
+    /** Decimated album art of the active song; null until [isArtLoading] clears, or if the song has none. */
     var currentArt: Bitmap? = null
         private set
+
+    /**
+     * True from the moment a track starts until its artwork lookup finishes. Callbacks fired in
+     * that window carry null art only because it is not ready yet, not because the song has none.
+     */
+    var isArtLoading: Boolean = false
+        private set
+
+    /** Bumped per track so a slow lookup for a skipped track cannot overwrite the current one. */
+    private var artLoadGeneration = 0
 
     /** Playback rate multiplier; changing it applies immediately to a playing track. */
     var playbackSpeed: Float = 1.0f
@@ -198,6 +207,7 @@ class AudioService : Service() {
             cancelTimeout()
 
             currentArt = null
+            isArtLoading = true
             updateSystemPlayerAndUI()
 
             loadAlbumArtAndNotify(trackUri)
@@ -288,18 +298,20 @@ class AudioService : Service() {
     /**
      * Reads track album artwork on a background thread. Decimates the image resolution
      * to prevent UI lags or Binder payload size constraint exceptions when sending to notification.
+     * The result is applied on the main thread only if the track has not been skipped meanwhile.
      *
      * @param trackUri Shared content resolver URI pointing to the track file path.
      */
     private fun loadAlbumArtAndNotify(trackUri: Uri) {
+        val generation = ++artLoadGeneration
         artworkExecutor.execute {
-            currentArt = null
+            var loadedArt: Bitmap? = null
             val metadataRetriever = MediaMetadataRetriever()
             try {
                 metadataRetriever.setDataSource(this, trackUri)
                 metadataRetriever.embeddedPicture?.let { pictureData ->
                     val decodeOptions = BitmapFactory.Options().apply { inSampleSize = 2 } // Decimate for notification speed
-                    currentArt = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.size, decodeOptions)
+                    loadedArt = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.size, decodeOptions)
                 }
             } catch (ignored: Exception) {
             } finally {
@@ -309,7 +321,12 @@ class AudioService : Service() {
                 }
             }
 
-            mainHandler.post { updateSystemPlayerAndUI() }
+            mainHandler.post {
+                if (generation != artLoadGeneration) return@post
+                currentArt = loadedArt
+                isArtLoading = false
+                updateSystemPlayerAndUI()
+            }
         }
     }
 

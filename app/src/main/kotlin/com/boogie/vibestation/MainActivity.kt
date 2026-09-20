@@ -15,7 +15,10 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PorterDuff
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.TransitionDrawable
 import android.media.audiofx.Visualizer
 import android.net.Uri
 import android.os.Build
@@ -71,6 +74,7 @@ import com.boogie.vibestation.util.FormatUtil.formatSpeed
 import com.boogie.vibestation.util.FormatUtil.formatTime
 import com.boogie.vibestation.util.MediaMetadataUtil
 import com.boogie.vibestation.util.MusicLibraryUtil
+import com.boogie.vibestation.util.PlaylistCoverUtil
 import com.boogie.vibestation.util.PlaylistUtil
 import com.boogie.vibestation.views.CircularProgressView
 import com.boogie.vibestation.views.ParticleView
@@ -700,24 +704,49 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                 if (sharedPreferences.getBoolean("adaptive_bg", true)) {
                     val dominantColor = palette.getDominantColor(0xFF111111.toInt())
                     val darkMutedColor = palette.getDarkMutedColor(Color.BLACK)
-                    fullPlayerScreenContainer.background = GradientDrawable(
-                        GradientDrawable.Orientation.TOP_BOTTOM,
-                        intArrayOf(dominantColor, darkMutedColor, Color.BLACK)
+                    setPlayerBackground(
+                        GradientDrawable(
+                            GradientDrawable.Orientation.TOP_BOTTOM,
+                            intArrayOf(dominantColor, darkMutedColor, Color.BLACK)
+                        )
                     )
                 } else {
-                    fullPlayerScreenContainer.setBackgroundColor(Color.BLACK)
+                    setPlayerBackground(ColorDrawable(Color.BLACK))
                 }
             }
         } else {
             loadArtAsync(miniArtImageView, song.path, false, QUALITY_LOW, null)
-            applyAccentColor(Color.WHITE)
-            fullPlayerScreenContainer.setBackgroundColor(Color.BLACK)
+            // Null art while the service is still loading it is transient; keep the previous
+            // track's theme instead of flashing black until the real art and palette arrive.
+            if (audioService?.isArtLoading != true) {
+                applyAccentColor(Color.WHITE)
+                setPlayerBackground(ColorDrawable(Color.BLACK))
+            }
         }
 
         boundService?.let {
             seekBarView.max = it.duration
             totalTimeTextView.text = formatTime(it.duration)
         }
+    }
+
+    /**
+     * Swaps the full player background to [newBackground], cross-fading from the current one when
+     * the "crossfade_bg" setting is on. A fade already in flight is restarted from its target so
+     * rapid skips never nest transitions.
+     *
+     * @param newBackground Drawable that becomes the full player background.
+     */
+    private fun setPlayerBackground(newBackground: Drawable) {
+        val current = fullPlayerScreenContainer.background
+        if (current == null || !sharedPreferences.getBoolean("crossfade_bg", true)) {
+            fullPlayerScreenContainer.background = newBackground
+            return
+        }
+        val start = if (current is TransitionDrawable) current.getDrawable(1) else current
+        val fade = TransitionDrawable(arrayOf(start, newBackground))
+        fullPlayerScreenContainer.background = fade
+        fade.startTransition(BACKGROUND_FADE_MS)
     }
 
     /** Tints the seek thumb, visualizer, particles, and progress ring with the track's accent color. */
@@ -1222,6 +1251,13 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         PlaylistUtil.savePlaylists(sharedPreferences, allPlaylists)
     }
 
+    /** Deletes restored cover files that no playlist references, off the main thread. */
+    private fun pruneCoverFiles() {
+        val referencedUris = allPlaylists.mapNotNull { it.imageUri }
+        val coversDir = PlaylistCoverUtil.coversDir(this)
+        imageExecutor.execute { PlaylistCoverUtil.deleteOrphans(coversDir, referencedUris) }
+    }
+
     /**
      * Sorts song and album datasets alphabetically or by add date.
      *
@@ -1303,6 +1339,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         const val QUALITY_MED = 2
         const val QUALITY_HIGH = 1
 
+        /** Duration of the full player background cross-fade between tracks. */
+        const val BACKGROUND_FADE_MS = 400
+
         /** Dark grey used for secondary buttons and empty-cover placeholders. */
         val BUTTON_DARK_COLOR = 0xFF333333.toInt()
 
@@ -1336,6 +1375,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                     3 -> {
                         allPlaylists.remove(playlist)
                         savePlaylists()
+                        pruneCoverFiles()
                         filterData(searchEditText.text.toString())
                         expandedDetailsContainer.visibility = View.GONE
                     }
@@ -1504,6 +1544,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         if (playlist != null) {
             playlist.imageUri = documentUri.toString()
             savePlaylists()
+            pruneCoverFiles()
             filterData("")
         } else if (album != null) {
             updateAlbumArt(album, documentUri)
@@ -1709,16 +1750,33 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     }
 
     /**
+     * Flips a boolean preference, persists it, and confirms the change with a toast.
+     *
+     * @param key     SharedPreferences key of the setting.
+     * @param current Value the setting had when the dialog was built.
+     * @param label   Human-readable setting name used in the toast.
+     * @return The new value of the setting.
+     */
+    private fun toggleSetting(key: String, current: Boolean, label: String): Boolean {
+        val newValue = !current
+        sharedPreferences.edit().putBoolean(key, newValue).apply()
+        Toast.makeText(this, "$label " + if (newValue) "Enabled" else "Disabled", Toast.LENGTH_SHORT).show()
+        return newValue
+    }
+
+    /**
      * Displays the visualizer display and hardware refresh rate toggle configurations.
      */
     private fun showVisualSettingsDialog() {
         val is120 = sharedPreferences.getBoolean("120hz", true)
         val adaptiveBg = sharedPreferences.getBoolean("adaptive_bg", true)
+        val crossfadeBg = sharedPreferences.getBoolean("crossfade_bg", true)
         val showVis = sharedPreferences.getBoolean("show_visualizer", true)
 
         val visualOptions = arrayOf(
             if (showVis) "Disable Visualizer Wave" else "Enable Visualizer Wave",
             if (adaptiveBg) "Disable Adaptive Background" else "Enable Adaptive Background",
+            if (crossfadeBg) "Disable Background Crossfade" else "Enable Background Crossfade",
             if (is120) "Disable 120Hz Refresh Rate" else "Enable 120Hz Refresh Rate"
         )
 
@@ -1727,27 +1785,19 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             .setItems(visualOptions) { _, which ->
                 when (which) {
                     0 -> {
-                        val newValue = !showVis
-                        sharedPreferences.edit().putBoolean("show_visualizer", newValue).apply()
+                        val newValue = toggleSetting("show_visualizer", showVis, "Visualizer")
                         audioVisualizerView.visibility = if (newValue) View.VISIBLE else View.GONE
-                        Toast.makeText(this, "Visualizer " + if (newValue) "Enabled" else "Disabled", Toast.LENGTH_SHORT).show()
                     }
                     1 -> {
-                        val newValue = !adaptiveBg
-                        sharedPreferences.edit().putBoolean("adaptive_bg", newValue).apply()
-                        Toast.makeText(this, "Adaptive Background " + if (newValue) "Enabled" else "Disabled", Toast.LENGTH_SHORT).show()
+                        toggleSetting("adaptive_bg", adaptiveBg, "Adaptive Background")
                         val art = audioService?.currentArt
                         val song = audioService?.currentSong
                         if (art != null && song != null) {
                             onTrackChanged(song, art)
                         }
                     }
-                    2 -> {
-                        val newValue = !is120
-                        sharedPreferences.edit().putBoolean("120hz", newValue).apply()
-                        applyRefreshRate(newValue)
-                        Toast.makeText(this, "120Hz " + if (newValue) "Enabled" else "Disabled", Toast.LENGTH_SHORT).show()
-                    }
+                    2 -> toggleSetting("crossfade_bg", crossfadeBg, "Background Crossfade")
+                    3 -> applyRefreshRate(toggleSetting("120hz", is120, "120Hz"))
                 }
             }
             .setNegativeButton("Back") { _, _ -> showMainSettingsDialog() }
