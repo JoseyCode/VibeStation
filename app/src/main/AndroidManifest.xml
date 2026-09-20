@@ -55,6 +55,12 @@
             android:launchMode="singleTask">
         </activity>
 
+        <activity
+            android:name=".share.ShareActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:screenOrientation="unspecified" />
+
         <service
             android:name=".share.ShareService"
             android:foregroundServiceType="dataSync"

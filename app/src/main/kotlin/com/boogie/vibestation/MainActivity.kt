@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -69,6 +70,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.boogie.vibestation.models.Album
 import com.boogie.vibestation.models.Playlist
 import com.boogie.vibestation.models.Song
+import com.boogie.vibestation.share.ShareActivity
 import com.boogie.vibestation.util.ArtUtil
 import com.boogie.vibestation.util.FormatUtil.formatSpeed
 import com.boogie.vibestation.util.FormatUtil.formatTime
@@ -171,6 +173,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val imageExecutor: ExecutorService = Executors.newFixedThreadPool(4)
     private val libraryExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+
+    /** Set when Share Mode was opened, so the library is reloaded on return. */
+    private var reloadAfterShare = false
     private lateinit var sharedPreferences: SharedPreferences
     private var audioVisualizer: Visualizer? = null
 
@@ -1693,25 +1698,41 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * Displays the parent settings list dialog window.
      */
     private fun showMainSettingsDialog() {
-        val mainOptions = arrayOf(
-            "Sync & Server Settings",
-            "Visualizer & Display Options",
-            "Backup & Portability Profiles",
-            "Audio & Equalizer Options"
+        val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        val options = mutableListOf<Pair<String, () -> Unit>>(
+            "Sync & Server Settings" to ::showSyncSettingsDialog,
+            "Visualizer & Display Options" to ::showVisualSettingsDialog,
+            "Backup & Portability Profiles" to ::showBackupSettingsDialog,
+            "Audio & Equalizer Options" to ::showEqualizerSettingsDialog,
+            "Share Mode (nearby phone)" to { openShareMode(demo = false) }
         )
+        if (debuggable) options += "Share Mode demo (debug build)" to { openShareMode(demo = true) }
 
         AlertDialog.Builder(this)
             .setTitle("VibeStation Settings")
-            .setItems(mainOptions) { _, which ->
-                when (which) {
-                    0 -> showSyncSettingsDialog()
-                    1 -> showVisualSettingsDialog()
-                    2 -> showBackupSettingsDialog()
-                    3 -> showEqualizerSettingsDialog()
-                }
-            }
+            .setItems(options.map { it.first }.toTypedArray()) { _, which -> options[which].second() }
             .setNegativeButton("Close", null)
             .show()
+    }
+
+    /**
+     * Opens the Share Mode screen. The library is reloaded when the user comes back, since a share may
+     * have added songs and playlists behind this screen's in-memory lists.
+     *
+     * @param demo True to show sample states instead of using the radio (debug builds only).
+     */
+    private fun openShareMode(demo: Boolean) {
+        reloadAfterShare = true
+        startActivity(Intent(this, ShareActivity::class.java).putExtra(ShareActivity.EXTRA_DEMO, demo))
+    }
+
+    /** Reloads the library after Share Mode closes so songs and playlists it added show up. */
+    override fun onResume() {
+        super.onResume()
+        if (reloadAfterShare) {
+            reloadAfterShare = false
+            loadMusic()
+        }
     }
 
     /**
