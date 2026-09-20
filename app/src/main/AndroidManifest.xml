@@ -56,6 +56,11 @@
         </activity>
 
         <service
+            android:name=".share.ShareService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+        <service
             android:name=".AudioService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false">
