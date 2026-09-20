@@ -50,6 +50,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     testImplementation(libs.archunit.junit4)
+    testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.org.json)
     detektPlugins(libs.detekt.ktlint)
