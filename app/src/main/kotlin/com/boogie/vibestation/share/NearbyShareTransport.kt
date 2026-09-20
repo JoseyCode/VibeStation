@@ -1,11 +1,13 @@
 package com.boogie.vibestation.share
 
 import android.content.Context
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.AdvertisingOptions
 import com.google.android.gms.nearby.connection.ConnectionInfo
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback
 import com.google.android.gms.nearby.connection.ConnectionResolution
+import com.google.android.gms.nearby.connection.ConnectionsStatusCodes
 import com.google.android.gms.nearby.connection.ConnectionsClient
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo
 import com.google.android.gms.nearby.connection.DiscoveryOptions
@@ -54,6 +56,7 @@ internal class NearbyShareTransport(
     private val lifecycle = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) = serial.execute {
             // One phone at a time: stop being visible while this connection is being set up.
+            ShareDebugLog.add(TAG, "connection initiated with $endpointId")
             peer = endpointId
             client.stopAdvertising()
             client.stopDiscovery()
@@ -61,6 +64,7 @@ internal class NearbyShareTransport(
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) = serial.execute {
+            ShareDebugLog.add(TAG, "connection result $endpointId status=${result.status.statusCode}")
             if (result.status.isSuccess) {
                 listener?.onConnected(endpointId)
             } else {
@@ -77,6 +81,7 @@ internal class NearbyShareTransport(
 
     private val discovery = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) = serial.execute {
+            ShareDebugLog.add(TAG, "endpoint found $endpointId name=${info.endpointName}")
             listener?.onPeerFound(endpointId, info.endpointName)
         }
 
@@ -105,6 +110,7 @@ internal class NearbyShareTransport(
             this.listener = listener
             running = true
             deleteStaleCopies()
+            ShareDebugLog.add(TAG, "starting as $hello")
             startRadio()
         }
     }
@@ -152,11 +158,28 @@ internal class NearbyShareTransport(
         }
     }
 
-    /** Starts advertising and discovering; failures such as "already advertising" are harmless and ignored. */
+    /** Starts advertising and discovering; "already running" is harmless, any other failure is reported. */
     private fun startRadio() {
         val strategy = Strategy.P2P_POINT_TO_POINT
         client.startAdvertising(hello, SERVICE_ID, lifecycle, AdvertisingOptions.Builder().setStrategy(strategy).build())
+            .addOnSuccessListener { ShareDebugLog.add(TAG, "advertising started") }
+            .addOnFailureListener { radioFailed("advertise", it) }
         client.startDiscovery(SERVICE_ID, discovery, DiscoveryOptions.Builder().setStrategy(strategy).build())
+            .addOnSuccessListener { ShareDebugLog.add(TAG, "discovery started") }
+            .addOnFailureListener { radioFailed("discover", it) }
+    }
+
+    private fun radioFailed(what: String, error: Exception) {
+        val code = (error as? ApiException)?.statusCode
+        ShareDebugLog.add(TAG, "FAILED to $what: code=$code ${ConnectionsStatusCodes.getStatusCodeString(code ?: 0)} ${error.message}")
+        if (code == ConnectionsStatusCodes.STATUS_ALREADY_ADVERTISING ||
+            code == ConnectionsStatusCodes.STATUS_ALREADY_DISCOVERING
+        ) {
+            return
+        }
+        serial.execute {
+            if (running) listener?.onRadioFailed("Share Mode could not $what (${code ?: error.message}). Check Location and Wi-Fi are on.")
+        }
     }
 
     /** Forgets the connection and its half-finished files, then becomes visible again if Share Mode is still on. */
@@ -300,6 +323,7 @@ internal class NearbyShareTransport(
     }
 
     private companion object {
+        const val TAG = "ShareTransport"
         const val SERVICE_ID = "com.boogie.vibestation.share"
 
         /** Files arrive one at a time, so a few in flight at once already means the peer is misbehaving. */

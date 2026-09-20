@@ -258,6 +258,8 @@ internal class ShareSession(
             }
         }
 
+        override fun onRadioFailed(reason: String) = post { shutdown(reason) }
+
         override fun onPeerLost(peerId: String) = post {
             if (state is ShareState.Connecting && this@ShareSession.peerId == peerId) backToSearching(null)
         }

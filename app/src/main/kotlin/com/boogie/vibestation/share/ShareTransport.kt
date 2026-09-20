@@ -51,6 +51,9 @@ internal interface ShareTransport {
 
         /** The transfer of file [index] failed. */
         fun onFileFailed(index: Int)
+
+        /** Advertising or discovery could not start, so no phone can ever find this one; [reason] says why. */
+        fun onRadioFailed(reason: String) = Unit
     }
 
     /** Starts advertising [hello] and discovering, reporting to [listener]. */

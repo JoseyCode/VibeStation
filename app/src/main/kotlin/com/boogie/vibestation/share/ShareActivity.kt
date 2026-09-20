@@ -9,6 +9,8 @@ import android.content.ServiceConnection
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Gravity
@@ -16,10 +18,12 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import com.boogie.vibestation.models.Album
 import com.boogie.vibestation.util.MusicLibraryUtil
 import com.boogie.vibestation.util.PlaylistUtil
@@ -78,6 +82,7 @@ class ShareActivity : AppCompatActivity() {
         } else {
             circle.onYes = { service?.yes() }
             circle.onNo = { service?.no() }
+            if (isDebuggable()) showDebugLog(root)
             requestAccess()
         }
     }
@@ -86,6 +91,7 @@ class ShareActivity : AppCompatActivity() {
         service?.attach(null)
         if (service != null) unbindService(connection)
         if (isFinishing) service?.end()
+        ShareDebugLog.onChange = null
         worker.shutdown()
         super.onDestroy()
     }
@@ -98,10 +104,34 @@ class ShareActivity : AppCompatActivity() {
             stopWith("Turn on Bluetooth to use Share Mode.")
             return
         }
+        val problem = radioProblem()
+        if (problem != null) {
+            stopWith(problem)
+            return
+        }
         val missing = SharePermissions.runtimePermissions().filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (missing.isEmpty()) startSharing() else permissionRequest.launch(missing.toTypedArray())
+    }
+
+    /** Nearby silently finds nothing when Location is off (before Android 13), so say so before starting. */
+    private fun radioProblem(): String? {
+        val location = getSystemService(LocationManager::class.java)
+        val off = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+            (location == null || !LocationManagerCompat.isLocationEnabled(location))
+        return if (off) "Turn on Location to use Share Mode." else null
+    }
+
+    /** Debug builds show the radio's own log over the circle, so two phones can be tested without a cable. */
+    private fun showDebugLog(root: FrameLayout) {
+        val text = TextView(this)
+        text.setTextColor(Color.LTGRAY)
+        text.textSize = DEBUG_TEXT_SP
+        text.setBackgroundColor(Color.argb(DEBUG_ALPHA, 0, 0, 0))
+        val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
+        root.addView(text, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, wrap, Gravity.BOTTOM))
+        ShareDebugLog.onChange = { text.text = it }
     }
 
     private fun onPermissions(granted: Map<String, Boolean>) {
@@ -191,6 +221,8 @@ class ShareActivity : AppCompatActivity() {
         /** Intent extra that shows sample states instead of using the radio; honoured in debuggable builds only. */
         const val EXTRA_DEMO = "demo"
 
+        private const val DEBUG_TEXT_SP = 10f
+        private const val DEBUG_ALPHA = 160
         private val BACKGROUND = Color.rgb(16, 16, 20)
     }
 }

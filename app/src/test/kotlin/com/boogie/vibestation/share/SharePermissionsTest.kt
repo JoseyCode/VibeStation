@@ -13,23 +13,19 @@ class SharePermissionsTest {
 
     private fun at(sdk: Int) = SharePermissions.runtimePermissions(sdk).toSet()
 
+    private val location = setOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+
     @Test
-    fun android13AndUpAddsNearbyWifiDevices() {
-        assertEquals(bluetooth + Manifest.permission.NEARBY_WIFI_DEVICES, at(33))
-        assertEquals(bluetooth + Manifest.permission.NEARBY_WIFI_DEVICES, at(36))
+    fun android13AndUpAddsNearbyWifiDevicesAndStillNeedsLocation() {
+        val expected = bluetooth + location + Manifest.permission.NEARBY_WIFI_DEVICES
+        assertEquals(expected, at(33))
+        assertEquals(expected, at(36))
     }
 
     @Test
-    fun android12LThroughBluetoothOnly() {
-        assertEquals(bluetooth, at(32))
-    }
-
-    @Test
-    fun android12StillNeedsLocationAskedAsAPair() {
-        assertEquals(
-            bluetooth + Manifest.permission.ACCESS_FINE_LOCATION + Manifest.permission.ACCESS_COARSE_LOCATION,
-            at(31)
-        )
+    fun android12AndUpNeedLocationAskedAsAPair() {
+        assertEquals(bluetooth + location, at(31))
+        assertEquals(bluetooth + location, at(32))
     }
 
     @Test
