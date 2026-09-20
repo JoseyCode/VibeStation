@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -57,6 +58,22 @@ dependencies {
     implementation("net.jthink:jaudiotagger:3.0.1")
 }
 
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("*.BuildConfig", "*.R", "*.R\$*")
+            }
+        }
+        verify {
+            // Ratchet: raise as tests land (baseline at introduction was 5.3% line coverage).
+            rule {
+                minBound(5)
+            }
+        }
+    }
+}
+
 val cpdConfig: Configuration by configurations.creating
 
 dependencies {
@@ -88,7 +105,7 @@ tasks.register<JavaExec>("cpd") {
 }
 
 tasks.register("checkQuality") {
-    description = "Run all quality verification checks: unit tests, lint, detekt, and CPD"
+    description = "Run all quality verification checks: unit tests, lint, detekt, coverage, and CPD"
     group = "verification"
-    dependsOn("testDebugUnitTest", "lintDebug", "detekt", "cpd")
+    dependsOn("testDebugUnitTest", "lintDebug", "detekt", "koverVerifyDebug", "cpd")
 }

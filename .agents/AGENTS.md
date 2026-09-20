@@ -36,6 +36,6 @@
   ./gradlew checkQuality
   ```
 * **Zero Regressions:** All JUnit unit tests and ArchUnit architectural constraints (`./gradlew testDebugUnitTest`) must pass. No new Android Lint errors (`./gradlew lintDebug`) beyond the baseline in `app/lint-baseline.xml` are permitted.
-* **Static Analysis:** `./gradlew detekt` (complexity, code smells, and ktlint style via `config/detekt/detekt.yml`; pre-existing findings live in `config/detekt/baseline.xml`, so any new finding fails the build).
+* **Static Analysis & Coverage:** `./gradlew detekt` (complexity, code smells, and ktlint style via `config/detekt/detekt.yml`; pre-existing findings live in `config/detekt/baseline.xml`, so any new finding fails the build) and `./gradlew koverVerifyDebug` (line-coverage floor set in `app/build.gradle.kts`; raise it when coverage improves, never lower it).
 * **Complexity & Duplication Audits:** Review CPD output (`./gradlew cpd`). Never introduce copy-paste duplicated logic; extract reusable helper functions or classes instead. Adhere to the method complexity limits in `detekt.yml` and keep classes focused and modular.
 
