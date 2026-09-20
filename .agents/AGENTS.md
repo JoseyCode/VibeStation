@@ -13,7 +13,7 @@
 * **Zero UI/Source Emojis:** Never add emojis or graphical icons to any project files (source code, HTML, CSS, assets, or UI text) unless explicitly commanded.
 
 ## 4. High-Density Documentation
-* **Concise Documentation:** Every new or modified method must include a brief, high-density KDoc block for Kotlin code (Javadoc for any remaining Java), or JSDoc block for JS code.
+* **Concise Documentation:** Every new or modified method must include a brief, high-density KDoc block for Kotlin code, or JSDoc block for JS code.
 * **Focus on Intent:** Keep inline comments strictly focused on *why* a complex calculation or logic segment exists, rather than *what* it does. Avoid wordiness to preserve the context window.
 
 ## 5. APK Compilation & Versioning
@@ -36,5 +36,6 @@
   ./gradlew checkQuality
   ```
 * **Zero Regressions:** All JUnit unit tests and ArchUnit architectural constraints (`./gradlew testDebugUnitTest`) must pass. No new Android Lint errors (`./gradlew lintDebug`) beyond the baseline in `app/lint-baseline.xml` are permitted.
-* **Complexity & Duplication Audits:** Review output from PMD (`./gradlew pmd`) and CPD (`./gradlew cpd`). Never introduce copy-paste duplicated logic; extract reusable helper functions or classes instead. Adhere to method cyclomatic complexity limits and keep classes focused and modular.
+* **Static Analysis & Coverage:** `./gradlew detekt` (complexity, code smells, and ktlint style via `config/detekt/detekt.yml`; pre-existing findings live in `config/detekt/baseline.xml`, so any new finding fails the build) and `./gradlew koverVerifyDebug` (line-coverage floor set in `app/build.gradle.kts`; raise it when coverage improves, never lower it).
+* **Complexity & Duplication Audits:** Review CPD output (`./gradlew cpd`). Never introduce copy-paste duplicated logic; extract reusable helper functions or classes instead. Adhere to the method complexity limits in `detekt.yml` and keep classes focused and modular.
 

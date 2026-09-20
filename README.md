@@ -19,41 +19,39 @@ VibeStation is a vibe-coded, premium, offline MP3 player for Android meant to ri
 
 ## Architecture and Core Components
 
-VibeStation follows a standard Android framework structure. Below is a directory tree of the key project files and layouts:
+VibeStation is a single-module Kotlin Android app. Below is a directory tree of the key project files and layouts:
 
 ```text
 VibeStation/
 ├── app/
 │   ├── src/
-│   │   └── main/
-│   │       ├── java/com/example/retroclone/
-│   │       │   ├── Models.java         (Song, Album, and Playlist data structures)
-│   │       │   ├── SplashActivity.java (Intro screen with randomized slogan)
-│   │       │   ├── MainActivity.java   (Core UI controller, adapters, & content queries)
-│   │       │   ├── AudioService.java   (Playback service, MediaSession, & lockscreen controls)
-│   │       │   └── VisualizerView.java (Custom view rendering dynamic FFT curves)
-│   │       ├── res/
-│   │       │   ├── layout/             (XML UI layout files)
-│   │       │   │   ├── activity_splash.xml
-│   │       │   │   ├── activity_main.xml
-│   │       │   │   ├── item_song.xml
-│   │       │   │   └── item_grid.xml
-│   │       │   └── values/             (Theme styles and color definitions)
-│   │       │       ├── colors.xml
-│   │       │       └── themes.xml
-│   │       └── AndroidManifest.xml     (System declarations, permissions, foreground setup)
-│   └── build.gradle.kts                (Module configurations and dependencies)
-└── settings.gradle.kts                 (Project-wide builds configuration)
+│   │   ├── main/
+│   │   │   ├── kotlin/com/boogie/vibestation/
+│   │   │   │   ├── SplashActivity.kt    (Intro screen with randomized slogan)
+│   │   │   │   ├── MainActivity.kt      (Core UI controller, adapters, & content queries)
+│   │   │   │   ├── AudioService.kt      (Playback service, MediaSession, & lockscreen controls)
+│   │   │   │   ├── SyncManager.kt       (Library and playlist sync with VibeStation-Web)
+│   │   │   │   ├── AppConfig.kt         (Application version constant)
+│   │   │   │   ├── models/              (Song, Album, and Playlist data structures)
+│   │   │   │   ├── util/                (Playlist persistence, artwork, MediaStore, and tag helpers)
+│   │   │   │   └── views/               (Custom views: FFT visualizer, particles, circular progress)
+│   │   │   ├── res/                     (Layouts, drawables, and theme/color values)
+│   │   │   └── AndroidManifest.xml      (System declarations, permissions, foreground setup)
+│   │   ├── test/kotlin/                 (JVM unit tests and ArchUnit architecture rules)
+│   │   └── androidTest/kotlin/          (Instrumented tests)
+│   └── build.gradle.kts                 (Module configurations and dependencies)
+├── config/detekt/                       (detekt/ktlint rules and baseline)
+└── settings.gradle.kts                  (Project-wide builds configuration)
 ```
 
 > **Note**: The web streaming server and player client have been extracted to their own dedicated repository: [**JoseyCode/VibeStation-Web**](https://github.com/JoseyCode/VibeStation-Web).
 
-*   **[`SplashActivity`](app/src/main/java/com/example/retroclone/SplashActivity.java)**: Greets you with a random vibe-coded slogan on start.
-*   **[`MainActivity`](app/src/main/java/com/example/retroclone/MainActivity.java)**: Coordinates the interface, handles standard storage query routines, and manages user interaction.
-*   **[`AudioService`](app/src/main/java/com/example/retroclone/AudioService.java)**: The single source of truth for audio playback, integrating background foreground service lifecycles, media notifications, lockscreen playback state (`MediaSessionCompat`), and audio focus handling.
-*   **[`VisualizerView`](app/src/main/java/com/example/retroclone/VisualizerView.java)**: Custom canvas view that plots and paints real-time frequency-domain data (FFT) as a smooth Bezier wave.
-*   **[`Models`](app/src/main/java/com/example/retroclone/Models.java)**: Lightweight, clean data models for `Song`, `Album`, and `Playlist`.
-*   **Library Sync Protocol**: An asynchronous, multi-threaded sync connector ([`SyncManager`](app/src/main/java/com/boogie/vibestation/SyncManager.java) in the Android app) that synchronizes local tracks directly to the [**VibeStation-Web**](https://github.com/JoseyCode/VibeStation-Web) sync server backend.
+*   **[`SplashActivity`](app/src/main/kotlin/com/boogie/vibestation/SplashActivity.kt)**: Greets you with a random vibe-coded slogan on start.
+*   **[`MainActivity`](app/src/main/kotlin/com/boogie/vibestation/MainActivity.kt)**: Coordinates the interface, handles standard storage query routines, and manages user interaction.
+*   **[`AudioService`](app/src/main/kotlin/com/boogie/vibestation/AudioService.kt)**: The single source of truth for audio playback, integrating background foreground service lifecycles, media notifications, lockscreen playback state (`MediaSessionCompat`), and audio focus handling.
+*   **[`VisualizerView`](app/src/main/kotlin/com/boogie/vibestation/views/VisualizerView.kt)**: Custom canvas view that plots and paints real-time frequency-domain data (FFT) as a smooth Bezier wave.
+*   **[`models`](app/src/main/kotlin/com/boogie/vibestation/models)**: Lightweight, clean data models for `Song`, `Album`, and `Playlist`.
+*   **Library Sync Protocol**: An asynchronous, multi-threaded sync connector ([`SyncManager`](app/src/main/kotlin/com/boogie/vibestation/SyncManager.kt) in the Android app) that synchronizes local tracks directly to the [**VibeStation-Web**](https://github.com/JoseyCode/VibeStation-Web) sync server backend.
 
 ---
 
@@ -71,7 +69,7 @@ For instructions on deploying the server on a Raspberry Pi or local server, conf
 ### Prerequisites
 *   Android Device running Android 7.0 (API level 24) or higher.
 *   Android Studio Ladybug (or newer).
-*   Target SDK: 36 (Java 11 compatible).
+*   Target SDK: 36 (Kotlin, JVM 11 target).
 
 ### Building and Running
 1. Clone the repository:
@@ -82,3 +80,10 @@ For instructions on deploying the server on a Raspberry Pi or local server, conf
 3. Sync the project with Gradle files.
 4. Put some MP3 files into your device's `/Music/` directory.
 5. Run the app on your physical device or emulator.
+
+### Quality Checks
+Run the full verification suite before committing:
+```bash
+./gradlew checkQuality
+```
+It runs JVM unit tests (including ArchUnit layer rules), Android Lint, detekt with ktlint (`config/detekt/`), a Kover line-coverage floor, and CPD copy-paste detection. Existing detekt and lint findings are captured in baseline files, so new findings fail the build.

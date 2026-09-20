@@ -91,19 +91,19 @@
         errorLine2="        ~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="17"
+            line="18"
             column="9"/>
     </issue>
 
     <issue
         id="CustomSplashScreen"
         message="The application should not provide its own launch screen"
-        errorLine1="public class SplashActivity extends AppCompatActivity {"
-        errorLine2="             ~~~~~~~~~~~~~~">
+        errorLine1="class SplashActivity : AppCompatActivity() {"
+        errorLine2="      ~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/SplashActivity.java"
-            line="15"
-            column="14"/>
+            file="src/main/kotlin/com/boogie/vibestation/SplashActivity.kt"
+            line="14"
+            column="7"/>
     </issue>
 
     <issue
@@ -123,18 +123,18 @@
         errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/wrapper/gradle-wrapper.properties"
+            file="$HOME/VibeStation/gradle/wrapper/gradle-wrapper.properties"
             line="5"
             column="17"/>
     </issue>
 
     <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.application than 9.1.0 is available: 9.4.0. (There is also a newer version of 9.1.𝑥 available, if upgrading to 9.4.0 is difficult: 9.1.1)"
+        message="A newer version of com.android.application than 9.1.0 is available: 9.4.1. (There is also a newer version of 9.1.𝑥 available, if upgrading to 9.4.1 is difficult: 9.1.1)"
         errorLine1="agp = &quot;9.1.0&quot;"
         errorLine2="      ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="2"
             column="7"/>
     </issue>
@@ -146,7 +146,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="52"
+            line="57"
             column="20"/>
     </issue>
 
@@ -157,7 +157,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="53"
+            line="58"
             column="20"/>
     </issue>
 
@@ -167,7 +167,7 @@
         errorLine1="junitVersion = &quot;1.1.5&quot;"
         errorLine2="               ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="4"
             column="16"/>
     </issue>
@@ -178,7 +178,7 @@
         errorLine1="espressoCore = &quot;3.5.1&quot;"
         errorLine2="               ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="5"
             column="16"/>
     </issue>
@@ -189,7 +189,7 @@
         errorLine1="appcompat = &quot;1.6.1&quot;"
         errorLine2="            ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="6"
             column="13"/>
     </issue>
@@ -200,7 +200,7 @@
         errorLine1="material = &quot;1.10.0&quot;"
         errorLine2="           ~~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="7"
             column="12"/>
     </issue>
@@ -211,7 +211,7 @@
         errorLine1="activity = &quot;1.8.0&quot;"
         errorLine2="           ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="8"
             column="12"/>
     </issue>
@@ -222,20 +222,9 @@
         errorLine1="constraintlayout = &quot;2.1.4&quot;"
         errorLine2="                   ~~~~~~~">
         <location
-            file="$HOME/Coding/VibeStation/gradle/libs.versions.toml"
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
             line="9"
             column="20"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
-        message="A newer version of com.tngtech.archunit:archunit-junit4 than 1.3.0 is available: 1.5.0"
-        errorLine1="    testImplementation(&quot;com.tngtech.archunit:archunit-junit4:1.3.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="51"
-            column="24"/>
     </issue>
 
     <issue
@@ -245,7 +234,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="55"
+            line="60"
             column="20"/>
     </issue>
 
@@ -256,18 +245,18 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="62"
+            line="84"
             column="15"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of net.sourceforge.pmd:pmd-java than 7.10.0 is available: 7.27.0"
-        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-java:7.10.0&quot;)"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="A newer version of net.sourceforge.pmd:pmd-kotlin than 7.10.0 is available: 7.27.0"
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-kotlin:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="63"
+            line="85"
             column="15"/>
     </issue>
 
@@ -278,7 +267,7 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
+            line="86"
             column="15"/>
     </issue>
 
@@ -289,63 +278,52 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="65"
+            line="87"
             column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of dev.detekt than 2.0.0-alpha.3 is available: 2.0.0-alpha.6"
+        errorLine1="detekt = &quot;2.0.0-alpha.3&quot;"
+        errorLine2="         ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
+            line="10"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of dev.detekt:detekt-rules-ktlint-wrapper than 2.0.0-alpha.3 is available: 2.0.0-alpha.6"
+        errorLine1="detekt = &quot;2.0.0-alpha.3&quot;"
+        errorLine2="         ~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
+            line="10"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.tngtech.archunit:archunit-junit4 than 1.3.0 is available: 1.5.0"
+        errorLine1="archunit = &quot;1.3.0&quot;"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="$HOME/VibeStation/gradle/libs.versions.toml"
+            line="15"
+            column="12"/>
     </issue>
 
     <issue
         id="NotifyDataSetChanged"
         message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
-        errorLine1="        if (playlistListAdapter != null) playlistListAdapter.notifyDataSetChanged();"
-        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        playlistListAdapter?.notifyDataSetChanged()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="883"
-            column="42"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 24"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="137"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 24"
-        errorLine1="            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="160"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 24"
-        errorLine1="            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/AudioService.java"
-            line="206"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 24"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="310"
-            column="13"/>
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="808"
+            column="9"/>
     </issue>
 
     <issue
@@ -558,14 +536,212 @@
     </issue>
 
     <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;com.tngtech.archunit:archunit-junit4:1.3.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                isUri -> resolver.openInputStream(Uri.parse(artworkPath)).use {"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="build.gradle.kts"
-            line="51"
-            column="24"/>
+            file="src/main/kotlin/com/boogie/vibestation/util/ArtUtil.kt"
+            line="37"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, BASE64_IMAGE_SIZE_PX, BASE64_IMAGE_SIZE_PX, true)"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/util/ArtUtil.kt"
+            line="118"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension property `View.isVisible` instead?"
+        errorLine1="                    fullPlayerScreenContainer.visibility == View.VISIBLE -> fullPlayerScreenContainer.visibility = View.GONE"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="259"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension property `View.isVisible` instead?"
+        errorLine1="                    expandedDetailsContainer.visibility == View.VISIBLE -> {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="260"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toColorInt` instead?"
+        errorLine1="        fireToggle.setColorFilter(if (isFire) Color.parseColor(&quot;#FF9800&quot;) else Color.WHITE)"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1430"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                sharedPreferences.edit().putStringSet(&quot;fireAlbums&quot;, fireAlbums).apply()"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1442"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toColorInt` instead?"
+        errorLine1="            fireToggle.setColorFilter(if (newFire) Color.parseColor(&quot;#FF9800&quot;) else Color.WHITE)"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1445"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                sharedPreferences.edit().putString(&quot;sync_server_url&quot;, url).apply()"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1576"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension property `View.isVisible` instead?"
+        errorLine1="        outState.putBoolean(&quot;isPlayerExpanded&quot;, fullPlayerScreenContainer.visibility == View.VISIBLE)"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1670"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                        sharedPreferences.edit().putBoolean(&quot;120hz&quot;, newValue).apply()"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1799"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                sharedPreferences.edit().putBoolean(&quot;eq_enabled&quot;, isChecked).apply()"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1858"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                            sharedPreferences.edit().putInt(&quot;eq_band_$band&quot;, newLevel.toInt()).apply()"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1894"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                    sharedPreferences.edit().putInt(&quot;eq_band_$index&quot;, 0).apply()"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1917"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            intent.data = Uri.parse(&quot;package:$packageName&quot;)"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1944"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            intent.data = Uri.parse(&quot;package:$packageName&quot;)"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1944"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit().putString(PLAYLISTS_KEY, playlistsJsonArray.toString()).apply()"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/util/PlaylistUtil.kt"
+            line="55"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                prefs.edit().putString(PLAYLISTS_KEY, validatedArray.toString()).apply()"
+        errorLine2="                ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/util/PlaylistUtil.kt"
+            line="143"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        get() = Uri.parse(albumArtUriString)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/models/Song.kt"
+            line="27"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                    prefs.edit().putString(&quot;playlists&quot;, mergedPlaylistsJson).apply()"
+        errorLine2="                    ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/SyncManager.kt"
+            line="291"
+            column="21"/>
     </issue>
 
     <issue
@@ -575,7 +751,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="52"
+            line="57"
             column="20"/>
     </issue>
 
@@ -586,7 +762,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="53"
+            line="58"
             column="20"/>
     </issue>
 
@@ -597,7 +773,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="54"
+            line="59"
             column="20"/>
     </issue>
 
@@ -608,7 +784,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="55"
+            line="60"
             column="20"/>
     </issue>
 
@@ -619,7 +795,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="56"
+            line="61"
             column="20"/>
     </issue>
 
@@ -630,18 +806,18 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="62"
+            line="84"
             column="15"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-java:7.10.0&quot;)"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    cpdConfig(&quot;net.sourceforge.pmd:pmd-kotlin:7.10.0&quot;)"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="63"
+            line="85"
             column="15"/>
     </issue>
 
@@ -652,7 +828,7 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
+            line="86"
             column="15"/>
     </issue>
 
@@ -663,18 +839,18 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="65"
+            line="87"
             column="15"/>
     </issue>
 
     <issue
         id="ClickableViewAccessibility"
         message="`onTouch` lambda should call `View#performClick` when a click is detected"
-        errorLine1="        fullPlayerScreenContainer.setOnTouchListener((v, event) -> {"
+        errorLine1="        fullPlayerScreenContainer.setOnTouchListener { _, event ->"
         errorLine2="                                                     ^">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="598"
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="553"
             column="54"/>
     </issue>
 
@@ -1066,67 +1242,100 @@
     <issue
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="                txtAppVersion.setText(&quot;Vibe&quot;);"
-        errorLine2="                                      ~~~~~~">
+        errorLine1="            text = &quot;Shuffle All&quot;"
+        errorLine2="                    ~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="411"
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="386"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            text = &quot;Speed: ${formatSpeed(service.playbackSpeed)}&quot;"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="437"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            text = &quot;Speed: ${formatSpeed(service.playbackSpeed)}&quot;"
+        errorLine2="                    ~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="437"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            text = &quot;Reset&quot;"
+        errorLine2="                    ~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="445"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                speedIndicator.text = &quot;Speed: ${formatSpeed(newSpeed)}&quot;"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="468"
             column="39"/>
     </issue>
 
     <issue
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="        btnLibShuffle.setText(&quot;Shuffle All&quot;);"
-        errorLine2="                              ~~~~~~~~~~~~~">
+        errorLine1="                speedIndicator.text = &quot;Speed: ${formatSpeed(newSpeed)}&quot;"
+        errorLine2="                                       ~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="424"
-            column="31"/>
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="468"
+            column="40"/>
     </issue>
 
     <issue
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="        btnReset.setText(&quot;Reset&quot;);"
-        errorLine2="                         ~~~~~~~">
+        errorLine1="            text = &quot;Preparing synchronization...&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="487"
-            column="26"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="        syncStatusTextView.setText(&quot;Preparing synchronization...&quot;);"
-        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="1737"
-            column="36"/>
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1605"
+            column="21"/>
     </issue>
 
     <issue
         id="SetTextI18n"
         message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
-        errorLine1="            freqTextView.setText((equalizer.getCenterFreq(band) / 1000) + &quot; Hz&quot;);"
-        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                text = &quot;${equalizer.getCenterFreq(band) / 1000} Hz&quot;"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2010"
-            column="34"/>
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1872"
+            column="24"/>
     </issue>
 
     <issue
         id="SetTextI18n"
         message="String literal in `setText` can not be translated. Use Android resources instead."
-        errorLine1="            freqTextView.setText((equalizer.getCenterFreq(band) / 1000) + &quot; Hz&quot;);"
-        errorLine2="                                                                          ~~~~~">
+        errorLine1="                text = &quot;${equalizer.getCenterFreq(band) / 1000} Hz&quot;"
+        errorLine2="                                                               ~~~">
         <location
-            file="src/main/java/com/boogie/vibestation/MainActivity.java"
-            line="2010"
-            column="75"/>
+            file="src/main/kotlin/com/boogie/vibestation/MainActivity.kt"
+            line="1872"
+            column="64"/>
     </issue>
 
     <issue
