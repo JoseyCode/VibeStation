@@ -104,8 +104,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     private var currentOpenPlaylist: Playlist? = null
 
     // Selection Queue
-    private var isSelectionMode = false
-    private val selectedSongs = HashSet<Song>()
+    private val selection = SelectionState()
 
     // UI Widgets
     private lateinit var albumsGridView: GridView
@@ -257,7 +256,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
-                    isSelectionMode -> clearSelection()
+                    selection.isActive -> clearSelection()
                     fullPlayerScreenContainer.visibility == View.VISIBLE -> fullPlayerScreenContainer.visibility = View.GONE
                     expandedDetailsContainer.visibility == View.VISIBLE -> {
                         expandedDetailsContainer.visibility = View.GONE
@@ -768,20 +767,17 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * @param song Song target toggled.
      */
     private fun toggleSelectionMode(song: Song) {
-        if (!isSelectionMode) {
-            isSelectionMode = true
+        if (!selection.isActive) {
             topBarContainer.visibility = View.GONE
             selectionBarContainer.visibility = View.VISIBLE
         }
 
-        if (!selectedSongs.remove(song)) {
-            selectedSongs.add(song)
-        }
+        selection.toggle(song)
 
-        if (selectedSongs.isEmpty()) {
+        if (selection.isEmpty) {
             clearSelection()
         } else {
-            selectionCountTextView.text = String.format(Locale.getDefault(), "%d Selected", selectedSongs.size)
+            selectionCountTextView.text = String.format(Locale.getDefault(), "%d Selected", selection.size)
             deleteSelectionButton.visibility = if (currentOpenPlaylist != null) View.VISIBLE else View.GONE
             refreshAllAdapters()
         }
@@ -792,8 +788,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * swapping the action toolbar layout back to normal search mode.
      */
     private fun clearSelection() {
-        isSelectionMode = false
-        selectedSongs.clear()
+        selection.clear()
         selectionBarContainer.visibility = View.GONE
         topBarContainer.visibility = View.VISIBLE
         refreshAllAdapters()
@@ -841,18 +836,18 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * tracks to an existing playlist or create a new playlist with them.
      */
     private fun showBatchAddToPlaylistDialog() {
-        if (selectedSongs.isEmpty()) return
+        if (selection.isEmpty) return
         val options = arrayOf("(Create Playlist...)") + allPlaylists.map { it.name }
 
         AlertDialog.Builder(this)
-            .setTitle("Add ${selectedSongs.size} songs to...")
+            .setTitle("Add ${selection.size} songs to...")
             .setItems(options) { _, which ->
                 if (which == 0) {
                     showCreatePlaylistDialog { newPlaylist ->
-                        newPlaylist.songs.addAll(selectedSongs)
+                        selection.addAllTo(newPlaylist)
                         savePlaylists()
                         filterData("")
-                        Toast.makeText(this, "Created & Added ${selectedSongs.size} songs!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Created & Added ${selection.size} songs!", Toast.LENGTH_SHORT).show()
                         clearSelection()
                     }
                 } else {
@@ -867,23 +862,10 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * then reports the added/skipped counts.
      */
     private fun addSelectionToPlaylist(targetPlaylist: Playlist) {
-        var addedCount = 0
-        var duplicateCount = 0
-        for (selectedSong in selectedSongs) {
-            if (targetPlaylist.songs.any { it.id == selectedSong.id }) {
-                duplicateCount++
-            } else {
-                targetPlaylist.songs.add(selectedSong)
-                addedCount++
-            }
-        }
+        val result = selection.addMissingTo(targetPlaylist)
         savePlaylists()
         filterData("")
-        var message = "Added $addedCount songs to ${targetPlaylist.name}"
-        if (duplicateCount > 0) {
-            message += " ($duplicateCount duplicates skipped)"
-        }
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(this, result.message(targetPlaylist.name), Toast.LENGTH_LONG).show()
         clearSelection()
     }
 
@@ -893,12 +875,11 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      */
     private fun batchDeleteFromPlaylist() {
         val playlist = currentOpenPlaylist ?: return
-        if (selectedSongs.isEmpty()) return
+        if (selection.isEmpty) return
         AlertDialog.Builder(this)
-            .setTitle("Remove ${selectedSongs.size} songs?")
+            .setTitle("Remove ${selection.size} songs?")
             .setPositiveButton("Yes") { _, _ ->
-                val selectedIds = selectedSongs.mapTo(HashSet()) { it.id }
-                playlist.songs.removeAll { it.id in selectedIds }
+                selection.removeFrom(playlist)
                 savePlaylists()
                 filterData("")
                 clearSelection()
@@ -1080,16 +1061,16 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         viewHolder.artistTextView.text = currentSong.artist
         loadArtAsync(viewHolder.artworkImageView, currentSong.path, false, QUALITY_LOW, null)
 
-        if (isSelectionMode) {
+        if (selection.isActive) {
             viewHolder.selectionCheckBox.visibility = View.VISIBLE
-            viewHolder.selectionCheckBox.isChecked = currentSong in selectedSongs
+            viewHolder.selectionCheckBox.isChecked = currentSong in selection
         } else {
             viewHolder.selectionCheckBox.visibility = View.GONE
         }
 
         itemView.setOnClickListener { clickedView ->
             triggerHapticFeedback(clickedView)
-            if (isSelectionMode) {
+            if (selection.isActive) {
                 toggleSelectionMode(currentSong)
             } else {
                 playAudio(songs, position)
@@ -1097,7 +1078,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         }
         itemView.setOnLongClickListener { clickedView ->
             triggerHapticFeedback(clickedView)
-            if (isSelectionMode) {
+            if (selection.isActive) {
                 toggleSelectionMode(currentSong)
             } else {
                 AlertDialog.Builder(this)
@@ -1326,7 +1307,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
 
         setupDetailFireToggle(findViewById(R.id.btnDetailFireToggle), isPlaylist, playlistObject, albumObject)
 
-        if (isSelectionMode) {
+        if (selection.isActive) {
             deleteSelectionButton.visibility = if (currentOpenPlaylist != null) View.VISIBLE else View.GONE
         }
     }
