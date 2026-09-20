@@ -70,9 +70,9 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 14.81% (after SyncManager tests).
+            // Ratchet: raise as tests land, never lower. Last measured 16.06% (after ArtUtil tests).
             rule {
-                minBound(14)
+                minBound(16)
             }
         }
     }
