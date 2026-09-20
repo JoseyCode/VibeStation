@@ -69,9 +69,9 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 7.19% (after PlaylistUtil tests).
+            // Ratchet: raise as tests land, never lower. Last measured 10.72% (after MusicLibraryUtil tests).
             rule {
-                minBound(7)
+                minBound(10)
             }
         }
     }
