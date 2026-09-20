@@ -143,6 +143,46 @@ object MusicLibraryUtil {
     }
 
     /**
+     * Everything the library screen needs after a load.
+     *
+     * @property songs     All songs, A-Z by title.
+     * @property albums    All albums, A-Z by name, each with its tracks in track-number order.
+     * @property playlists Playlists resolved against [songs].
+     */
+    class Library(val songs: List<Song>, val albums: List<Album>, val playlists: List<Playlist>)
+
+    /**
+     * Turns a raw MediaStore scan into the sorted library: orders each album's tracks by track
+     * number, resolves saved playlists, then sorts songs and albums A-Z. Playlists are resolved
+     * before the sort, so when two songs share a name key the one scanned last wins the lookup.
+     *
+     * @param songs          Scanned songs; sorted in place and returned as [Library.songs].
+     * @param albumMap       Albums grouped during the scan, keyed by album ID.
+     * @param resolvePlaylists Builds playlists from lookups of the scanned songs by ID and by
+     *                         [PlaylistUtil.songNameKey].
+     * @return The assembled library.
+     */
+    fun assembleLibrary(
+        songs: MutableList<Song>,
+        albumMap: Map<String, Album>,
+        resolvePlaylists: (byId: Map<String, Song>, byNameKey: Map<String, Song>) -> List<Playlist>
+    ): Library {
+        val albums = ArrayList(albumMap.values)
+        for (album in albums) {
+            album.songs.sortBy { it.trackNumber }
+        }
+
+        val playlists = resolvePlaylists(
+            songs.associateBy { it.id },
+            songs.associateBy { PlaylistUtil.songNameKey(it.title, it.artist) }
+        )
+
+        songs.sortWith { a, b -> a.title.compareTo(b.title, ignoreCase = true) }
+        albums.sortWith { a, b -> a.name.compareTo(b.name, ignoreCase = true) }
+        return Library(songs, albums, playlists)
+    }
+
+    /**
      * Sorts song and album datasets alphabetically or by add date.
      *
      * @param sortType Sort selector key index (0: A-Z, 1: Z-A, 2: Newest).

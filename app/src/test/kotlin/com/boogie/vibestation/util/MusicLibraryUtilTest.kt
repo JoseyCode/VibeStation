@@ -333,4 +333,95 @@ class MusicLibraryUtilTest {
             assertEquals(listOf("gamma", "beta", "Alpha"), albums)
         }
     }
+
+    // assembleLibrary
+
+    private fun songWith(id: String, title: String, artist: String, track: Int = 1) =
+        Song(id, title, artist, "/m/$id.mp3", "alb", "Album", track, 0L)
+
+    /**
+     * Verifies each album's tracks are ordered by track number and albums and songs come out A-Z,
+     * ignoring case.
+     */
+    @Test
+    fun assembleLibrarySortsAlbumTracksAndTopLevelLists() {
+        val t2 = songWith("2", "banana", "X", track = 2)
+        val t1 = songWith("1", "Cherry", "X", track = 1)
+        val other = songWith("3", "apple", "Y")
+        val albumB = Album("b", "beta", "X", 0L).apply { songs.addAll(listOf(t2, t1)) }
+        val albumA = Album("a", "Alpha", "Y", 0L).apply { songs.add(other) }
+
+        val library = MusicLibraryUtil.assembleLibrary(
+            mutableListOf(t2, t1, other), mapOf("b" to albumB, "a" to albumA)
+        ) { _, _ -> emptyList() }
+
+        assertEquals(listOf("apple", "banana", "Cherry"), library.songs.map { it.title })
+        assertEquals(listOf("Alpha", "beta"), library.albums.map { it.name })
+        assertEquals(listOf(1, 2), albumB.songs.map { it.trackNumber })
+    }
+
+    /**
+     * Verifies the playlist resolver receives ID and name-key lookups over every scanned song.
+     */
+    @Test
+    fun assembleLibraryGivesResolverIdAndNameKeyLookups() {
+        val one = songWith("1", "Get Lucky", "Daft Punk")
+        val two = songWith("2", "Nightcall", "Kavinsky")
+        var seenById: Map<String, Song> = emptyMap()
+        var seenByName: Map<String, Song> = emptyMap()
+
+        MusicLibraryUtil.assembleLibrary(mutableListOf(one, two), emptyMap()) { byId, byName ->
+            seenById = byId
+            seenByName = byName
+            emptyList()
+        }
+
+        assertEquals(mapOf("1" to one, "2" to two), seenById)
+        assertEquals(mapOf("get lucky_daft punk" to one, "nightcall_kavinsky" to two), seenByName)
+    }
+
+    /**
+     * Verifies playlists are resolved against the songs in scan order, before the A-Z sort, so on a
+     * name-key collision the song scanned last wins the lookup, and that the resolver's playlists
+     * become the library's.
+     */
+    @Test
+    fun assembleLibraryResolvesPlaylistsBeforeSortingSongs() {
+        val zed = songWith("1", "Zed", "Artist")
+        val alpha = songWith("2", "Alpha", "Artist")
+        val alphaLower = songWith("3", "alpha", "Artist")
+        val scanned = mutableListOf(zed, alpha, alphaLower)
+        val resolved = listOf(Playlist("Mine", null))
+        var orderSeenByResolver: List<String> = emptyList()
+        var collisionWinner: String? = null
+
+        val library = MusicLibraryUtil.assembleLibrary(scanned, emptyMap()) { _, byName ->
+            orderSeenByResolver = scanned.map { it.id }
+            collisionWinner = byName["alpha_artist"]?.id
+            resolved
+        }
+
+        assertEquals(listOf("1", "2", "3"), orderSeenByResolver)
+        assertEquals("3", collisionWinner)
+        assertEquals(listOf("2", "3", "1"), library.songs.map { it.id })
+        assertEquals(resolved, library.playlists)
+    }
+
+    /**
+     * Verifies an empty scan yields an empty library and still calls the resolver, so saved
+     * playlists are not silently dropped from the result shape.
+     */
+    @Test
+    fun assembleLibraryHandlesEmptyScan() {
+        var called = false
+
+        val library = MusicLibraryUtil.assembleLibrary(mutableListOf(), emptyMap()) { byId, byName ->
+            called = true
+            assertTrue(byId.isEmpty() && byName.isEmpty())
+            emptyList()
+        }
+
+        assertTrue(called)
+        assertTrue(library.songs.isEmpty() && library.albums.isEmpty() && library.playlists.isEmpty())
+    }
 }

@@ -926,13 +926,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                 val from = viewHolder.adapterPosition
                 val to = target.adapterPosition
 
-                // Mirror the move into the master list so the order survives filtering
-                val allFrom = allPlaylists.indexOf(displayPlaylists[from])
-                val allTo = allPlaylists.indexOf(displayPlaylists[to])
-                if (allFrom != -1 && allTo != -1) {
-                    allPlaylists.add(allTo, allPlaylists.removeAt(allFrom))
-                }
-                displayPlaylists.add(to, displayPlaylists.removeAt(from))
+                PlaylistUtil.movePlaylist(allPlaylists, displayPlaylists, from, to)
                 playlistListAdapter?.notifyItemMoved(from, to)
                 return true
             }
@@ -1205,27 +1199,18 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     private fun loadMusic() {
         libraryExecutor.execute {
             val albumMap = HashMap<String, Album>()
-            val tempSongs = MusicLibraryUtil.queryMediaStoreSongs(contentResolver, fireAlbums, albumMap)
-
-            val tempAlbums = ArrayList(albumMap.values)
-            for (album in tempAlbums) {
-                album.songs.sortBy { it.trackNumber }
+            val scannedSongs = MusicLibraryUtil.queryMediaStoreSongs(contentResolver, fireAlbums, albumMap)
+            val library = MusicLibraryUtil.assembleLibrary(scannedSongs, albumMap) { byId, byNameKey ->
+                PlaylistUtil.parsePlaylists(sharedPreferences, byId, byNameKey)
             }
-
-            val songIdMap = tempSongs.associateBy { it.id }
-            val songNameMap = tempSongs.associateBy { "${it.title}_${it.artist}".lowercase(Locale.getDefault()) }
-            val tempPlaylists = PlaylistUtil.parsePlaylists(sharedPreferences, songIdMap, songNameMap)
-
-            tempSongs.sortWith { a, b -> a.title.compareTo(b.title, ignoreCase = true) }
-            tempAlbums.sortWith { a, b -> a.name.compareTo(b.name, ignoreCase = true) }
 
             runOnUiThread {
                 allSongs.clear()
-                allSongs.addAll(tempSongs)
+                allSongs.addAll(library.songs)
                 allAlbums.clear()
-                allAlbums.addAll(tempAlbums)
+                allAlbums.addAll(library.albums)
                 allPlaylists.clear()
-                allPlaylists.addAll(tempPlaylists)
+                allPlaylists.addAll(library.playlists)
 
                 filterData(searchEditText.text.toString())
             }
