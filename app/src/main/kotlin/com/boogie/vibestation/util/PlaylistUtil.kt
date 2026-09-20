@@ -19,7 +19,7 @@ import java.util.concurrent.Executors
  */
 object PlaylistUtil {
 
-    private const val PLAYLISTS_KEY = "playlists"
+    internal const val PLAYLISTS_KEY = "playlists"
 
     private val backupExecutor = Executors.newSingleThreadExecutor()
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
