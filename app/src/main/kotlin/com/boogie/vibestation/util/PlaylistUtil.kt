@@ -129,7 +129,8 @@ object PlaylistUtil {
     }
 
     /**
-     * Serializes playlist collection into a backup file on a background thread.
+     * Serializes playlist collection into a backup file on a background thread, embedding each
+     * playlist's cover image so it can be restored on another device or after a reinstall.
      *
      * @param context Application context for Toast.
      * @param prefs Source SharedPreferences instance.
@@ -139,8 +140,10 @@ object PlaylistUtil {
         if (documentUri == null) return
         backupExecutor.execute {
             try {
+                // Built before the stream opens so a failure cannot leave a truncated backup file.
+                val playlistsJsonArray = JSONArray(prefs.getString(PLAYLISTS_KEY, "[]"))
+                PlaylistCoverUtil.embedCovers(context.contentResolver, playlistsJsonArray)
                 context.contentResolver.openOutputStream(documentUri).use { outputStream ->
-                    val playlistsJsonArray = JSONArray(prefs.getString(PLAYLISTS_KEY, "[]"))
                     outputStream?.write(playlistsJsonArray.toString().toByteArray(Charsets.UTF_8))
                     toastOnMain(context, "Export Ready!")
                 }
@@ -150,7 +153,9 @@ object PlaylistUtil {
     }
 
     /**
-     * Parses and restores playlists JSON backup data from a user-selected document.
+     * Parses and restores playlists JSON backup data from a user-selected document. Embedded covers
+     * are written to app-private storage and stripped from the JSON saved to preferences; cover
+     * files left over from the replaced playlists are deleted.
      *
      * @param context Application context for content resolution.
      * @param prefs Target SharedPreferences instance.
@@ -165,7 +170,11 @@ object PlaylistUtil {
                     ?: throw IOException("Unable to open backup document")
                 val backupContent = inputStream.bufferedReader(Charsets.UTF_8).use { it.readLines().joinToString("") }
 
-                prefs.edit().putString(PLAYLISTS_KEY, sanitizeBackup(backupContent)).apply()
+                val restoredPlaylists = JSONArray(sanitizeBackup(backupContent))
+                val coversDir = PlaylistCoverUtil.coversDir(context)
+                PlaylistCoverUtil.extractCovers(restoredPlaylists, coversDir)
+                prefs.edit().putString(PLAYLISTS_KEY, restoredPlaylists.toString()).apply()
+                PlaylistCoverUtil.deleteOrphans(coversDir, PlaylistCoverUtil.imageUris(restoredPlaylists))
                 mainHandler.post {
                     onRestoreComplete()
                     Toast.makeText(context, "Restore Successful!", Toast.LENGTH_SHORT).show()

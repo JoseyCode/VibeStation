@@ -74,6 +74,7 @@ import com.boogie.vibestation.util.FormatUtil.formatSpeed
 import com.boogie.vibestation.util.FormatUtil.formatTime
 import com.boogie.vibestation.util.MediaMetadataUtil
 import com.boogie.vibestation.util.MusicLibraryUtil
+import com.boogie.vibestation.util.PlaylistCoverUtil
 import com.boogie.vibestation.util.PlaylistUtil
 import com.boogie.vibestation.views.CircularProgressView
 import com.boogie.vibestation.views.ParticleView
@@ -1250,6 +1251,13 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         PlaylistUtil.savePlaylists(sharedPreferences, allPlaylists)
     }
 
+    /** Deletes restored cover files that no playlist references, off the main thread. */
+    private fun pruneCoverFiles() {
+        val referencedUris = allPlaylists.mapNotNull { it.imageUri }
+        val coversDir = PlaylistCoverUtil.coversDir(this)
+        imageExecutor.execute { PlaylistCoverUtil.deleteOrphans(coversDir, referencedUris) }
+    }
+
     /**
      * Sorts song and album datasets alphabetically or by add date.
      *
@@ -1367,6 +1375,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                     3 -> {
                         allPlaylists.remove(playlist)
                         savePlaylists()
+                        pruneCoverFiles()
                         filterData(searchEditText.text.toString())
                         expandedDetailsContainer.visibility = View.GONE
                     }
@@ -1535,6 +1544,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         if (playlist != null) {
             playlist.imageUri = documentUri.toString()
             savePlaylists()
+            pruneCoverFiles()
             filterData("")
         } else if (album != null) {
             updateAlbumArt(album, documentUri)

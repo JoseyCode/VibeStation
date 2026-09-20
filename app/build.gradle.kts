@@ -70,7 +70,7 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 21.37% (after library assembly tests).
+            // Ratchet: raise as tests land, never lower. Last measured 21.92% (after playlist cover backup tests).
             rule {
                 minBound(21)
             }
