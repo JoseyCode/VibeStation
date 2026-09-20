@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 17
-        versionName = "3.0.0"
+        versionCode = 18
+        versionName = "3.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
