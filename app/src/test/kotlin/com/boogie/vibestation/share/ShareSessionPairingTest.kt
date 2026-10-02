@@ -196,6 +196,16 @@ class ShareSessionPairingTest {
         assertFalse(h.transport.running)
     }
 
+    /** A stop that was not the user's choice carries its reason to the screen. */
+    @Test
+    fun stopCanGiveAReason() {
+        h.session.start()
+
+        h.session.stop("No phone found nearby")
+
+        assertEquals(ShareState.Closed("No phone found nearby"), h.state)
+    }
+
     /** Which gestures each screen accepts. */
     @Test
     fun allowedGesturesPerState() {

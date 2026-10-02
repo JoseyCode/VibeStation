@@ -95,8 +95,11 @@ internal data class ShareManifest(
         /** Longest description kept. */
         const val MAX_DESCRIPTION = 1000
 
-        /** Longest cover payload accepted, in Base64 characters. */
-        const val MAX_COVER_CHARS = 2_000_000
+        /**
+         * Longest cover payload accepted, in Base64 characters. Room for a 3 MB original ([CoverSizing.ORIGINAL_LIMIT_BYTES])
+         * with margin; the manifest is escaped twice on the wire and still fits [ShareFraming.MAX_MESSAGE_BYTES].
+         */
+        const val MAX_COVER_CHARS = 4_500_000
 
         /**
          * Parses and validates a manifest from an untrusted peer. Text is truncated to the limits

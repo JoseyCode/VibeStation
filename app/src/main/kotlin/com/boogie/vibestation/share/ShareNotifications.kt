@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.boogie.vibestation.MainActivity
 import com.boogie.vibestation.R
 
 /**
@@ -53,7 +52,10 @@ internal class ShareNotifications(private val context: Context) {
     }
 
     private fun build(text: String): Notification {
-        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        // Back to the Share screen that is already open, not a second copy of it or the player.
+        val intent = Intent(context, ShareActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        val open = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_play_bubbly)
             .setContentTitle("Share Mode")

@@ -28,7 +28,7 @@ class ShareDiffTest {
     fun differentDurationIsNotAMatch() {
         val tracks = listOf(remote("Song", durationMs = 300_000))
         val library = listOf(local("1", "Song", durationMs = 200_000))
-        assertEquals(listOf(0), ShareDiff.missingIndices(tracks, library))
+        assertNull(ShareDiff.match(tracks, library)[0])
     }
 
     /** Durations off by up to the tolerance still match; one millisecond over does not. */
@@ -57,14 +57,14 @@ class ShareDiffTest {
     /** The key includes the artist, so the same title by another artist is new. */
     @Test
     fun differentArtistIsMissing() {
-        assertEquals(listOf(0), ShareDiff.missingIndices(listOf(remote("Song", "A")), listOf(local("1", "Song", "B"))))
+        assertNull(ShareDiff.match(listOf(remote("Song", "A")), listOf(local("1", "Song", "B")))[0])
     }
 
-    /** Missing indices keep manifest order and skip owned tracks; an empty library misses everything. */
+    /** Every track gets its own entry in manifest order: the owned one is matched, the others are null. */
     @Test
-    fun missingIndicesKeepOrder() {
+    fun matchKeepsManifestOrder() {
         val tracks = listOf(remote("A"), remote("B"), remote("C"))
-        assertEquals(listOf(0, 2), ShareDiff.missingIndices(tracks, listOf(local("2", "B"))))
-        assertEquals(listOf(0, 1, 2), ShareDiff.missingIndices(tracks, emptyList()))
+        assertEquals(listOf(null, "2", null), ShareDiff.match(tracks, listOf(local("2", "B"))).map { it?.songId })
+        assertEquals(listOf(null, null, null), ShareDiff.match(tracks, emptyList()))
     }
 }

@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 21
-        versionName = "3.1.0"
+        versionCode = 23
+        versionName = "3.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -75,14 +75,16 @@ kover {
                     "*.share.NearbyShareTransport*",
                     "*.share.ShareService*",
                     "*.share.ShareActivity*",
-                    "*.views.ShareCircleView*"
+                    "*.share.ShareHaptics*",
+                    "*.views.ShareWaveView*",
+                    "*.views.SplinePath*"
                 )
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 41.91% (after the Share Mode classes).
+            // Ratchet: raise as tests land, never lower. Last measured 44.13% (after the Share Mode screen rework).
             rule {
-                minBound(41)
+                minBound(44)
             }
         }
     }

@@ -3,8 +3,8 @@ package com.boogie.vibestation.share
 import java.io.InputStream
 
 /**
- * A [ShareTransport] with no radio. It records everything the session asks of it and lets a test, or the
- * debug simulator, play the other phone by calling the `simulate*` functions.
+ * A [ShareTransport] with no radio. It records everything the session asks of it and lets a test play the
+ * other phone by calling the `simulate*` functions.
  */
 @Suppress("TooManyFunctions") // mirrors the transport interface plus one simulate function per event
 internal class FakeShareTransport : ShareTransport {

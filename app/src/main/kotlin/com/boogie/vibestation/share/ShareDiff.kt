@@ -40,16 +40,6 @@ internal object ShareDiff {
         }
     }
 
-    /**
-     * Lists the manifest positions the receiver must be sent.
-     *
-     * @param tracks Manifest tracks in order.
-     * @param local  Songs in this device's library.
-     * @return Indices into [tracks] with no local match, ascending.
-     */
-    fun missingIndices(tracks: List<ShareTrack>, local: List<LocalTrack>): List<Int> =
-        match(tracks, local).withIndex().filter { it.value == null }.map { it.index }
-
     /** An unknown (0) duration on either side cannot rule a match out, so only the key decides. */
     private fun sameLength(a: Long, b: Long): Boolean = a <= 0 || b <= 0 || abs(a - b) <= DURATION_TOLERANCE_MS
 }

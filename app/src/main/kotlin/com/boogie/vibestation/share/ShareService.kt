@@ -32,6 +32,7 @@ class ShareService : Service() {
     private var session: ShareSession? = null
     private var searchTimeout: SearchTimeout? = null
     private var screen: ShareSession.Listener? = null
+    private var notifiedText: String? = null
 
     /** The latest session state; readable from the main thread. */
     internal var state: ShareState = ShareState.Idle
@@ -48,18 +49,27 @@ class ShareService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        notifications.enterForeground(this, ShareStatus.text(ShareState.Idle))
+        // The screen asks to start again whenever it reopens, so show what the running session is doing, not "idle".
+        val text = ShareStatus.text(if (session == null) ShareState.Idle else state)
+        notifications.enterForeground(this, text)
+        notifiedText = text
         if (session == null) begin()
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        session?.stop()
         searchTimeout?.stop()
+        session?.stop()
         session = null
-        sessionExecutor.shutdown()
-        transportExecutor.shutdown()
-        ioExecutor.shutdown()
+        // Stopping the session queues a stop of the radio, so each executor is shut down from inside the one
+        // before it, once everything it queued for the next has been submitted.
+        sessionExecutor.execute {
+            transportExecutor.execute {
+                ioExecutor.shutdown()
+                transportExecutor.shutdown()
+            }
+            sessionExecutor.shutdown()
+        }
         super.onDestroy()
     }
 
@@ -88,16 +98,20 @@ class ShareService : Service() {
         session?.offer(offer)
     }
 
-    /** Leaves Share Mode. */
-    internal fun end() {
-        session?.stop()
+    /**
+     * Leaves Share Mode.
+     *
+     * @param reason Why, when it was not the user's choice; the screen shows it.
+     */
+    internal fun end(reason: String? = null) {
+        session?.stop(reason)
     }
 
     private fun begin() {
         val incomingDir = File(cacheDir, "share")
         incomingDir.mkdirs()
         val transport = NearbyShareTransport(this, incomingDir, transportExecutor, ioExecutor)
-        searchTimeout = SearchTimeout(SEARCH_TIMEOUT_MS, HandlerShareTimer(main), ::end)
+        searchTimeout = SearchTimeout(SEARCH_TIMEOUT_MS, HandlerShareTimer(main)) { end(TIMEOUT_REASON) }
         val listener = object : ShareSession.Listener {
             override fun onState(state: ShareState) {
                 main.post { onSessionState(state) }
@@ -120,11 +134,17 @@ class ShareService : Service() {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         } else {
-            notifications.update(ShareStatus.text(new))
+            // Transfers report progress many times a second; Android drops notification updates beyond a few per second.
+            val text = ShareStatus.text(new)
+            if (text != notifiedText) {
+                notifiedText = text
+                notifications.update(text)
+            }
         }
     }
 
     private companion object {
         const val SEARCH_TIMEOUT_MS = 3 * 60 * 1000L
+        const val TIMEOUT_REASON = "No phone found nearby"
     }
 }

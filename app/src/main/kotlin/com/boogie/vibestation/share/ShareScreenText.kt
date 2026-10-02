@@ -5,11 +5,19 @@ import java.util.Locale
 /**
  * The words the Share screen draws for a state.
  *
- * @property title  Main line, largest.
- * @property detail Second line, smaller; may be empty.
- * @property hint   What dragging does right now; shown while the circle is held.
+ * @property title    Main line, largest.
+ * @property detail   Second line, smaller; may be empty.
+ * @property yesLabel What lifting the finger in the upper half does, or null when the upper half means nothing.
+ * @property noLabel  What lifting the finger in the lower half does, or null when the lower half means nothing.
+ * @property code     The verification code to draw large while the phones compare it, otherwise null.
  */
-internal data class ShareScreenText(val title: String, val detail: String, val hint: String) {
+internal data class ShareScreenText(
+    val title: String,
+    val detail: String,
+    val yesLabel: String?,
+    val noLabel: String?,
+    val code: String? = null
+) {
 
     /** Builds the text for a [ShareState]. */
     companion object {
@@ -24,28 +32,31 @@ internal data class ShareScreenText(val title: String, val detail: String, val h
          * @return The text to draw.
          */
         fun of(state: ShareState): ShareScreenText = when (state) {
-            is ShareState.Idle, is ShareState.Searching ->
-                ShareScreenText(
-                    "Looking for a phone",
-                    (state as? ShareState.Searching)?.notice ?: "Open Share Mode on the other phone",
-                    "drag down to close"
-                )
-            is ShareState.Connecting -> ShareScreenText("Connecting to ${state.peerName}", "", "drag down to cancel")
+            is ShareState.Idle -> ShareScreenText("Looking for a phone", "Open Share Mode on the other phone", null, null)
+            is ShareState.Searching -> ShareScreenText(
+                "Looking for a phone",
+                state.notice ?: "Open Share Mode on the other phone",
+                null,
+                "Close"
+            )
+            is ShareState.Connecting -> ShareScreenText("Connecting to ${state.peerName}", "", null, "Cancel")
             is ShareState.Verifying -> verifying(state)
             is ShareState.Locked -> ShareScreenText(
                 "Connected to ${state.peerName}",
                 state.lastResult?.let(::describe) ?: "Ready",
-                "drag up to send, down to disconnect"
+                "Send",
+                "Disconnect"
             )
             is ShareState.Offering ->
-                ShareScreenText("Offering ${state.manifest.name}", "Waiting for ${state.peerName}", "drag down to cancel")
+                ShareScreenText("Offering ${state.manifest.name}", "Waiting for ${state.peerName}", null, "Cancel")
             is ShareState.IncomingOffer -> ShareScreenText(
                 "Accept ${label(state.manifest.kind)} ${state.manifest.name}?",
                 "${state.missing.size} new of ${state.manifest.tracks.size}, ${megabytes(state.needBytes)}",
-                "drag up to accept, down to decline"
+                "Accept",
+                "Decline"
             )
             is ShareState.Transferring -> transferring(state)
-            is ShareState.Closed -> ShareScreenText("Share Mode closed", state.reason ?: "", "")
+            is ShareState.Closed -> ShareScreenText("Share Mode closed", state.reason ?: "", null, null)
         }
 
         /**
@@ -60,9 +71,9 @@ internal data class ShareScreenText(val title: String, val detail: String, val h
         }
 
         private fun verifying(state: ShareState.Verifying) = if (state.confirmed) {
-            ShareScreenText("Code ${state.code}", "Waiting for ${state.peerName} to confirm", "drag down to cancel")
+            ShareScreenText("Waiting for ${state.peerName}", "to confirm the code", null, "Cancel", state.code)
         } else {
-            ShareScreenText("Code ${state.code}", "Same code on ${state.peerName}'s phone?", "drag up if it matches, down if not")
+            ShareScreenText("Same code on ${state.peerName}?", "", "Codes match", "Not a match", state.code)
         }
 
         private fun transferring(state: ShareState.Transferring): ShareScreenText {
@@ -71,7 +82,8 @@ internal data class ShareScreenText(val title: String, val detail: String, val h
             return ShareScreenText(
                 "$verb ${state.manifest.name}",
                 "${state.doneFiles} of ${state.totalFiles} songs$percent",
-                "drag down to cancel"
+                null,
+                "Cancel"
             )
         }
 

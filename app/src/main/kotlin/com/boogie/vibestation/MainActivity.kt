@@ -176,6 +176,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
 
     /** Set when Share Mode was opened, so the library is reloaded on return. */
     private var reloadAfterShare = false
+
+    /** The accent colour of the current track, which Share Mode tints its waves with. */
+    private var currentAccent = Color.WHITE
     private lateinit var sharedPreferences: SharedPreferences
     private var audioVisualizer: Visualizer? = null
 
@@ -756,6 +759,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
 
     /** Tints the seek thumb, visualizer, particles, and progress ring with the track's accent color. */
     private fun applyAccentColor(color: Int) {
+        currentAccent = color
         seekBarView.thumb.setTint(color)
         audioVisualizerView.color = color
         particleView?.particleColor = color
@@ -1723,6 +1727,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      */
     private fun openShareMode(demo: Boolean) {
         reloadAfterShare = true
+        sharedPreferences.edit().putInt(ShareActivity.KEY_ACCENT, currentAccent).apply()
         startActivity(Intent(this, ShareActivity::class.java).putExtra(ShareActivity.EXTRA_DEMO, demo))
     }
 

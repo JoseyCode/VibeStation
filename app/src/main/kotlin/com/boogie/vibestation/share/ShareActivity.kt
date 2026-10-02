@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
@@ -18,37 +19,41 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
+import androidx.core.view.WindowCompat
 import com.boogie.vibestation.models.Album
 import com.boogie.vibestation.util.MusicLibraryUtil
 import com.boogie.vibestation.util.PlaylistUtil
-import com.boogie.vibestation.views.ShareCircleView
+import com.boogie.vibestation.views.ShareWaveView
 import java.util.concurrent.Executors
 
 /**
- * The Share Mode screen: a full-screen [ShareCircleView] over a dark background. It asks for the Nearby
- * permissions, starts and binds [ShareService], shows whatever state the service reports, and opens a
- * picker when the user says yes while connected. Leaving the screen (back, not rotation) turns Share Mode
- * off, since nothing is shared while the screen is closed. In a debuggable build, launching with
- * [EXTRA_DEMO] shows sample states instead of touching the radio.
+ * The Share Mode screen: a full-screen [ShareWaveView] over a dark background, tinted with the player's
+ * accent colour. It asks for the Nearby permissions, starts and binds [ShareService], shows whatever state
+ * the service reports (with the offered playlist's cover once one is out), and opens a picker when the user
+ * says yes while connected. Leaving the screen (back, not rotation) turns Share Mode off, since nothing is
+ * shared while the screen is closed. In a debuggable build, launching with [EXTRA_DEMO] shows sample states
+ * instead of touching the radio.
  */
 @Suppress("TooManyFunctions") // lifecycle, permission and picker steps of one screen
 class ShareActivity : AppCompatActivity() {
-    private lateinit var circle: ShareCircleView
+    private lateinit var wave: ShareWaveView
     private val worker = Executors.newSingleThreadExecutor()
     private var service: ShareService? = null
+    private var bound = false
     private var demoIndex = 0
+    private var coverSource: String? = null
 
     private val permissionRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(), ::onPermissions)
 
     private val listener = object : ShareSession.Listener {
         override fun onState(state: ShareState) {
-            circle.shareState = state
+            wave.shareState = state
+            showCover(state)
             if (state is ShareState.Closed) {
                 state.reason?.let { Toast.makeText(this@ShareActivity, it, Toast.LENGTH_LONG).show() }
                 finish()
@@ -71,27 +76,30 @@ class ShareActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        circle = ShareCircleView(this)
+        wave = ShareWaveView(this)
+        wave.accent = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getInt(KEY_ACCENT, Color.WHITE)
         val root = FrameLayout(this)
         root.setBackgroundColor(BACKGROUND)
-        root.addView(circle, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        root.addView(wave, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         setContentView(root)
+        // Draw behind the system bars, which the view keeps clear of itself; the bars' icons must stay light on the dark screen.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, root).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, root).isAppearanceLightNavigationBars = false
 
         if (intent.getBooleanExtra(EXTRA_DEMO, false) && isDebuggable()) {
             startDemo(root)
         } else {
-            circle.onYes = { service?.yes() }
-            circle.onNo = { service?.no() }
-            if (isDebuggable()) showDebugLog(root)
+            wave.onYes = { service?.yes() }
+            wave.onNo = { service?.no() }
             requestAccess()
         }
     }
 
     override fun onDestroy() {
         service?.attach(null)
-        if (service != null) unbindService(connection)
+        if (bound) unbindService(connection)
         if (isFinishing) service?.end()
-        ShareDebugLog.onChange = null
         worker.shutdown()
         super.onDestroy()
     }
@@ -123,15 +131,22 @@ class ShareActivity : AppCompatActivity() {
         return if (off) "Turn on Location to use Share Mode." else null
     }
 
-    /** Debug builds show the radio's own log over the circle, so two phones can be tested without a cable. */
-    private fun showDebugLog(root: FrameLayout) {
-        val text = TextView(this)
-        text.setTextColor(Color.LTGRAY)
-        text.textSize = DEBUG_TEXT_SP
-        text.setBackgroundColor(Color.argb(DEBUG_ALPHA, 0, 0, 0))
-        val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
-        root.addView(text, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, wrap, Gravity.BOTTOM))
-        ShareDebugLog.onChange = { text.text = it }
+    /** Decodes the offered item's cover off the main thread, once per offer, and hands it to the screen. */
+    private fun showCover(state: ShareState) {
+        val encoded = state.manifest?.coverBase64?.takeIf { it.isNotEmpty() }
+        if (encoded == null) {
+            coverSource = null
+            wave.cover = null
+            return
+        }
+        if (encoded === coverSource) return
+        coverSource = encoded
+        worker.execute {
+            val bitmap: Bitmap? = ShareCovers.decode(encoded, COVER_PX)
+            runOnUiThread {
+                if (coverSource === encoded && !isDestroyed) wave.cover = bitmap
+            }
+        }
     }
 
     private fun onPermissions(granted: Map<String, Boolean>) {
@@ -141,7 +156,7 @@ class ShareActivity : AppCompatActivity() {
     private fun startSharing() {
         val intent = Intent(this, ShareService::class.java)
         ContextCompat.startForegroundService(this, intent)
-        bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        bound = bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
     private fun stopWith(message: String) {
@@ -154,11 +169,13 @@ class ShareActivity : AppCompatActivity() {
         val next = Button(this)
         next.text = "Next state"
         val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
-        root.addView(next, FrameLayout.LayoutParams(wrap, wrap, Gravity.TOP or Gravity.END))
-        circle.onYes = { Toast.makeText(this, "Yes", Toast.LENGTH_SHORT).show() }
-        circle.onNo = { Toast.makeText(this, "No", Toast.LENGTH_SHORT).show() }
+        val corner = FrameLayout.LayoutParams(wrap, wrap, Gravity.TOP or Gravity.END)
+        corner.topMargin = (DEMO_TOP_DP * resources.displayMetrics.density).toInt()
+        root.addView(next, corner)
+        wave.onYes = { Toast.makeText(this, "Yes", Toast.LENGTH_SHORT).show() }
+        wave.onNo = { Toast.makeText(this, "No", Toast.LENGTH_SHORT).show() }
         next.setOnClickListener {
-            circle.shareState = ShareDemo.states[demoIndex % ShareDemo.states.size]
+            wave.shareState = ShareDemo.states[demoIndex % ShareDemo.states.size]
             demoIndex++
         }
         next.performClick()
@@ -175,7 +192,7 @@ class ShareActivity : AppCompatActivity() {
 
     /** Reads the library off the main thread, then shows the list for the chosen kind. */
     private fun loadLibraryThen(kind: ShareKind) {
-        val prefs = getSharedPreferences("RetroPrefs", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         worker.execute {
             val albumMap = HashMap<String, Album>()
             val songs = MusicLibraryUtil.queryMediaStoreSongs(contentResolver, null, albumMap)
@@ -216,13 +233,19 @@ class ShareActivity : AppCompatActivity() {
         }
     }
 
-    /** Intent extra names. */
+    /** Intent extra names and the preference the player leaves its accent colour in. */
     companion object {
         /** Intent extra that shows sample states instead of using the radio; honoured in debuggable builds only. */
         const val EXTRA_DEMO = "demo"
 
-        private const val DEBUG_TEXT_SP = 10f
-        private const val DEBUG_ALPHA = 160
+        /** Preferences file the whole app uses; the player stores [KEY_ACCENT] here before opening this screen. */
+        const val PREFS_NAME = "RetroPrefs"
+
+        /** Preference holding the colour the waves are tinted with. */
+        const val KEY_ACCENT = "share_accent"
+
+        private const val COVER_PX = 512
+        private const val DEMO_TOP_DP = 40f
         private val BACKGROUND = Color.rgb(16, 16, 20)
     }
 }

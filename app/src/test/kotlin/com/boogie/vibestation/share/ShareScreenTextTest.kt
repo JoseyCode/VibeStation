@@ -3,7 +3,6 @@ package com.boogie.vibestation.share
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class ShareScreenTextTest {
     private val playlist = SessionHarness.manifest(ShareKind.PLAYLIST, "a", "b", "c", name = "Road Trip")
@@ -18,11 +17,22 @@ class ShareScreenTextTest {
     @Test
     fun verifyingShowsCodeAndAsksToCompareUntilConfirmed() {
         val asking = ShareScreenText.of(ShareState.Verifying("Sam", "4821", false))
-        assertEquals("Code 4821", asking.title)
-        assertTrue(asking.hint.contains("up"))
+        assertEquals("4821", asking.code)
+        assertEquals("Same code on Sam?", asking.title)
+        assertEquals("Codes match", asking.yesLabel)
+        assertEquals("Not a match", asking.noLabel)
         val waiting = ShareScreenText.of(ShareState.Verifying("Sam", "4821", true))
-        assertEquals("Waiting for Sam to confirm", waiting.detail)
-        assertTrue(waiting.hint.contains("cancel"))
+        assertEquals("4821", waiting.code)
+        assertEquals("Waiting for Sam", waiting.title)
+        assertNull(waiting.yesLabel)
+        assertEquals("Cancel", waiting.noLabel)
+    }
+
+    @Test
+    fun onlyVerifyingShowsACode() {
+        for (state in ShareDemo.states) {
+            if (state !is ShareState.Verifying) assertNull(ShareScreenText.of(state).code, "$state")
+        }
     }
 
     @Test
@@ -30,7 +40,8 @@ class ShareScreenTextTest {
         val text = ShareScreenText.of(ShareState.IncomingOffer("Sam", playlist, listOf(0, 2), 5 * 1024 * 1024L))
         assertEquals("Accept playlist Road Trip?", text.title)
         assertEquals("2 new of 3, 5.0 MB", text.detail)
-        assertTrue(text.hint.contains("accept"))
+        assertEquals("Accept", text.yesLabel)
+        assertEquals("Decline", text.noLabel)
     }
 
     @Test
@@ -98,13 +109,20 @@ class ShareScreenTextTest {
         assertNull(ShareScreenText.progress(ShareState.Locked("Sam")))
     }
 
+    /** A zone has a label exactly when the session lets it do something, for every state the demo can show. */
     @Test
-    fun everyDragAllowedStateHasAHint() {
-        val states = listOf(
-            ShareState.Searching(), ShareState.Connecting("S"), ShareState.Verifying("S", "1", false),
-            ShareState.Locked("S"), ShareState.Offering("S", playlist),
-            ShareState.IncomingOffer("S", playlist, listOf(0), 1), ShareState.Transferring("S", playlist, true, 0, 1, 0, 1)
-        )
-        states.forEach { assertTrue(ShareScreenText.of(it).hint.isNotEmpty(), "$it") }
+    fun labelsMatchWhatEachZoneCanDo() {
+        (ShareDemo.states + ShareState.Idle).forEach {
+            val text = ShareScreenText.of(it)
+            assertEquals(it.allowsYes, text.yesLabel != null, "yes label of $it")
+            assertEquals(it.allowsNo, text.noLabel != null, "no label of $it")
+        }
+    }
+
+    @Test
+    fun lockedOffersSendAndDisconnect() {
+        val text = ShareScreenText.of(ShareState.Locked("Sam"))
+        assertEquals("Send", text.yesLabel)
+        assertEquals("Disconnect", text.noLabel)
     }
 }

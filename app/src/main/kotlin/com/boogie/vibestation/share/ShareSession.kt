@@ -68,8 +68,12 @@ internal class ShareSession(
         setState(ShareState.Searching())
     }
 
-    /** Leaves Share Mode: drops any connection and stops the radio. */
-    fun stop() = post { shutdown(null) }
+    /**
+     * Leaves Share Mode: drops any connection and stops the radio.
+     *
+     * @param reason Why, when it was not the user's choice; the screen shows it.
+     */
+    fun stop(reason: String? = null) = post { shutdown(reason) }
 
     /** The user dragged up: confirm the code, pick something to send, or accept the incoming offer. */
     fun yes() = post {

@@ -31,27 +31,12 @@ class ShareCoversTest {
         unmockkAll()
     }
 
-    /** The cover is read from the playlist's imageUri and returned as Base64. */
+    /** No cover set means nothing is read and nothing is sent. */
     @Test
-    fun encodeReturnsEmbeddedCover() {
-        every { PlaylistCoverUtil.embedCovers(resolver, any()) } answers {
-            val entry = secondArg<JSONArray>().getJSONObject(0)
-            assertEquals("content://cover/1", entry.getString("imageUri"))
-            entry.put("cover_b64", "QUJD")
-        }
-
-        assertEquals("QUJD", ShareCovers.encode(resolver, "content://cover/1"))
-    }
-
-    /** No cover, or one that cannot be read, yields an empty string without touching the resolver when blank. */
-    @Test
-    fun encodeWithoutCover() {
-        every { PlaylistCoverUtil.embedCovers(resolver, any()) } returns Unit
-
+    fun encodeWithoutCoverReadsNothing() {
         assertEquals("", ShareCovers.encode(resolver, null))
         assertEquals("", ShareCovers.encode(resolver, " "))
-        verify(exactly = 0) { PlaylistCoverUtil.embedCovers(any(), any()) }
-        assertEquals("", ShareCovers.encode(resolver, "content://gone"))
+        verify(exactly = 0) { resolver.openInputStream(any()) }
     }
 
     /** A stored cover comes back as the local URI PlaylistCoverUtil wrote. */

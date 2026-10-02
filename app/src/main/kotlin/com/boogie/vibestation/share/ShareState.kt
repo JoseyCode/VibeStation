@@ -69,3 +69,12 @@ internal val ShareState.allowsYes: Boolean
 /** Whether dragging down currently means something on this screen. */
 internal val ShareState.allowsNo: Boolean
     get() = this !is ShareState.Idle && this !is ShareState.Closed
+
+/** The offer this state is about, or null when no offer is out, incoming or moving. */
+internal val ShareState.manifest: ShareManifest?
+    get() = when (this) {
+        is ShareState.Offering -> manifest
+        is ShareState.IncomingOffer -> manifest
+        is ShareState.Transferring -> manifest
+        else -> null
+    }

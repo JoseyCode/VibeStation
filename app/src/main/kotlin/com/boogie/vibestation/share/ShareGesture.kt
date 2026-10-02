@@ -1,99 +1,128 @@
 package com.boogie.vibestation.share
 
 import kotlin.math.abs
+import kotlin.math.hypot
 
 /** What lifting the finger meant. */
 internal enum class GestureOutcome {
-    /** The drag did not reach the threshold, or there was no active drag; the circle springs back. */
+    /** Nothing was armed, or there was no active drag; the screen settles back. */
     NONE,
 
-    /** Dragged up far enough: send, accept, or confirm. */
+    /** Released in the upper half: send, accept, or confirm. */
     YES,
 
-    /** Dragged down far enough: close, decline, or reject. */
+    /** Released in the lower half: close, decline, or reject. */
     NO
 }
+
+/** Which half of the screen the finger is in. The strip around the middle belongs to neither. */
+internal enum class GestureZone { NONE, YES, NO }
 
 /**
  * Snapshot of a drag for drawing and haptics.
  *
  * @property active   True while a finger is down and the gesture has not been invalidated.
- * @property progress Drag distance as a fraction of the full travel, from -1 (fully down, "no") to 1
- *                    (fully up, "yes"). Always 0 in a direction that is not currently allowed.
- * @property armed    True once the drag is past the commit threshold, so releasing now will commit.
+ * @property x        Finger position in pixels; meaningless when not [active].
+ * @property y        Finger position in pixels; meaningless when not [active].
+ * @property zone     The half the finger is in, or NONE in the middle strip or when not [active].
+ * @property progress How far into the zone the finger is, from -1 (bottom edge, "no") to 1 (top edge, "yes");
+ *                    0 in the middle strip and in a zone that currently means nothing.
+ * @property armed    True while releasing would commit.
+ * @property blocked  True while the finger is in a zone that currently means nothing, so the screen can say so.
  */
-internal data class GestureState(val active: Boolean, val progress: Float, val armed: Boolean)
+internal data class GestureState(
+    val active: Boolean,
+    val x: Float,
+    val y: Float,
+    val zone: GestureZone,
+    val progress: Float,
+    val armed: Boolean,
+    val blocked: Boolean
+)
 
 /**
- * The hold-and-drag vocabulary of Share Mode as pure math: hold the circle, drag up for yes, drag down
- * for no, and sideways does nothing (only the vertical position is ever given to this class). The
- * custom view feeds it touch positions and draws [state]; nothing here touches Android.
+ * The touch vocabulary of Share Mode as pure math: put a finger down anywhere and drag it anywhere. Above the
+ * middle of the screen is yes, below is no, and a thin strip around the middle is neither. A zone arms once the
+ * finger is clearly inside it and has moved more than the touch slop from where it went down, so a plain tap
+ * never commits; lifting while armed commits. Once armed it stays armed until the finger backs out a little,
+ * so a finger resting on the boundary does not flicker. Nothing here touches Android.
  *
- * @param travelPx       Vertical drag distance that counts as a full swipe; must be positive.
- * @param commitFraction Fraction of [travelPx] at which a release commits, in (0, 1].
+ * @param heightPx Height of the touch area in pixels; the middle is half of it. Must be positive.
+ * @param slopPx   How far the finger must travel from where it went down before anything can arm; not negative.
  */
-internal class ShareGesture(private val travelPx: Float, private val commitFraction: Float = DEFAULT_COMMIT) {
+@Suppress("TooManyFunctions") // one state machine; its private helpers are one-liners
+internal class ShareGesture(private val heightPx: Float, private val slopPx: Float) {
 
     init {
-        require(travelPx > 0f) { "travelPx must be positive" }
-        require(commitFraction > 0f && commitFraction <= 1f) { "commitFraction must be in (0, 1]" }
+        require(heightPx > 0f) { "heightPx must be positive" }
+        require(slopPx >= 0f) { "slopPx must not be negative" }
     }
 
-    /** Whether dragging up currently means something. The session changes this with its state. */
+    /** Whether the upper half currently means something. The session changes this with its state. */
     var allowYes: Boolean = true
 
-    /** Whether dragging down currently means something. The session changes this with its state. */
+    /** Whether the lower half currently means something. The session changes this with its state. */
     var allowNo: Boolean = true
 
     private var active = false
+    private var startX = 0f
     private var startY = 0f
-    private var progress = 0f
+    private var x = 0f
+    private var y = 0f
+    private var moved = false
+    private var armedZone = GestureZone.NONE
 
     /** Current drag snapshot. */
     val state: GestureState
-        get() = GestureState(active, progress, active && abs(progress) >= commitFraction)
+        get() {
+            if (!active) return GestureState(false, x, y, GestureZone.NONE, 0f, armed = false, blocked = false)
+            val offset = offsetOf(y)
+            val zone = zoneOf(offset)
+            val blocked = isBlocked(zone)
+            val progress = if (blocked || zone == GestureZone.NONE) 0f else depth(offset) * (if (offset > 0f) 1f else -1f)
+            val armed = zone != GestureZone.NONE && zone == armedZone && !blocked
+            return GestureState(true, x, y, zone, progress, armed, blocked)
+        }
 
     /**
      * Starts a drag. A gesture only ever begins here, so one that was invalidated cannot be resumed.
      *
+     * @param x Horizontal touch position in pixels.
      * @param y Vertical touch position in pixels (screen coordinates grow downward).
-     * @return The new state, at zero progress.
+     * @return The new state, which is never armed.
      */
-    fun down(y: Float): GestureState {
+    fun down(x: Float, y: Float): GestureState {
         active = true
+        startX = x
         startY = y
-        progress = 0f
-        return state
+        moved = false
+        armedZone = GestureZone.NONE
+        return follow(x, y)
     }
 
     /**
-     * Updates the drag. Ignored when no drag is active.
+     * Moves the finger. Ignored when no drag is active.
      *
+     * @param x Horizontal touch position in pixels.
      * @param y Vertical touch position in pixels.
-     * @return The new state; progress is clamped to [-1, 1] and held at 0 in a disallowed direction.
+     * @return The new state.
      */
-    fun move(y: Float): GestureState {
-        if (!active) return state
-        val raw = ((startY - y) / travelPx).coerceIn(-1f, 1f)
-        progress = when {
-            raw > 0f && !allowYes -> 0f
-            raw < 0f && !allowNo -> 0f
-            else -> raw
-        }
-        return state
-    }
+    fun move(x: Float, y: Float): GestureState = if (active) follow(x, y) else state
 
     /**
      * Ends the drag and reports whether it committed.
      *
-     * @return [GestureOutcome.YES] or [GestureOutcome.NO] if released past the threshold, else NONE.
+     * @return [GestureOutcome.YES] or [GestureOutcome.NO] if released while armed, else NONE.
      */
     fun up(): GestureOutcome {
-        val outcome = when {
-            !active -> GestureOutcome.NONE
-            progress >= commitFraction -> GestureOutcome.YES
-            progress <= -commitFraction -> GestureOutcome.NO
-            else -> GestureOutcome.NONE
+        val outcome = if (!active) {
+            GestureOutcome.NONE
+        } else {
+            when (state.takeIf { it.armed }?.zone) {
+                GestureZone.YES -> GestureOutcome.YES
+                GestureZone.NO -> GestureOutcome.NO
+                else -> GestureOutcome.NONE
+            }
         }
         reset()
         return outcome
@@ -108,12 +137,50 @@ internal class ShareGesture(private val travelPx: Float, private val commitFract
      */
     fun invalidate() = reset()
 
-    private fun reset() {
-        active = false
-        progress = 0f
+    private fun follow(newX: Float, newY: Float): GestureState {
+        x = newX
+        y = newY
+        if (!moved && hypot(newX - startX, newY - startY) > slopPx) moved = true
+        val offset = offsetOf(newY)
+        val zone = zoneOf(offset)
+        val threshold = if (armedZone == zone) ARM_AT - HYSTERESIS else ARM_AT
+        armedZone = if (canArm(zone) && depth(offset) >= threshold) zone else GestureZone.NONE
+        return state
     }
 
-    private companion object {
-        const val DEFAULT_COMMIT = 0.6f
+    /** A zone can only arm once the finger has really travelled, and only if the zone means something right now. */
+    private fun canArm(zone: GestureZone) = moved && zone != GestureZone.NONE && !isBlocked(zone)
+
+    /** Where [y] is relative to the middle: 1 at the top edge, -1 at the bottom edge. */
+    private fun offsetOf(y: Float) = ((heightPx / 2f - y) / (heightPx / 2f)).coerceIn(-1f, 1f)
+
+    private fun zoneOf(offset: Float) = when {
+        abs(offset) <= DEAD_BAND -> GestureZone.NONE
+        offset > 0f -> GestureZone.YES
+        else -> GestureZone.NO
+    }
+
+    private fun isBlocked(zone: GestureZone) =
+        (zone == GestureZone.YES && !allowYes) || (zone == GestureZone.NO && !allowNo)
+
+    /** How deep into its zone [offset] is: 0 at the edge of the middle strip, 1 at the edge of the screen. */
+    private fun depth(offset: Float) = ((abs(offset) - DEAD_BAND) / (1f - DEAD_BAND)).coerceIn(0f, 1f)
+
+    private fun reset() {
+        active = false
+        moved = false
+        armedZone = GestureZone.NONE
+    }
+
+    /** Tuning for the zones. */
+    companion object {
+        /** Half-width of the middle strip, as a fraction of half the height. */
+        const val DEAD_BAND = 0.08f
+
+        /** Depth into a zone at which it arms. */
+        const val ARM_AT = 0.25f
+
+        /** How far back out of an armed zone the finger must come before it disarms. */
+        const val HYSTERESIS = 0.06f
     }
 }

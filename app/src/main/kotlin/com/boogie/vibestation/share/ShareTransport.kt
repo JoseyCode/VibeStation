@@ -13,10 +13,10 @@ internal class ShareFileSource(val index: Int, val sizeBytes: Long, val open: ()
 
 /**
  * The radio layer under Share Mode, kept minimal so the session logic can be tested without one. The
- * real implementation wraps Google Nearby Connections; [FakeShareTransport] stands in for tests and the
- * debug simulator. Contract: after [start] the transport advertises and discovers until [stop], and
- * resumes doing so when a connection ends. Calls may come from any thread; listener callbacks may arrive
- * on any thread too, so the [ShareSession] serializes them.
+ * real implementation wraps Google Nearby Connections; tests use a fake with no radio. Contract: after
+ * [start] the transport advertises and discovers until [stop], and resumes doing so when a connection
+ * ends. Calls may come from any thread; listener callbacks may arrive on any thread too, so the
+ * [ShareSession] serializes them.
  */
 internal interface ShareTransport {
 
