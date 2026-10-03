@@ -260,10 +260,8 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         setupAdapters()
         setupLaunchers()
 
-        // Launch and bind background Audio Service
-        val serviceIntent = Intent(this, AudioService::class.java)
-        startService(serviceIntent)
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+        // Bind the Audio Service; it starts itself once playback begins, so an idle app leaves nothing running
+        bindService(Intent(this, AudioService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
 
         // System back navigation handling: collapse player panels or clear selections first
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
