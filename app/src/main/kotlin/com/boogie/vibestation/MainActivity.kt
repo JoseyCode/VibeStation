@@ -212,6 +212,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         /** Triggered if the service connection is unexpectedly lost. */
         override fun onServiceDisconnected(name: ComponentName) {
             isBound = false
+            audioService = null
         }
     }
 
@@ -1051,15 +1052,18 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             imageView.setImageResource(R.drawable.ic_albums_bubbly)
         }
 
-        imageExecutor.execute {
-            val decodedBitmap = ArtUtil.decodeArtworkBitmap(contentResolver, artworkPath, isUri, qualityMode)
-            if (decodedBitmap != null) artworkCache.put(cacheKey, decodedBitmap)
-            mainHandler.post {
-                if (artworkPath == imageView.tag) {
-                    if (decodedBitmap != null) {
-                        imageView.setImageBitmap(decodedBitmap)
-                    } else {
-                        imageView.setImageResource(R.drawable.ic_albums_bubbly)
+        // A shut-down executor rejects work, which would crash the process
+        if (!isDestroyed && !imageExecutor.isShutdown) {
+            imageExecutor.execute {
+                val decodedBitmap = ArtUtil.decodeArtworkBitmap(contentResolver, artworkPath, isUri, qualityMode)
+                if (decodedBitmap != null) artworkCache.put(cacheKey, decodedBitmap)
+                mainHandler.post {
+                    if (artworkPath == imageView.tag) {
+                        if (decodedBitmap != null) {
+                            imageView.setImageBitmap(decodedBitmap)
+                        } else {
+                            imageView.setImageResource(R.drawable.ic_albums_bubbly)
+                        }
                     }
                 }
             }
@@ -1680,6 +1684,8 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * and shuts down image loading thread executors.
      */
     override fun onDestroy() {
+        // The service outlives this activity, so it must stop calling into it before the executors shut down
+        if (audioService?.callback === this) audioService?.callback = null
         super.onDestroy()
         if (isBound) {
             unbindService(serviceConnection)
