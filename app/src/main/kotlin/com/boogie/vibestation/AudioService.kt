@@ -30,6 +30,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.boogie.vibestation.models.Song
 import java.util.concurrent.Executors
@@ -67,7 +68,13 @@ class AudioService : Service() {
     private lateinit var audioManager: AudioManager
     private val artworkExecutor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val timeoutRunnable = Runnable { stopSelf() }
+    private val timeoutRunnable = Runnable { stopPlaybackAndService() }
+
+    /** True while the service is in the started state, so it survives its activity unbinding. */
+    private var isStarted = false
+
+    /** Focus request held while playing, kept so it can be abandoned on stop. */
+    private var focusRequest: AudioFocusRequest? = null
 
     private val queue = PlaybackQueue()
     private var equalizerInstance: Equalizer? = null
@@ -203,6 +210,7 @@ class AudioService : Service() {
             mediaPlayer.setDataSource(this, trackUri)
             mediaPlayer.prepare()
             applyPlaybackSpeed(playbackSpeed)
+            ensureStarted()
             mediaPlayer.start()
             cancelTimeout()
 
@@ -233,10 +241,42 @@ class AudioService : Service() {
             mediaPlayer.pause()
             startTimeout()
         } else if (requestFocus()) {
+            ensureStarted()
             mediaPlayer.start()
             cancelTimeout()
         }
         updateSystemPlayerAndUI()
+    }
+
+    /**
+     * Puts the service in the started state and re-activates the media session, so playback keeps
+     * running after the activity unbinds. Needed again after [stopPlaybackAndService].
+     */
+    private fun ensureStarted() {
+        mediaSession.isActive = true
+        if (isStarted) return
+        startService(Intent(this, AudioService::class.java))
+        isStarted = true
+    }
+
+    /**
+     * Pauses, removes the notification and stops the service. Safe to call repeatedly, since the
+     * Close button, the notification's delete intent and the inactivity timeout can all land in a row.
+     */
+    private fun stopPlaybackAndService() {
+        cancelTimeout()
+        artLoadGeneration++
+        isArtLoading = false
+        if (mediaPlayer.isPlaying) mediaPlayer.pause()
+        abandonFocus()
+        mediaSession.setPlaybackState(
+            PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_STOPPED, 0L, 1.0f).build()
+        )
+        mediaSession.isActive = false
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        isStarted = false
+        stopSelf()
+        callback?.onPlaybackStateChanged(false)
     }
 
     /** Starts the 10-minute inactivity timeout. */
@@ -291,8 +331,17 @@ class AudioService : Service() {
             ACTION_PLAY_PAUSE -> togglePlayPause()
             ACTION_NEXT -> playNext()
             ACTION_PREV -> playPrev()
+            ACTION_STOP -> stopPlaybackAndService()
         }
+        // A stale notification tap can start a fresh process with nothing loaded; don't linger as a zombie
+        if (currentSong == null && !mediaPlayer.isPlaying) stopSelf(startId)
         return START_NOT_STICKY
+    }
+
+    /** Swiping the app away stops a paused player but lets a playing one carry on. */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (!mediaPlayer.isPlaying) stopPlaybackAndService()
     }
 
     /**
@@ -364,7 +413,7 @@ class AudioService : Service() {
         mediaSession.setMetadata(metadataBuilder.build())
 
         // 2. Refresh Foreground Notification
-        startForeground(NOTIFICATION_ID, buildNotification(song, art, isPlaying))
+        if (isStarted) startForeground(NOTIFICATION_ID, buildNotification(song, art, isPlaying))
 
         // 3. Notify Activity UI
         callback?.let {
@@ -397,6 +446,8 @@ class AudioService : Service() {
             .addAction(R.drawable.ic_prev_bubbly, "Prev", servicePendingIntent(ACTION_PREV))
             .addAction(playPauseIcon, "Play/Pause", servicePendingIntent(ACTION_PLAY_PAUSE))
             .addAction(R.drawable.ic_next_bubbly, "Next", servicePendingIntent(ACTION_NEXT))
+            .addAction(R.drawable.ic_close_bubbly, "Close", servicePendingIntent(ACTION_STOP))
+            .setDeleteIntent(servicePendingIntent(ACTION_STOP))
             .setStyle(
                 MediaStyle()
                     .setMediaSession(mediaSession.sessionToken)
@@ -420,23 +471,38 @@ class AudioService : Service() {
     @Suppress("DEPRECATION")
     private fun requestFocus(): Boolean {
         val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            val request = focusRequest ?: AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setOnAudioFocusChangeListener(audioFocusChangeListener)
                 .build()
-            audioManager.requestAudioFocus(focusRequest)
+                .also { focusRequest = it }
+            audioManager.requestAudioFocus(request)
         } else {
             audioManager.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
+    /** Gives audio focus back to the OS so other apps can resume. */
+    @Suppress("DEPRECATION")
+    private fun abandonFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        } else {
+            audioManager.abandonAudioFocus(audioFocusChangeListener)
+        }
+    }
+
     /** Sets up MediaSessionCompat options and callback listener definitions. */
     private fun setupMediaSession() {
         mediaSession = MediaSessionCompat(this, "VibeStation")
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
-            override fun onPlay() = togglePlayPause()
+            override fun onPlay() {
+                if (!mediaPlayer.isPlaying) togglePlayPause()
+            }
 
-            override fun onPause() = togglePlayPause()
+            override fun onPause() {
+                if (mediaPlayer.isPlaying) togglePlayPause()
+            }
 
             override fun onSkipToNext() = playNext()
 
@@ -464,7 +530,10 @@ class AudioService : Service() {
     override fun onDestroy() {
         unregisterReceiver(noisyReceiver)
         super.onDestroy()
+        callback = null
         cancelTimeout()
+        abandonFocus()
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         equalizerInstance?.release()
         mediaPlayer.release()
         mediaSession.release()
@@ -481,6 +550,9 @@ class AudioService : Service() {
 
         /** Returns to the previous song, or restarts the current one. */
         const val ACTION_PREV = "com.boogie.vibestation.ACTION_PREV"
+
+        /** Pauses, removes the notification and stops the service. */
+        const val ACTION_STOP = "com.boogie.vibestation.ACTION_STOP"
 
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "vibe_channel"
