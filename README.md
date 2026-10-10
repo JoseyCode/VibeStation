@@ -88,6 +88,12 @@ Run the full verification suite before committing:
 ```
 It runs JVM unit tests (including ArchUnit layer rules), Android Lint, detekt with ktlint (`config/detekt/`), a Kover line-coverage floor, and CPD copy-paste detection. Existing detekt and lint findings are captured in baseline files, so new findings fail the build.
 
+A `pre-push` hook in `.githooks/` runs `checkQuality` automatically before every `git push` and aborts the push if it fails. Enable it once per clone:
+```bash
+git config core.hooksPath .githooks
+```
+Skip it in an emergency with `git push --no-verify`.
+
 ## License
 
 VibeStation is licensed under the GNU General Public License v3.0.
