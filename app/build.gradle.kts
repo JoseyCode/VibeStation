@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 24
-        versionName = "3.1.3"
+        versionCode = 25
+        versionName = "3.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -30,6 +30,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -82,7 +85,7 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 44.13% (after the Share Mode screen rework).
+            // Ratchet: raise as tests land, never lower. Last measured 44.03% (after extracting the AudioService lifecycle rules into PlaybackLifecycle).
             rule {
                 minBound(44)
             }

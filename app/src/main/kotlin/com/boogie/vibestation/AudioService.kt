@@ -70,8 +70,8 @@ class AudioService : Service() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timeoutRunnable = Runnable { stopPlaybackAndService() }
 
-    /** True while the service is in the started state, so it survives its activity unbinding. */
-    private var isStarted = false
+    /** Decides when the service is started and when it must stop itself. */
+    private val lifecycle = PlaybackLifecycle()
 
     /** Focus request held while playing, kept so it can be abandoned on stop. */
     private var focusRequest: AudioFocusRequest? = null
@@ -254,9 +254,7 @@ class AudioService : Service() {
      */
     private fun ensureStarted() {
         mediaSession.isActive = true
-        if (isStarted) return
-        startService(Intent(this, AudioService::class.java))
-        isStarted = true
+        if (lifecycle.markStarted()) startService(Intent(this, AudioService::class.java))
     }
 
     /**
@@ -274,7 +272,7 @@ class AudioService : Service() {
         )
         mediaSession.isActive = false
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        isStarted = false
+        lifecycle.markStopped()
         stopSelf()
         callback?.onPlaybackStateChanged(false)
     }
@@ -334,14 +332,14 @@ class AudioService : Service() {
             ACTION_STOP -> stopPlaybackAndService()
         }
         // A stale notification tap can start a fresh process with nothing loaded; don't linger as a zombie
-        if (currentSong == null && !mediaPlayer.isPlaying) stopSelf(startId)
+        if (lifecycle.shouldStopOnStartCommand(currentSong != null, mediaPlayer.isPlaying)) stopSelf(startId)
         return START_NOT_STICKY
     }
 
     /** Swiping the app away stops a paused player but lets a playing one carry on. */
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        if (!mediaPlayer.isPlaying) stopPlaybackAndService()
+        if (lifecycle.shouldStopOnTaskRemoved(mediaPlayer.isPlaying)) stopPlaybackAndService()
     }
 
     /**
@@ -413,7 +411,7 @@ class AudioService : Service() {
         mediaSession.setMetadata(metadataBuilder.build())
 
         // 2. Refresh Foreground Notification
-        if (isStarted) startForeground(NOTIFICATION_ID, buildNotification(song, art, isPlaying))
+        if (lifecycle.isStarted) startForeground(NOTIFICATION_ID, buildNotification(song, art, isPlaying))
 
         // 3. Notify Activity UI
         callback?.let {
@@ -497,11 +495,11 @@ class AudioService : Service() {
         mediaSession = MediaSessionCompat(this, "VibeStation")
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
-                if (!mediaPlayer.isPlaying) togglePlayPause()
+                if (lifecycle.shouldToggleOnPlay(mediaPlayer.isPlaying)) togglePlayPause()
             }
 
             override fun onPause() {
-                if (mediaPlayer.isPlaying) togglePlayPause()
+                if (lifecycle.shouldToggleOnPause(mediaPlayer.isPlaying)) togglePlayPause()
             }
 
             override fun onSkipToNext() = playNext()

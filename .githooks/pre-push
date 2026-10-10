@@ -1,0 +1,24 @@
+#!/bin/bash
+# Runs the full quality suite before any push so broken code never reaches the remote.
+# Bypass in an emergency with: git push --no-verify
+
+zero="0000000000000000000000000000000000000000"
+pushing_commits=false
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+    # A delete push (local sha all zeros) has nothing to verify.
+    if [ "$local_sha" != "$zero" ]; then
+        pushing_commits=true
+    fi
+done
+
+if [ "$pushing_commits" = false ]; then
+    exit 0
+fi
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+echo "pre-push: running ./gradlew checkQuality (git push --no-verify to skip)..."
+if ! ./gradlew checkQuality; then
+    echo "pre-push: checkQuality failed, push aborted." >&2
+    exit 1
+fi

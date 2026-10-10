@@ -22,6 +22,7 @@
   - `0.0.x`: Very minor changes / bug fixes.
   - `0.x.x`: Ending of minor upgrades / feature additions.
   - `x.x.x`: Major upgrades / overhauls.
+* **Single Source of Truth:** The app version lives only in `app/build.gradle.kts` (`versionName` + `versionCode`). The top-bar label reads it via `BuildConfig.VERSION_NAME` through `AppConfig.APP_VERSION`. Never hardcode a version string anywhere else. When bumping a build: increment `versionCode` by 1, set `versionName` per the schema above, and name the exported APK `VibeStation-<versionName>.apk` so the file, the installed build, and the top bar all match.
 * **Agent Context:** All agents must adhere to this file and versioning schema when exporting builds.
 
 ## 6. GitHub Commit & PR Explanations
@@ -37,5 +38,6 @@
   ```
 * **Zero Regressions:** All JUnit unit tests and ArchUnit architectural constraints (`./gradlew testDebugUnitTest`) must pass. No new Android Lint errors (`./gradlew lintDebug`) beyond the baseline in `app/lint-baseline.xml` are permitted.
 * **Static Analysis & Coverage:** `./gradlew detekt` (complexity, code smells, and ktlint style via `config/detekt/detekt.yml`; pre-existing findings live in `config/detekt/baseline.xml`, so any new finding fails the build) and `./gradlew koverVerifyDebug` (line-coverage floor set in `app/build.gradle.kts`; raise it when coverage improves, never lower it).
+* **Pre-Push Hook:** `.githooks/pre-push` runs `./gradlew checkQuality` before every push (enable per clone with `git config core.hooksPath .githooks`). Never bypass it with `--no-verify` unless the user explicitly asks.
 * **Complexity & Duplication Audits:** Review CPD output (`./gradlew cpd`). Never introduce copy-paste duplicated logic; extract reusable helper functions or classes instead. Adhere to the method complexity limits in `detekt.yml` and keep classes focused and modular.
 
