@@ -22,6 +22,7 @@
   - `0.0.x`: Very minor changes / bug fixes.
   - `0.x.x`: Ending of minor upgrades / feature additions.
   - `x.x.x`: Major upgrades / overhauls.
+* **Single Source of Truth:** The app version lives only in `app/build.gradle.kts` (`versionName` + `versionCode`). The top-bar label reads it via `BuildConfig.VERSION_NAME` through `AppConfig.APP_VERSION`. Never hardcode a version string anywhere else. When bumping a build: increment `versionCode` by 1, set `versionName` per the schema above, and name the exported APK `VibeStation-<versionName>.apk` so the file, the installed build, and the top bar all match.
 * **Agent Context:** All agents must adhere to this file and versioning schema when exporting builds.
 
 ## 6. GitHub Commit & PR Explanations

@@ -18,6 +18,6 @@ class AppConfigTest {
             AppConfig.APP_VERSION.matches(Regex("""^\d+\.\d+\.\d+$""")),
             "APP_VERSION should follow semantic versioning"
         )
-        assertEquals("3.0.0", AppConfig.APP_VERSION)
+        assertEquals(BuildConfig.VERSION_NAME, AppConfig.APP_VERSION)
     }
 }

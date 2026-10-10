@@ -6,7 +6,8 @@ package com.boogie.vibestation
 object AppConfig {
 
     /**
-     * Currently active application release version string displayed across UI headers.
+     * Release version string displayed across UI headers. Sourced from `versionName` in
+     * `app/build.gradle.kts` so the UI and the APK can never drift; never hardcode it here.
      */
-    const val APP_VERSION = "3.0.0"
+    val APP_VERSION: String = BuildConfig.VERSION_NAME
 }
