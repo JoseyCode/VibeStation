@@ -85,7 +85,7 @@ kover {
             }
         }
         verify {
-            // Ratchet: raise as tests land, never lower. Last measured 44.13% (after the Share Mode screen rework).
+            // Ratchet: raise as tests land, never lower. Last measured 44.03% (after extracting the AudioService lifecycle rules into PlaybackLifecycle).
             rule {
                 minBound(44)
             }
