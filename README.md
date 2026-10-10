@@ -87,3 +87,15 @@ Run the full verification suite before committing:
 ./gradlew checkQuality
 ```
 It runs JVM unit tests (including ArchUnit layer rules), Android Lint, detekt with ktlint (`config/detekt/`), a Kover line-coverage floor, and CPD copy-paste detection. Existing detekt and lint findings are captured in baseline files, so new findings fail the build.
+
+## License
+
+VibeStation is licensed under the GNU General Public License v3.0.
+See [LICENSE](LICENSE) for the full text.
+
+### Additional permission under GNU GPL version 3 section 7
+
+If you modify this Program, or any covered work, by linking or
+combining it with Google Play Services (or a modified version of
+that library), the licensors of this Program grant you additional
+permission to convey the resulting work.
