@@ -1,21 +1,27 @@
 #!/bin/bash
-# Runs the full quality suite before any push so broken code never reaches the remote.
+# Before any push: refuse to publish the real sync password, then run the full quality suite so broken code never reaches the remote.
+# The password is read from VIBE_PASSWORD or a .env (this repo's, or the sibling VibeStation-Web one); see scripts/check-no-secret.sh.
 # Bypass in an emergency with: git push --no-verify
 
 zero="0000000000000000000000000000000000000000"
 pushing_commits=false
+push_refs="$(cat)"
 while read -r _local_ref local_sha _remote_ref _remote_sha; do
     # A delete push (local sha all zeros) has nothing to verify.
-    if [ "$local_sha" != "$zero" ]; then
+    if [ -n "$local_sha" ] && [ "$local_sha" != "$zero" ]; then
         pushing_commits=true
     fi
-done
+done <<< "$push_refs"
 
 if [ "$pushing_commits" = false ]; then
     exit 0
 fi
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if ! ./scripts/check-no-secret.sh <<< "$push_refs"; then
+    exit 1
+fi
 
 echo "pre-push: running ./gradlew checkQuality (git push --no-verify to skip)..."
 if ! ./gradlew checkQuality; then
