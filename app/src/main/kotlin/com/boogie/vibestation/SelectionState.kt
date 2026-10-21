@@ -73,10 +73,16 @@ internal class SelectionState {
         return AddResult(added, duplicates)
     }
 
-    /** Removes every track from [playlist] whose ID matches a selected song. */
-    fun removeFrom(playlist: Playlist) {
+    /**
+     * Removes every track from [playlist] whose ID matches a selected song.
+     *
+     * @return The tracks that were removed, so the removal can be reported to the sync server.
+     */
+    fun removeFrom(playlist: Playlist): List<Song> {
         val selectedIds = selected.mapTo(HashSet()) { it.id }
+        val removed = playlist.songs.filter { it.id in selectedIds }
         playlist.songs.removeAll { it.id in selectedIds }
+        return removed
     }
 
     /**

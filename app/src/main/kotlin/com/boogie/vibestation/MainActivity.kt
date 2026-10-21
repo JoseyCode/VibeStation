@@ -30,6 +30,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.Gravity
@@ -76,6 +77,7 @@ import com.boogie.vibestation.util.FormatUtil.formatSpeed
 import com.boogie.vibestation.util.FormatUtil.formatTime
 import com.boogie.vibestation.util.MediaMetadataUtil
 import com.boogie.vibestation.util.MusicLibraryUtil
+import com.boogie.vibestation.util.PendingDeletions
 import com.boogie.vibestation.util.PlaylistCoverUtil
 import com.boogie.vibestation.util.PlaylistUtil
 import com.boogie.vibestation.views.CircularProgressView
@@ -860,6 +862,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                 val enteredName = nameField.text.toString().trim()
                 val newPlaylist = Playlist(enteredName.ifEmpty { "New Playlist" }, null)
                 newPlaylist.description = descField.text.toString().trim()
+                newPlaylist.touch()
                 allPlaylists.add(newPlaylist)
                 savePlaylists()
                 onCreated(newPlaylist)
@@ -916,7 +919,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         AlertDialog.Builder(this)
             .setTitle("Remove ${selection.size} songs?")
             .setPositiveButton("Yes") { _, _ ->
-                selection.removeFrom(playlist)
+                pendingDeletions.recordTracks(playlist.name, selection.removeFrom(playlist))
                 savePlaylists()
                 filterData("")
                 clearSelection()
@@ -996,6 +999,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                     0 -> {
                         val newPlaylist = Playlist(album.name, null)
                         newPlaylist.songs.addAll(album.songs)
+                        newPlaylist.touch()
                         allPlaylists.add(newPlaylist)
                         savePlaylists()
                         filterData(searchEditText.text.toString())
@@ -1257,6 +1261,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         }
     }
 
+    /** Deletions waiting to be sent to the sync server; see [PendingDeletions]. */
+    private val pendingDeletions by lazy { PendingDeletions(sharedPreferences) }
+
     /** Serializes playlist collection structures to persistent SharedPreferences storage. */
     private fun savePlaylists() {
         PlaylistUtil.savePlaylists(sharedPreferences, allPlaylists)
@@ -1353,6 +1360,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         /** Duration of the full player background cross-fade between tracks. */
         const val BACKGROUND_FADE_MS = 400
 
+        /** Preference key for the shared sync server password. */
+        const val SYNC_PASSWORD_KEY = "sync_server_password"
+
         /** Dark grey used for secondary buttons and empty-cover placeholders. */
         val BUTTON_DARK_COLOR = 0xFF333333.toInt()
 
@@ -1385,6 +1395,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                     2 -> downloadImageFromImageView(detailCoverImageView, playlist.name)
                     3 -> {
                         allPlaylists.remove(playlist)
+                        pendingDeletions.recordPlaylists(listOfNotNull(playlist.name, playlist.renamedFrom))
                         savePlaylists()
                         pruneCoverFiles()
                         filterData(searchEditText.text.toString())
@@ -1417,8 +1428,16 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             .setTitle("Edit Details")
             .setView(layout)
             .setPositiveButton("Save") { _, _ ->
-                playlist.name = nameField.text.toString()
+                // A blank name would be dropped by the server and then vanish from this device
+                val newName = nameField.text.toString().ifBlank { playlist.name }
+                if (newName != playlist.name) {
+                    // Remembered until synced so the server can move tracks other devices added under the old name
+                    playlist.renamedFrom = playlist.renamedFrom ?: playlist.name
+                    playlist.name = newName
+                    if (playlist.renamedFrom == playlist.name) playlist.renamedFrom = null
+                }
                 playlist.description = descField.text.toString()
+                playlist.touch()
                 detailTitleTextView.text = playlist.name
 
                 if (playlist.description.isNotEmpty()) {
@@ -1450,6 +1469,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             var newFire = false
             if (isPlaylist && playlist != null) {
                 playlist.isFire = !playlist.isFire
+                playlist.touch()
                 newFire = playlist.isFire
             } else if (!isPlaylist && album != null) {
                 album.isFire = !album.isFire
@@ -1554,6 +1574,9 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         val album = activeAlbumForImage
         if (playlist != null) {
             playlist.imageUri = documentUri.toString()
+            // Blank until the new image has been uploaded; the old server cover no longer applies
+            playlist.cover = ""
+            playlist.touch()
             savePlaylists()
             pruneCoverFiles()
             filterData("")
@@ -1563,18 +1586,35 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     }
 
     /**
-     * Displays a text dialog input window for configuring the Raspberry Pi sync server IP destination.
+     * Displays the sync server settings dialog: the server URL and the shared server password.
      */
     private fun showSetIpDialog() {
-        val inputField = EditText(this)
-        inputField.setText(sharedPreferences.getString("sync_server_url", ""))
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        val urlField = EditText(this).apply {
+            hint = "http://192.168.1.10:1337"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(sharedPreferences.getString("sync_server_url", ""))
+        }
+        val passwordField = EditText(this).apply {
+            hint = "Server password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setText(sharedPreferences.getString(SYNC_PASSWORD_KEY, ""))
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padding, padding / 2, padding, 0)
+            addView(urlField)
+            addView(passwordField)
+        }
         AlertDialog.Builder(this)
-            .setTitle("Sync Server URL")
-            .setView(inputField)
+            .setTitle("Sync Server")
+            .setView(layout)
             .setPositiveButton("Save") { _, _ ->
-                val url = inputField.text.toString().trim()
-                sharedPreferences.edit().putString("sync_server_url", url).apply()
-                Toast.makeText(this, "Server URL Saved!", Toast.LENGTH_SHORT).show()
+                sharedPreferences.edit()
+                    .putString("sync_server_url", SyncManager.normalizeServerUrl(urlField.text.toString()))
+                    .putString(SYNC_PASSWORD_KEY, passwordField.text.toString())
+                    .apply()
+                Toast.makeText(this, "Server Settings Saved!", Toast.LENGTH_SHORT).show()
             }.show()
     }
 
@@ -1629,7 +1669,8 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         syncProgressDialog = dialog
         dialog.show()
 
-        SyncManager.startSync(this, serverUrl, allSongs, object : SyncManager.SyncCallback {
+        val password = sharedPreferences.getString(SYNC_PASSWORD_KEY, "") ?: ""
+        SyncManager.startSync(this, serverUrl, password, allSongs, object : SyncManager.SyncCallback {
             override fun onProgress(progress: Int, max: Int, message: String) {
                 runOnUiThread {
                     if (syncProgressDialog?.isShowing == true) {
@@ -1750,7 +1791,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     private fun showSyncSettingsDialog() {
         val syncOptions = arrayOf(
             "Sync Now (Raspberry Pi)",
-            "Set Sync Server IP Address",
+            "Set Sync Server & Password",
             "Copy Web URL"
         )
 

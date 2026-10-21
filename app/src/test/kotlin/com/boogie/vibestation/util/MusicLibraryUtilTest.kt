@@ -377,7 +377,7 @@ class MusicLibraryUtilTest {
         }
 
         assertEquals(mapOf("1" to one, "2" to two), seenById)
-        assertEquals(mapOf("get lucky_daft punk" to one, "nightcall_kavinsky" to two), seenByName)
+        assertEquals(mapOf("getlucky_daftpunk" to one, "nightcall_kavinsky" to two), seenByName)
     }
 
     /**
