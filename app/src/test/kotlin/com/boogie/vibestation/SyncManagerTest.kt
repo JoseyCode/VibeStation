@@ -30,6 +30,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -464,6 +465,11 @@ class SyncManagerTest {
             events += "error $error"
             finished.countDown()
         }
+
+        override fun onUnreachable(error: String) {
+            events += "unreachable $error"
+            finished.countDown()
+        }
     }
 
     private fun runSync(context: Context, local: List<Song>, password: String = ""): Recorder {
@@ -630,5 +636,37 @@ class SyncManagerTest {
         val songs = SyncManager.fetchRemoteSongs(client, baseUrl)
 
         assertEquals(listOf("flac", ""), songs.map { it.format })
+    }
+
+    // Unreachable servers
+
+    /** Refused connections, timeouts and unknown hosts mean "could not reach it", while a server's own error does not. */
+    @Test
+    fun classifiesUnreachableErrors() {
+        assertTrue(SyncManager.isUnreachable(java.net.ConnectException("refused")))
+        assertTrue(SyncManager.isUnreachable(java.net.SocketTimeoutException("timeout")))
+        assertTrue(SyncManager.isUnreachable(java.net.UnknownHostException("nope")))
+        assertTrue(SyncManager.isUnreachable(java.net.NoRouteToHostException("no route")))
+        assertFalse(SyncManager.isUnreachable(java.io.IOException("Wrong or missing sync password")))
+        assertFalse(SyncManager.isUnreachable(IllegalStateException("bug")))
+    }
+
+    /** A server that is not there reports as unreachable, so the app can look for it at a new address. */
+    @Test
+    fun startSyncReportsAServerThatIsNotThereAsUnreachable() {
+        val freePort = java.net.ServerSocket(0).use { it.localPort }
+        val recorder = Recorder()
+        SyncManager.startSync(contextWithPrefs("[]"), "http://127.0.0.1:$freePort", "", emptyList(), recorder)
+        assertTrue(recorder.finished.await(15, TimeUnit.SECONDS), "sync did not finish")
+        assertTrue(recorder.events.last().startsWith("unreachable "), recorder.events.last())
+    }
+
+    /** A rejected password is the server answering, so it stays an ordinary error and never triggers a search. */
+    @Test
+    fun startSyncKeepsAWrongPasswordAnOrdinaryError() {
+        server.enqueue(json("{}", code = 401))
+        val recorder = runSync(contextWithPrefs("[]"), emptyList())
+        assertContains(recorder.events.last(), "Wrong or missing sync password")
+        assertTrue(recorder.events.last().startsWith("error "))
     }
 }

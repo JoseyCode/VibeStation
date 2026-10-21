@@ -18,6 +18,10 @@ import okhttp3.Response
 import org.json.JSONArray
 import java.io.File
 import java.io.IOException
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +39,7 @@ object SyncManager {
     private const val READ_TIMEOUT_SECONDS = 30L
     private const val WRITE_TIMEOUT_SECONDS = 60L
 
-    /** Header the server checks against its `VIBE_PASSWORD`. */
+    /** Header carrying the shared server password; the web server checks it on every API request. */
     internal const val PASSWORD_HEADER = "X-Vibe-Password"
 
     // Executor that serializes sync execution runs to prevent race conditions on write operations
@@ -54,6 +58,12 @@ object SyncManager {
 
         /** Called when a critical exception terminates the synchronization run. */
         fun onError(error: String)
+
+        /**
+         * Called instead of [onError] when the server could not be reached at all (refused, timed out,
+         * unknown host), which usually means its address changed. Defaults to a plain error.
+         */
+        fun onUnreachable(error: String) = onError(error)
     }
 
     /**
@@ -103,10 +113,21 @@ object SyncManager {
                 callback.onComplete("Uploaded $uploaded tracks, Downloaded $downloaded tracks.")
             } catch (e: Exception) {
                 Log.e(TAG, "Sync process crashed with exception", e)
-                callback.onError(e.toString())
+                if (isUnreachable(e)) callback.onUnreachable(e.toString()) else callback.onError(e.toString())
             }
         }
     }
+
+    /**
+     * Tells "could not reach the server" apart from errors the server itself answered with.
+     *
+     * @param error Exception that ended a sync run.
+     * @return True for refused connections, timeouts, unknown hosts and missing routes.
+     */
+    internal fun isUnreachable(error: Exception): Boolean = error is ConnectException ||
+        error is SocketTimeoutException ||
+        error is UnknownHostException ||
+        error is NoRouteToHostException
 
     /**
      * Builds the sync HTTP client, attaching [password] to every request so uploads, streams and

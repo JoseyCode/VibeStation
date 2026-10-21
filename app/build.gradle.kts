@@ -82,6 +82,12 @@ kover {
                     "*.views.ShareWaveView*",
                     "*.views.SplinePath*"
                 )
+                // Server discovery: the decisions (what to try, what to offer, when the server moved) are in the tested
+                // util/ServerDiscovery; these two only drive the network lookup and show its dialogs.
+                classes(
+                    "*.util.NsdServerFinder*",
+                    "*.SyncDiscoveryController*"
+                )
             }
         }
         verify {

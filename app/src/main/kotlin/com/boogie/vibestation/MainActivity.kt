@@ -182,6 +182,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
     /** The accent colour of the current track, which Share Mode tints its waves with. */
     private var currentAccent = Color.WHITE
     private lateinit var sharedPreferences: SharedPreferences
+    private val syncDiscovery by lazy { SyncDiscoveryController(this, sharedPreferences) }
     private var audioVisualizer: Visualizer? = null
 
     // File / Image Launchers
@@ -1361,7 +1362,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         const val BACKGROUND_FADE_MS = 400
 
         /** Preference key for the shared sync server password. */
-        const val SYNC_PASSWORD_KEY = "sync_server_password"
+        const val SYNC_PASSWORD_KEY = SyncDiscoveryController.PASSWORD_KEY
 
         /** Dark grey used for secondary buttons and empty-cover placeholders. */
         val BUTTON_DARK_COLOR = 0xFF333333.toInt()
@@ -1610,10 +1611,13 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             .setTitle("Sync Server")
             .setView(layout)
             .setPositiveButton("Save") { _, _ ->
+                val oldUrl = sharedPreferences.getString("sync_server_url", "").orEmpty()
+                val newUrl = SyncManager.normalizeServerUrl(urlField.text.toString())
                 sharedPreferences.edit()
-                    .putString("sync_server_url", SyncManager.normalizeServerUrl(urlField.text.toString()))
+                    .putString("sync_server_url", newUrl)
                     .putString(SYNC_PASSWORD_KEY, passwordField.text.toString())
                     .apply()
+                syncDiscovery.addressEdited(oldUrl, newUrl)
                 Toast.makeText(this, "Server Settings Saved!", Toast.LENGTH_SHORT).show()
             }.show()
     }
@@ -1627,7 +1631,7 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
      * and handling server network connection results inside dialog elements.
      */
     @Suppress("DEPRECATION")
-    private fun runSync() {
+    private fun runSync(afterRecovery: Boolean = false) {
         val serverUrl = sharedPreferences.getString("sync_server_url", "") ?: ""
         if (serverUrl.isEmpty()) {
             Toast.makeText(this, "Please set server IP first!", Toast.LENGTH_SHORT).show()
@@ -1702,7 +1706,27 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
                     Toast.makeText(this@MainActivity, "Sync Error: $error", Toast.LENGTH_LONG).show()
                 }
             }
+
+            override fun onUnreachable(error: String) {
+                runOnUiThread { retryAtNewAddress(afterRecovery) { onError(error) } }
+            }
         })
+    }
+
+    /**
+     * Called when a sync could not reach the server at all: it may just have a new address, so look for it
+     * once on the network and sync again if it was found.
+     *
+     * @param alreadyRetried True when this sync already is the retry, so there is nothing more to try.
+     * @param giveUp Reports the original error.
+     */
+    private fun retryAtNewAddress(alreadyRetried: Boolean, giveUp: () -> Unit) {
+        if (alreadyRetried) return giveUp()
+        syncStatusTextView?.text = "Server not answering. Looking for it on the network..."
+        syncDiscovery.recoverAddress { recovered ->
+            if (syncProgressDialog?.isShowing == true) syncProgressDialog?.dismiss()
+            if (recovered) runSync(afterRecovery = true) else giveUp()
+        }
     }
 
     /** Persists whether the full player sheet is expanded so it survives rotation. */
@@ -1792,15 +1816,17 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
         val syncOptions = arrayOf(
             "Sync Now (Raspberry Pi)",
             "Set Sync Server & Password",
-            "Copy Web URL"
+            "Copy Web URL",
+            "Find Server on Network"
         )
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle("Sync & Server")
             .setItems(syncOptions) { _, which ->
                 when (which) {
                     0 -> runSync()
                     1 -> showSetIpDialog()
+                    3 -> syncDiscovery.search(stillOpen = { !isFinishing }, reportNothing = true)
                     2 -> {
                         val serverUrl = sharedPreferences.getString("sync_server_url", "") ?: ""
                         if (serverUrl.isNotEmpty()) {
@@ -1818,6 +1844,8 @@ class MainActivity : AppCompatActivity(), AudioService.ServiceCallback {
             }
             .setNegativeButton("Back") { _, _ -> showMainSettingsDialog() }
             .show()
+        // Only here, where the server is being set up, does the app look for it; it speaks up only if it finds something to act on
+        syncDiscovery.search(stillOpen = { dialog.isShowing }, reportNothing = false)
     }
 
     /**
