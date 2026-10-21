@@ -180,6 +180,20 @@ class PlaylistSyncTest {
         assertEquals(listOf("Kept"), (0 until result.length()).map { result.getJSONObject(it).getString("name") })
     }
 
+    /** The device keeps its own playlist order; playlists new to it follow in the server's order. */
+    @Test
+    fun reconcileKeepsTheDevicePlaylistOrder() {
+        val sent = array(playlist("C"), playlist("A"), playlist("B"))
+        val server = array(playlist("A"), playlist("New1"), playlist("B"), playlist("C"), playlist("New2"))
+
+        val result = reconcile(sent, server)
+
+        assertEquals(
+            listOf("C", "A", "B", "New1", "New2"),
+            (0 until result.length()).map { result.getJSONObject(it).getString("name") }
+        )
+    }
+
     /** A playlist that only exists on the server (made on the web) appears locally. */
     @Test
     fun reconcileAddsServerOnlyPlaylists() {
@@ -190,12 +204,13 @@ class PlaylistSyncTest {
     /** An unchanged cover keeps its existing local image and downloads nothing. */
     @Test
     fun reconcileKeepsLocalImageForUnchangedCover() {
-        val sent = array(playlist("Mix", extra = mapOf("imageUri" to "file:///local/c.jpg", "cover" to coverA)))
+        val existing = File(coversDir, "local.jpg").apply { writeText("image") }
+        val sent = array(playlist("Mix", extra = mapOf("imageUri" to "file://${existing.absolutePath}", "cover" to coverA)))
         val server = array(playlist("Mix", extra = mapOf("cover" to coverA)))
 
         val result = reconcile(sent, server, noDownload)
 
-        assertEquals("file:///local/c.jpg", result.getJSONObject(0).getString("imageUri"))
+        assertEquals("file://${existing.absolutePath}", result.getJSONObject(0).getString("imageUri"))
         assertEquals(coverA, result.getJSONObject(0).getString("cover"))
     }
 
@@ -217,6 +232,21 @@ class PlaylistSyncTest {
 
         // The file is there now, so a second reconcile does not download again
         reconcile(array(), server, noDownload)
+    }
+
+    /** A cover file that was deleted from the device is downloaded again instead of kept as a dead link. */
+    @Test
+    fun reconcileRedownloadsAMissingCoverFile() {
+        val gone = File(coversDir, "gone-$coverA")
+        val sent = array(playlist("Mix", extra = mapOf("imageUri" to "file://${gone.absolutePath}", "cover" to coverA)))
+        val server = array(playlist("Mix", extra = mapOf("cover" to coverA)))
+
+        val result = reconcile(sent, server) { _, file ->
+            file.writeText("image")
+            true
+        }
+
+        assertEquals("file://${File(coversDir, coverA).absolutePath}", result.getJSONObject(0).getString("imageUri"))
     }
 
     /** A failed download keeps whatever image the device already had. */

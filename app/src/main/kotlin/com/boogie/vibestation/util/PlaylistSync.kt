@@ -133,7 +133,8 @@ internal object PlaylistSync {
      * Turns the server's merged playlists into the stored format. Names, fields and tracks come from
      * the server; local track ids and cover files are kept where they still apply, and cover images
      * the device does not have yet are downloaded. A playlist the server no longer lists was deleted
-     * elsewhere and is dropped.
+     * elsewhere and is dropped. The device's own playlist order is kept (the server has no order of its
+     * own), with playlists that are new to this device appended in the server's order.
      *
      * @param sent Playlists as sent in the request.
      * @param server Merged playlists returned by the server.
@@ -143,8 +144,9 @@ internal object PlaylistSync {
      */
     fun reconcile(sent: JSONArray, server: JSONArray, coversDir: File, fetchCover: (String, File) -> Boolean): JSONArray {
         val local = objects(sent).associateBy { it.optString("name") }
+        val localOrder = objects(sent).mapIndexed { index, playlist -> playlist.optString("name") to index }.toMap()
         val result = JSONArray()
-        for (remote in objects(server)) {
+        for (remote in objects(server).sortedBy { localOrder[it.optString("name")] ?: Int.MAX_VALUE }) {
             val name = remote.optString("name")
             val localPlaylist = local[name]
             val cover = remote.optString("cover", "")
@@ -189,7 +191,7 @@ internal object PlaylistSync {
         return when {
             // The upload failed or is still pending: keep the device's own image until it goes through
             cover.isBlank() -> if (localCover.isBlank()) localUri else ""
-            localCover == cover && localUri.isNotBlank() -> localUri
+            localCover == cover && localUri.isNotBlank() && !isMissingFile(localUri) -> localUri
             !isCoverName(cover) -> localUri
             else -> {
                 val file = File(coversDir, cover)
@@ -197,6 +199,9 @@ internal object PlaylistSync {
             }
         }
     }
+
+    // A restored or downloaded cover file can be deleted behind the app's back; content URIs cannot be checked
+    private fun isMissingFile(uri: String): Boolean = uri.startsWith("file://") && !File(uri.removePrefix("file://")).exists()
 
     private fun objects(array: JSONArray): List<JSONObject> =
         (0 until array.length()).mapNotNull { array.optJSONObject(it) }
