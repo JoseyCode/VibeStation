@@ -11,7 +11,6 @@ import com.boogie.vibestation.models.Song
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
-import java.util.Locale
 import java.util.concurrent.Executors
 
 /**
@@ -31,9 +30,9 @@ object PlaylistUtil {
      *
      * @param title  Song title.
      * @param artist Song artist.
-     * @return Lowercase "title_artist" key; no trimming or punctuation stripping is applied.
+     * @return The normalized [MatchKey], so a track matches across devices whatever its casing or punctuation.
      */
-    fun songNameKey(title: String, artist: String): String = "${title}_$artist".lowercase(Locale.getDefault())
+    fun songNameKey(title: String, artist: String): String = MatchKey.of(title, artist)
 
     /**
      * Moves the playlist shown at [from] to position [to] in the displayed (possibly filtered) list
@@ -57,30 +56,39 @@ object PlaylistUtil {
     /**
      * Serializes playlist collection structures to JSON array and saves to SharedPreferences.
      *
+     * Tracks without a recorded add time are stamped [nowMs]; those are the genuinely new additions, and
+     * tracks that are no longer in the playlist forget theirs so a later re-add counts as new.
+     *
      * @param prefs Target SharedPreferences instance.
      * @param playlists Playlists to persist.
+     * @param nowMs Time to stamp newly added tracks with.
      */
-    fun savePlaylists(prefs: SharedPreferences, playlists: List<Playlist>) {
+    fun savePlaylists(prefs: SharedPreferences, playlists: List<Playlist>, nowMs: Long = System.currentTimeMillis()) {
         try {
             val playlistsJsonArray = JSONArray()
             for (playlist in playlists) {
+                val keys = playlist.songs.map { songNameKey(it.title, it.artist) }
+                playlist.addedAt.keys.retainAll(keys.toSet())
                 val songsJsonArray = JSONArray()
-                for (song in playlist.songs) {
+                for ((song, key) in playlist.songs.zip(keys)) {
                     songsJsonArray.put(
                         JSONObject()
                             .put("id", song.id)
                             .put("t", song.title)
                             .put("a", song.artist)
+                            .put("addedAt", playlist.addedAt.getOrPut(key) { nowMs })
                     )
                 }
-                playlistsJsonArray.put(
-                    JSONObject()
-                        .put("name", playlist.name)
-                        .put("imageUri", playlist.imageUri ?: "")
-                        .put("description", playlist.description)
-                        .put("isFire", playlist.isFire)
-                        .put("songData", songsJsonArray)
-                )
+                val entry = JSONObject()
+                    .put("name", playlist.name)
+                    .put("imageUri", playlist.imageUri ?: "")
+                    .put("cover", playlist.cover)
+                    .put("description", playlist.description)
+                    .put("isFire", playlist.isFire)
+                    .put("lastModified", playlist.lastModified)
+                    .put("songData", songsJsonArray)
+                playlist.renamedFrom?.let { entry.put("renamedFrom", it) }
+                playlistsJsonArray.put(entry)
             }
             prefs.edit().putString(PLAYLISTS_KEY, playlistsJsonArray.toString()).apply()
         } catch (ignored: Exception) {
@@ -111,6 +119,9 @@ object PlaylistUtil {
                 )
                 playlist.description = playlistJson.optString("description", "")
                 playlist.isFire = playlistJson.optBoolean("isFire", false)
+                playlist.cover = playlistJson.optString("cover", "")
+                playlist.lastModified = playlistJson.optLong("lastModified", 0)
+                playlist.renamedFrom = playlistJson.optString("renamedFrom", "").takeUnless { it.isBlank() }
 
                 val songsJsonArray = playlistJson.getJSONArray("songData")
                 for (j in 0 until songsJsonArray.length()) {
@@ -119,6 +130,8 @@ object PlaylistUtil {
                     val matchedSong = songIdMap[songJson.getString("id")] ?: songNameMap[nameKey]
                     if (matchedSong != null) {
                         playlist.songs.add(matchedSong)
+                        // Keyed by the matched song, not the stored entry, so save finds it again
+                        playlist.addedAt[songNameKey(matchedSong.title, matchedSong.artist)] = songJson.optLong("addedAt", 0)
                     }
                 }
                 playlists.add(playlist)

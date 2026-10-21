@@ -161,9 +161,10 @@ class SelectionStateTest {
         val playlist = playlistOf(song("a"), song("b", path = "/old/b.mp3"), song("c"), song("d"))
         val selection = selectionOf(song("b", path = "/new/b.mp3"), song("d"))
 
-        selection.removeFrom(playlist)
+        val removed = selection.removeFrom(playlist)
 
         assertEquals(listOf("a", "c"), playlist.ids())
+        assertEquals(listOf("b", "d"), removed.map { it.id })
     }
 
     /**

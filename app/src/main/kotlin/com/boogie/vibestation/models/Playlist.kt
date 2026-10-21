@@ -19,6 +19,30 @@ class Playlist(
     /** Whether the user has marked this playlist as a favorite ("fire"). */
     var isFire: Boolean = false
 
+    /** Name of this playlist's cover as stored on the sync server; blank until the cover has been uploaded. */
+    var cover: String = ""
+
+    /**
+     * Epoch milliseconds of the last change to the playlist itself (name, description, fire flag,
+     * cover). Adding or removing tracks does not move it, so a track edit made offline can never
+     * revert another device's cover or description change.
+     */
+    var lastModified: Long = 0
+
+    /** Epoch milliseconds each track was added, keyed by match key; 0 for tracks added before tracking began. */
+    val addedAt: HashMap<String, Long> = HashMap()
+
+    /** Marks the playlist itself as changed now. */
+    fun touch(nowMs: Long = System.currentTimeMillis()) {
+        lastModified = nowMs
+    }
+
+    /**
+     * Name this playlist had on the server before an unsynced rename, so the server can move tracks
+     * other devices added under the old name; null once the rename has synced.
+     */
+    var renamedFrom: String? = null
+
     /** Tracks in playlist order. */
     val songs: ArrayList<Song> = ArrayList()
 
