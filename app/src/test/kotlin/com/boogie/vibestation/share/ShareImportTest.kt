@@ -107,7 +107,7 @@ class ShareImportTest {
         val m = manifest(track("A"), track("B"), track("C"), description = "Road trip")
         val resolved = listOf(LocalTrack("101", "A", "Artist", 1), null, LocalTrack("103", "C", "Artist", 1))
 
-        val entry = ShareImport.playlistEntry(m, "Mix (2)", "file:///cover.jpg", resolved)
+        val entry = ShareImport.playlistEntry(m, "Mix (2)", "file:///cover.jpg", resolved, nowMs = 4242)
 
         assertEquals("Mix (2)", entry.getString("name"))
         assertEquals("file:///cover.jpg", entry.getString("imageUri"))
@@ -116,6 +116,10 @@ class ShareImportTest {
         val songs = entry.getJSONArray("songData")
         assertEquals(listOf("101", "103"), (0 until songs.length()).map { songs.getJSONObject(it).getString("id") })
         assertEquals("C", songs.getJSONObject(1).getString("t"))
+        // Stamped so a deletion of an older playlist with the same name cannot remove the import
+        assertEquals(4242, entry.getLong("lastModified"))
+        assertEquals(4242, songs.getJSONObject(0).getLong("addedAt"))
+        assertEquals("", entry.getString("cover"))
     }
 
     /** No cover means an empty imageUri, which parsePlaylists reads back as null. */

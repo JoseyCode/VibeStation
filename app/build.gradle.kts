@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 25
-        versionName = "3.1.4"
+        versionCode = 26
+        versionName = "3.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -87,7 +87,7 @@ kover {
         verify {
             // Ratchet: raise as tests land, never lower. Last measured 44.03% (after extracting the AudioService lifecycle rules into PlaybackLifecycle).
             rule {
-                minBound(44)
+                minBound(46)
             }
         }
     }
