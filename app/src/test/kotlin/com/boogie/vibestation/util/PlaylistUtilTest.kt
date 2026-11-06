@@ -57,20 +57,27 @@ class PlaylistUtilTest {
         val playlist = Playlist("Gym", "content://cover/1").apply {
             description = "Workout"
             isFire = true
+            cover = "c".repeat(32) + ".jpg"
+            lastModified = 1234
+            renamedFrom = "Old Gym"
             songs.add(getLucky)
         }
 
-        PlaylistUtil.savePlaylists(prefs, listOf(playlist))
+        PlaylistUtil.savePlaylists(prefs, listOf(playlist), nowMs = 555)
 
         val entry = JSONArray(saved.captured).getJSONObject(0)
         assertEquals("Gym", entry.getString("name"))
         assertEquals("content://cover/1", entry.getString("imageUri"))
+        assertEquals("c".repeat(32) + ".jpg", entry.getString("cover"))
         assertEquals("Workout", entry.getString("description"))
         assertTrue(entry.getBoolean("isFire"))
+        assertEquals(1234, entry.getLong("lastModified"))
+        assertEquals("Old Gym", entry.getString("renamedFrom"))
         val songEntry = entry.getJSONArray("songData").getJSONObject(0)
         assertEquals("id-1", songEntry.getString("id"))
         assertEquals("Get Lucky", songEntry.getString("t"))
         assertEquals("Daft Punk", songEntry.getString("a"))
+        assertEquals(555, songEntry.getLong("addedAt"))
         verify { editor.apply() }
     }
 
@@ -126,13 +133,14 @@ class PlaylistUtilTest {
     }
 
     /**
-     * Verifies a track whose ID changed (rescan, reinstall) is re-found by lowercased title_artist key.
+     * Verifies a track whose ID changed (rescan, reinstall, or a different device's id) is re-found by
+     * its normalized title_artist key.
      */
     @Test
-    fun parseFallsBackToLowercasedNameKey() {
-        val json = playlistJson("Mix", listOf(Triple("stale-id", "Get Lucky", "Daft Punk")))
+    fun parseFallsBackToNormalizedNameKey() {
+        val json = playlistJson("Mix", listOf(Triple("stale-id", "Get Lucky!", "daft punk")))
 
-        val restored = parse(json, byName = mapOf("get lucky_daft punk" to getLucky)).single()
+        val restored = parse(json, byName = mapOf("getlucky_daftpunk" to getLucky)).single()
 
         assertEquals(listOf(getLucky), restored.songs)
     }
@@ -224,14 +232,70 @@ class PlaylistUtilTest {
     }
 
     /**
-     * Verifies the name key is lowercase "title_artist" with no trimming or punctuation stripping
-     * (unlike SyncManager's match key), and is the key parsePlaylists falls back on.
+     * Verifies the name key is the shared normalized match key, so a track saved by one device is found
+     * by another whatever its casing or punctuation, and is the key parsePlaylists falls back on.
      */
     @Test
-    fun songNameKeyIsLowercaseTitleUnderscoreArtist() {
-        assertEquals("get lucky_daft punk", PlaylistUtil.songNameKey("Get Lucky", "Daft Punk"))
-        assertEquals(" a !_b ", PlaylistUtil.songNameKey(" A !", "B "))
-        assertEquals("_", PlaylistUtil.songNameKey("", ""))
+    fun songNameKeyIsTheSharedMatchKey() {
+        assertEquals("getlucky_daftpunk", PlaylistUtil.songNameKey("Get Lucky", "Daft Punk"))
+        assertEquals("a_b", PlaylistUtil.songNameKey(" A !", "B "))
+        assertEquals("unknown_track", PlaylistUtil.songNameKey("", ""))
+    }
+
+    /**
+     * Verifies a track from before add times were recorded keeps 0 through save, so a deletion made
+     * elsewhere still wins over it, while a genuinely new track is stamped.
+     */
+    @Test
+    fun legacyTracksKeepZeroAddTimeAndNewTracksAreStamped() {
+        val legacy = parse(playlistJson("P", listOf(Triple("id-1", "Get Lucky", "Daft Punk"))), byId = mapOf("id-1" to getLucky)).single()
+        legacy.songs.add(nightcall)
+
+        PlaylistUtil.savePlaylists(prefs, listOf(legacy), nowMs = 777)
+
+        val songs = JSONArray(saved.captured).getJSONObject(0).getJSONArray("songData")
+        assertEquals(0, songs.getJSONObject(0).getLong("addedAt"))
+        assertEquals(777, songs.getJSONObject(1).getLong("addedAt"))
+    }
+
+    /**
+     * Verifies a stored add time survives a round trip, and a track removed then added back is treated
+     * as new, so it beats the removal that was reported to the server.
+     */
+    @Test
+    fun addTimesRoundTripAndResetOnReAdd() {
+        stubPrefs()
+        val playlist = Playlist("P", null).apply { songs.addAll(listOf(getLucky, nightcall)) }
+        PlaylistUtil.savePlaylists(prefs, listOf(playlist), nowMs = 100)
+        val restored = parse(saved.captured, byId = listOf(getLucky, nightcall).associateBy { it.id }).single()
+
+        restored.songs.remove(nightcall)
+        PlaylistUtil.savePlaylists(prefs, listOf(restored), nowMs = 200)
+        restored.songs.add(nightcall)
+        PlaylistUtil.savePlaylists(prefs, listOf(restored), nowMs = 300)
+
+        val songs = JSONArray(saved.captured).getJSONObject(0).getJSONArray("songData")
+        assertEquals(100, songs.getJSONObject(0).getLong("addedAt"))
+        assertEquals(300, songs.getJSONObject(1).getLong("addedAt"))
+    }
+
+    /**
+     * Verifies the sync fields are read back, and legacy entries without them get their defaults.
+     */
+    @Test
+    fun parseReadsSyncFieldsWithDefaults() {
+        val fresh = JSONObject().put("name", "New").put("cover", "x.png").put("lastModified", 42)
+            .put("renamedFrom", "Was").put("songData", JSONArray())
+        val json = JSONArray().put(fresh).put(JSONObject().put("name", "Old").put("songData", JSONArray())).toString()
+
+        val (parsedFresh, legacy) = parse(json)
+
+        assertEquals("x.png", parsedFresh.cover)
+        assertEquals(42, parsedFresh.lastModified)
+        assertEquals("Was", parsedFresh.renamedFrom)
+        assertEquals("", legacy.cover)
+        assertEquals(0, legacy.lastModified)
+        assertNull(legacy.renamedFrom)
     }
 
     /**

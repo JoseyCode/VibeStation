@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.retroclone"
         minSdk = 24
         targetSdk = 36
-        versionCode = 25
-        versionName = "3.1.4"
+        versionCode = 26
+        versionName = "3.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -82,12 +82,18 @@ kover {
                     "*.views.ShareWaveView*",
                     "*.views.SplinePath*"
                 )
+                // Server discovery: the decisions (what to try, what to offer, when the server moved) are in the tested
+                // util/ServerDiscovery; these two only drive the network lookup and show its dialogs.
+                classes(
+                    "*.util.NsdServerFinder*",
+                    "*.SyncDiscoveryController*"
+                )
             }
         }
         verify {
             // Ratchet: raise as tests land, never lower. Last measured 44.03% (after extracting the AudioService lifecycle rules into PlaybackLifecycle).
             rule {
-                minBound(44)
+                minBound(46)
             }
         }
     }

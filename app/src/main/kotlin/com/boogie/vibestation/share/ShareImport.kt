@@ -1,6 +1,7 @@
 package com.boogie.vibestation.share
 
 import com.boogie.vibestation.SyncManager
+import com.boogie.vibestation.util.AudioFormats
 import com.boogie.vibestation.util.NewTrack
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,18 +15,6 @@ internal object ShareImport {
 
     private const val MAX_SEGMENT = 100
     private const val DEFAULT_PLAYLIST_NAME = "Shared playlist"
-    private const val DEFAULT_MIME = "audio/mpeg"
-
-    // Extension to MIME type for the audio formats MediaStore accepts; also used in reverse for names.
-    private val MIME_BY_EXTENSION = linkedMapOf(
-        "mp3" to "audio/mpeg",
-        "m4a" to "audio/mp4",
-        "aac" to "audio/aac",
-        "flac" to "audio/flac",
-        "ogg" to "audio/ogg",
-        "opus" to "audio/opus",
-        "wav" to "audio/x-wav"
-    )
 
     /**
      * Picks a playlist name that does not clash with an existing one by appending " (2)", " (3)", and so on.
@@ -65,7 +54,7 @@ internal object ShareImport {
     fun displayName(track: ShareTrack): String {
         val fromSender = cleanSegment(track.fileName, "")
         if (fromSender.isNotEmpty()) return fromSender
-        val extension = MIME_BY_EXTENSION.entries.firstOrNull { it.value == track.mimeType }?.key ?: "mp3"
+        val extension = AudioFormats.extensionForMime(track.mimeType)
         return "${cleanSegment(track.title, "track")}.$extension"
     }
 
@@ -79,8 +68,7 @@ internal object ShareImport {
     fun newTrack(track: ShareTrack): NewTrack {
         val name = displayName(track)
         val mime = track.mimeType.takeIf { it.startsWith("audio/") }
-            ?: MIME_BY_EXTENSION[name.substringAfterLast('.', "").lowercase()]
-            ?: DEFAULT_MIME
+            ?: AudioFormats.mimeOf(name)
         return NewTrack(name, track.title, track.artist, track.album, mime, relativePath(track.artist, track.album))
     }
 
@@ -93,19 +81,29 @@ internal object ShareImport {
      * @param name     Final playlist name, already made unique.
      * @param imageUri Local cover URI, or null for none.
      * @param resolved For each manifest track in order, the local song it maps to, or null if unavailable.
+     * @param nowMs    Creation time. It stamps the playlist and its tracks, so a deletion of an older
+     *                 playlist with the same name cannot remove the import.
      * @return The playlist entry to add to the stored playlists.
      */
-    fun playlistEntry(manifest: ShareManifest, name: String, imageUri: String?, resolved: List<LocalTrack?>): JSONObject {
+    fun playlistEntry(
+        manifest: ShareManifest,
+        name: String,
+        imageUri: String?,
+        resolved: List<LocalTrack?>,
+        nowMs: Long = System.currentTimeMillis()
+    ): JSONObject {
         require(resolved.size == manifest.tracks.size) { "resolved must have one entry per manifest track" }
         val songs = JSONArray()
         for (local in resolved.filterNotNull()) {
-            songs.put(JSONObject().put("id", local.songId).put("t", local.title).put("a", local.artist))
+            songs.put(JSONObject().put("id", local.songId).put("t", local.title).put("a", local.artist).put("addedAt", nowMs))
         }
         return JSONObject()
             .put("name", name)
             .put("imageUri", imageUri ?: "")
+            .put("cover", "")
             .put("description", manifest.description)
             .put("isFire", false)
+            .put("lastModified", nowMs)
             .put("songData", songs)
     }
 

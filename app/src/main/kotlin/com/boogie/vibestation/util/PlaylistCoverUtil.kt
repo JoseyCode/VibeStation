@@ -19,6 +19,11 @@ object PlaylistCoverUtil {
     private const val COVER_KEY = "cover_b64"
     private const val IMAGE_URI_KEY = "imageUri"
 
+    // The image types the sync server stores
+    private val UPLOADABLE_TYPES_BY_EXTENSION = mapOf(
+        "jpg" to "image/jpeg", "jpeg" to "image/jpeg", "png" to "image/png", "webp" to "image/webp", "gif" to "image/gif"
+    )
+
     /**
      * Resolves the app-private folder that holds restored cover images.
      *
@@ -26,6 +31,26 @@ object PlaylistCoverUtil {
      * @return The covers directory; it may not exist yet.
      */
     fun coversDir(context: Context): File = File(context.filesDir, COVERS_DIR)
+
+    /**
+     * Reads a cover image at its original quality for upload.
+     *
+     * @param resolver Resolver used to open [imageUri].
+     * @param imageUri Content or file URI of the cover.
+     * @return The image, or null when it is unreadable or not a format the server stores.
+     */
+    internal fun readImage(resolver: ContentResolver, imageUri: String): CoverImage? = try {
+        val uri = Uri.parse(imageUri)
+        val extension = imageUri.substringAfterLast('.', "").lowercase()
+        val mimeType = resolver.getType(uri) ?: UPLOADABLE_TYPES_BY_EXTENSION[extension]
+        val bytes = resolver.openInputStream(uri)?.use { it.readBytes() }
+        if (mimeType != null && isUploadable(mimeType, bytes)) CoverImage(bytes!!, mimeType) else null
+    } catch (ignored: Exception) {
+        null
+    }
+
+    private fun isUploadable(mimeType: String, bytes: ByteArray?): Boolean =
+        mimeType in UPLOADABLE_TYPES_BY_EXTENSION.values && bytes != null && bytes.isNotEmpty()
 
     /**
      * Adds a downsampled Base64 copy of each playlist's cover to the backup JSON. Playlists whose

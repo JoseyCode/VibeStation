@@ -62,6 +62,8 @@ The streaming hub, browser player client, and synchronization server are maintai
 
 For instructions on deploying the server on a Raspberry Pi or local server, configuring endpoints, and setting up metadata overrides, please visit the [VibeStation-Web documentation](https://github.com/JoseyCode/VibeStation-Web).
 
+**Finding the server**: the web server announces itself on the local network. Open *Settings > Sync & Server* and the app looks for it, offers what it finds, and then asks for the server password (*Find Server on Network* searches again on demand). The app only looks there, never in the background. The server also has a stable id, so if its address changes and a sync cannot reach it, the app searches once for the same server and updates the saved address itself.
+
 ---
 
 ## Getting Started
